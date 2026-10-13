@@ -182,8 +182,13 @@ To check the phone can reach the API, open `http://<computer's IP>:8000/docs` in
 - **Create moment**: pick friends and a reveal time.
 - **Open a moment**: capture photos (they stay hidden) and chat in the **Hangout** tab. Log in
   as `ali@sonder.app` on a second phone or emulator to see messages arrive live.
-- **Reveal**: create a moment with **Custom** set a minute or two ahead, add a photo, wait for
-  the countdown, then reveal it and open the gallery.
+- **Reveal**: on the **Moments** tab, open **Summer Beach Trip** ("Ready to reveal"), tap
+  **Reveal**, then **Explore memories** to see its photos. Or create a moment with **Custom** set a
+  minute or two ahead, add a photo, wait for the countdown, then reveal it.
+
+**Before a demo**, reset the database (see Troubleshooting: "Start the database over"). The demo
+times are counted from when the database was created: Birthday Night unlocks about 2 hours later,
+and Summer Beach Trip can only be revealed once per reset.
 - **Moments** tab: unlocked moments. **Profile** tab: stats, friends, log out.
 
 ---
