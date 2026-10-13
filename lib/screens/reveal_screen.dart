@@ -25,10 +25,7 @@ class _RevealScreenState extends State<RevealScreen> with SingleTickerProviderSt
   void initState() {
     super.initState();
     _moment = widget.moment;
-    _shakeController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 100),
-    );
+    _shakeController = AnimationController(vsync: this, duration: const Duration(milliseconds: 100));
   }
 
   @override
@@ -48,10 +45,7 @@ class _RevealScreenState extends State<RevealScreen> with SingleTickerProviderSt
     if (_revealing) return;
     setState(() => _revealing = true);
     try {
-      final results = await Future.wait<Object?>([
-        SonderApi.instance.revealMoment(_moment.id),
-        _shake(),
-      ]);
+      final results = await Future.wait<Object?>([SonderApi.instance.revealMoment(_moment.id), _shake()]);
       if (!mounted) return;
       setState(() {
         _moment = results.first as Moment;
@@ -65,10 +59,7 @@ class _RevealScreenState extends State<RevealScreen> with SingleTickerProviderSt
   }
 
   void _explore() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => MemoriesGalleryScreen(moment: _moment)),
-    );
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MemoriesGalleryScreen(moment: _moment)));
   }
 
   @override
@@ -85,7 +76,7 @@ class _RevealScreenState extends State<RevealScreen> with SingleTickerProviderSt
       ),
       body: SafeArea(
         child: Center(
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(24.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -94,10 +85,7 @@ class _RevealScreenState extends State<RevealScreen> with SingleTickerProviderSt
                   animation: _shakeController,
                   builder: (context, child) {
                     final dx = _shakeController.value * 12.0;
-                    return Transform.translate(
-                      offset: Offset(dx, 0),
-                      child: child,
-                    );
+                    return Transform.translate(offset: Offset(dx, 0), child: child);
                   },
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 400),
@@ -105,10 +93,18 @@ class _RevealScreenState extends State<RevealScreen> with SingleTickerProviderSt
                       return ScaleTransition(scale: animation, child: child);
                     },
                     child: _isRevealed
-                        ? const Icon(Icons.lock_open_rounded,
-                            key: ValueKey("open"), size: 100, color: AppTheme.kTextPrimary)
-                        : const Icon(Icons.lock_rounded,
-                            key: ValueKey("closed"), size: 100, color: AppTheme.kTextPrimary),
+                        ? const Icon(
+                            Icons.lock_open_rounded,
+                            key: ValueKey("open"),
+                            size: 100,
+                            color: AppTheme.kTextPrimary,
+                          )
+                        : const Icon(
+                            Icons.lock_rounded,
+                            key: ValueKey("closed"),
+                            size: 100,
+                            color: AppTheme.kTextPrimary,
+                          ),
                   ),
                 ),
                 const SizedBox(height: 32),
