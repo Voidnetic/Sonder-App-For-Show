@@ -2,7 +2,7 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <!-- usesCleartextTraffic: the dev backend is plain http:// on the local network. -->
     <application
-        android:label="sonder_app"
+        android:label="Sonder"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="true">

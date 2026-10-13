@@ -107,8 +107,12 @@ async def hangout_websocket(websocket: WebSocket, moment_id: uuid.UUID, token: s
     await manager.connect(moment_id, websocket)
     try:
         while True:
-            payload = await websocket.receive_json()
-            text = (payload or {}).get("text", "").strip()
+            try:
+                payload = await websocket.receive_json()
+            except ValueError:
+                continue  # ignore frames that aren't valid JSON
+            raw_text = payload.get("text") if isinstance(payload, dict) else None
+            text = raw_text.strip()[:2000] if isinstance(raw_text, str) else ""
             if not text:
                 continue
 
@@ -121,4 +125,6 @@ async def hangout_websocket(websocket: WebSocket, moment_id: uuid.UUID, token: s
 
             await manager.broadcast(moment_id, response.model_dump(mode="json"))
     except WebSocketDisconnect:
+        pass
+    finally:
         manager.disconnect(moment_id, websocket)

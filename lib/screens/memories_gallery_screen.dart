@@ -42,7 +42,12 @@ class _MemoriesGalleryScreenState extends State<MemoriesGalleryScreen> {
           children: [
             Flexible(
               child: InteractiveViewer(
-                child: Image.network(SonderApi.instance.imageUrl(memory.imageUrl!), fit: BoxFit.contain),
+                child: Image.network(
+                  SonderApi.instance.imageUrl(memory.imageUrl!),
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stack) =>
+                      const Icon(Icons.broken_image_outlined, color: Colors.white70, size: 64),
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -156,8 +161,7 @@ class _MemoriesGalleryScreenState extends State<MemoriesGalleryScreen> {
               child: Image.network(
                 SonderApi.instance.imageUrl(memory.imageUrl!),
                 fit: BoxFit.cover,
-                loadingBuilder: (context, child, progress) =>
-                    progress == null ? child : const LoadingView(),
+                loadingBuilder: (context, child, progress) => progress == null ? child : const LoadingView(),
                 errorBuilder: (context, error, stack) =>
                     const Icon(Icons.broken_image_outlined, color: AppTheme.kTextSecondary, size: 40),
               ),

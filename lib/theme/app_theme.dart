@@ -14,27 +14,16 @@ class AppTheme {
   static const Color kPalePeach = Color(0xFFFFE5B4);
   static const Color kLightBlue = Color(0xFFE1F5FE);
 
+  // Matches the theme the original prototype ran with. Don't give bodyMedium a colour here:
+  // it's the default style for every Text, so it would turn all unstyled text grey.
   static ThemeData get lightTheme {
     return ThemeData(
       brightness: Brightness.light,
       scaffoldBackgroundColor: kBackground,
       primaryColor: kTextPrimary,
-      fontFamily: 'Inter', // Or any rounded friendly sans-serif
-      appBarTheme: const AppBarTheme(
-        backgroundColor: kBackground,
-        elevation: 0,
-        iconTheme: IconThemeData(color: kTextPrimary),
-        centerTitle: true,
-        titleTextStyle: TextStyle(
-          color: kTextPrimary,
-          fontSize: 18,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
+      fontFamily: 'Inter',
       textTheme: const TextTheme(
         displayLarge: TextStyle(color: kTextPrimary, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: -0.5),
-        bodyLarge: TextStyle(color: kTextPrimary, fontSize: 16),
-        bodyMedium: TextStyle(color: kTextSecondary, fontSize: 14),
       ),
     );
   }

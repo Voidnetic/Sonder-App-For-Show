@@ -18,7 +18,8 @@ from app.utils import to_utc
 
 router = APIRouter(prefix="/moments/{moment_id}/memories", tags=["Memories"])
 
-ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp", "image/heic"}
+# Content type -> file extension used when saving the upload.
+ALLOWED_CONTENT_TYPES = {"image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp", "image/heic": ".heic"}
 MAX_FILE_SIZE_BYTES = 8 * 1024 * 1024  # 8MB
 
 
@@ -55,7 +56,7 @@ async def capture_memory(
 
     upload_dir = Path(settings.upload_dir)
     upload_dir.mkdir(parents=True, exist_ok=True)
-    extension = Path(file.filename or "").suffix or ".jpg"
+    extension = ALLOWED_CONTENT_TYPES[file.content_type]
     filename = f"{uuid.uuid4().hex}{extension}"
     (upload_dir / filename).write_bytes(contents)
 

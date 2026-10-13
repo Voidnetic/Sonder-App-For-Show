@@ -150,6 +150,13 @@ then run `flutter run`.
 
 iPhones need a Mac with Xcode. See https://docs.flutter.dev/get-started/install/macos.
 
+### Or: install the APK without a cable
+
+Every push builds an APK on GitHub (workflow **Build Android APK**). On the phone, open the
+repository's **Releases** page, open **Sonder APK (latest build)**, tap `sonder.apk`, and allow
+the browser to install apps when Android asks. The API still has to run on your computer
+(step 3), and the phone needs its address (next section).
+
 ### Point the app at your computer (first launch)
 
 The app opens on a login screen. At the bottom is a yellow **Server** button. Tap it and enter
@@ -175,8 +182,13 @@ To check the phone can reach the API, open `http://<computer's IP>:8000/docs` in
 - **Create moment**: pick friends and a reveal time.
 - **Open a moment**: capture photos (they stay hidden) and chat in the **Hangout** tab. Log in
   as `ali@sonder.app` on a second phone or emulator to see messages arrive live.
-- **Reveal**: create a moment with **Custom** set a minute or two ahead, add a photo, wait for
-  the countdown, then reveal it and open the gallery.
+- **Reveal**: on the **Moments** tab, open **Summer Beach Trip** ("Ready to reveal"), tap
+  **Reveal**, then **Explore memories** to see its photos. Or create a moment with **Custom** set a
+  minute or two ahead, add a photo, wait for the countdown, then reveal it.
+
+**Before a demo**, reset the database (see Troubleshooting: "Start the database over"). The demo
+times are counted from when the database was created: Birthday Night unlocks about 2 hours later,
+and Summer Beach Trip can only be revealed once per reset.
 - **Moments** tab: unlocked moments. **Profile** tab: stats, friends, log out.
 
 ---
@@ -218,6 +230,7 @@ to clean up.
 | API stops with `Sonder tables are missing` | Run step 2 again. |
 | `flutter devices` doesn't show the phone | Check USB debugging is on, accept the prompt on the phone, try another cable, and set the USB mode to "File transfer". |
 | App says `Can't reach the server at ...` | Check the Server address on the login screen. Use the same Wi-Fi as the computer, start the API with `--host 0.0.0.0`, and allow Python through the firewall. Test by opening `http://<computer's IP>:8000/docs` in the phone's browser. |
+| Works at home but not on university / public Wi-Fi | Those networks often block devices from reaching each other. Turn on the phone's hotspot, connect the computer to it, and use the computer's new IP as the Server address. |
 | App was logged in but now shows the login screen | The login expired (after 7 days) or the database was recreated. Log in again. |
 | Camera button does nothing on an emulator | Use the gallery button next to the shutter, or turn on the emulator camera in Android Studio's Device Manager. |
 | Start the database over with fresh demo data | In pgAdmin or `psql`, run `DROP DATABASE sonder;` as the `postgres` user, then run step 2 again. |

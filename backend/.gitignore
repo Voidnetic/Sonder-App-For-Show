@@ -5,3 +5,4 @@ venv/
 .env
 uploads/*
 !uploads/.gitkeep
+!uploads/demo-*.jpg
