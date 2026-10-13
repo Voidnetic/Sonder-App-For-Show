@@ -1,50 +1,43 @@
 import 'package:flutter/material.dart';
-import 'data/mock_data.dart';
-import 'screens/create_moment_screen.dart';
-import 'screens/active_moment_screen.dart';
-import 'screens/profile_screen.dart';
-import 'screens/global_camera_screen.dart';
-import 'screens/moments_archive_screen.dart';
 
-void main() {
+import 'data/api_client.dart';
+import 'data/models.dart';
+import 'screens/global_camera_screen.dart';
+import 'screens/home_screen.dart';
+import 'screens/login_screen.dart';
+import 'screens/moments_archive_screen.dart';
+import 'screens/profile_screen.dart';
+import 'theme/app_theme.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await SonderApi.instance.restoreSession();
   runApp(const SonderApp());
 }
 
-// --- THEME ---
-class AppTheme {
-  static const Color kBackground = Color(0xFFFAF9F6); // Warm off-white
-  static const Color kTextPrimary = Color(0xFF1C1C1C); // Dark charcoal
-  static const Color kTextSecondary = Color(0xFF6B6B6B);
-  static const Color kBorder = Color(0xFF2D2D2D);
-
-  static const Color kLavender = Color(0xFFE6E6FA);
-  static const Color kPaleYellow = Color(0xFFFFFACD);
-  static const Color kSoftMint = Color(0xFFE0F8E6);
-
-  static ThemeData get lightTheme {
-    return ThemeData(
-      brightness: Brightness.light,
-      scaffoldBackgroundColor: kBackground,
-      primaryColor: kTextPrimary,
-      fontFamily: 'Inter',
-      textTheme: const TextTheme(
-        displayLarge: TextStyle(color: kTextPrimary, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: -0.5),
-      ),
-    );
-  }
-}
-
-// --- MAIN APP & NAVIGATION ---
 class SonderApp extends StatelessWidget {
   const SonderApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Sonder Prototype',
+      title: 'Sonder',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const MainNavigation(),
+      home: const AuthGate(),
+    );
+  }
+}
+
+/// Shows the login screen while signed out and the main app while signed in.
+class AuthGate extends StatelessWidget {
+  const AuthGate({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<AppUser?>(
+      valueListenable: SonderApi.instance.currentUser,
+      builder: (context, user, _) => user == null ? const LoginScreen() : const MainNavigation(),
     );
   }
 }
@@ -59,20 +52,24 @@ class MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<MainNavigation> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = [
-    const HomeScreen(),
-    const GlobalCameraScreen(),
-    const MomentsArchiveScreen(), // <--- Plugged in here!
-    const ProfileScreen(),
-  ];
+  // Built fresh on every tab switch so each tab shows up-to-date data.
+  Widget _buildScreen() {
+    switch (_currentIndex) {
+      case 1:
+        return const GlobalCameraScreen();
+      case 2:
+        return const MomentsArchiveScreen();
+      case 3:
+        return const ProfileScreen();
+      default:
+        return const HomeScreen();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
+      body: _buildScreen(),
       bottomNavigationBar: _buildCustomBottomNav(),
     );
   }
@@ -128,191 +125,6 @@ class _MainNavigationState extends State<MainNavigation> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// --- HOME SCREEN ---
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(24.0),
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  "SONDER",
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 3,
-                  ),
-                ),
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: AppTheme.kPaleYellow,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppTheme.kBorder, width: 1.5),
-                  ),
-                  child: const Center(
-                    child: Icon(Icons.face_6_rounded, size: 28),
-                  ),
-                )
-              ],
-            ),
-            const SizedBox(height: 32),
-            Text(
-              "Hey, ${MockData.userName} 👋",
-              style: Theme.of(context).textTheme.displayLarge,
-            ),
-            const SizedBox(height: 48),
-            const Text(
-              "YOUR MOMENTS",
-              style: TextStyle(
-                color: AppTheme.kTextSecondary,
-                fontSize: 14,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1.5,
-              ),
-            ),
-            const SizedBox(height: 24),
-            ...MockData.activeMoments.map((moment) => MomentCard(
-              moment: moment,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ActiveMomentScreen(moment: moment),
-                  ),
-                );
-              },
-            )),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const CreateMomentScreen()),
-          );
-        },
-        backgroundColor: AppTheme.kTextPrimary,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-          side: const BorderSide(color: AppTheme.kBorder, width: 1.5),
-        ),
-        icon: const Icon(Icons.add, color: AppTheme.kBackground),
-        label: const Text(
-          "CREATE MOMENT",
-          style: TextStyle(
-            color: AppTheme.kBackground,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.2,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// --- MOMENT CARD WIDGET ---
-class MomentCard extends StatelessWidget {
-  final Moment moment;
-  final VoidCallback onTap;
-
-  const MomentCard({super.key, required this.moment, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 24),
-        decoration: BoxDecoration(
-          color: moment.accentColor,
-          borderRadius: BorderRadius.circular(32),
-          border: Border.all(color: AppTheme.kBorder, width: 1.5),
-          boxShadow: const [
-            BoxShadow(
-              color: AppTheme.kBorder,
-              offset: Offset(4, 4),
-              blurRadius: 0,
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    moment.title.toUpperCase(),
-                    style: const TextStyle(
-                      color: AppTheme.kTextPrimary,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                  const Icon(Icons.star_border_rounded, size: 32),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  const Icon(Icons.lock_outline_rounded, size: 20),
-                  const SizedBox(width: 8),
-                  Text(
-                    "${moment.memoryCount} memories • ${moment.friendCount} friends",
-                    style: const TextStyle(
-                      color: AppTheme.kTextPrimary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 32),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: AppTheme.kBackground.withValues(alpha: 0.9),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppTheme.kBorder, width: 1),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      "Unlocks in ",
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    Text(
-                      moment.unlockText,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.5,
-                      ),
-                    ),
-                  ],
-                ),
-              )
-            ],
-          ),
-        ),
       ),
     );
   }

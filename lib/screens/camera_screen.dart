@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
-import '../data/mock_data.dart';
+import 'package:image_picker/image_picker.dart';
 
+import '../data/api_client.dart';
+import '../data/models.dart';
+import '../theme/app_theme.dart';
+import '../utils/photo_picker.dart';
+import '../widgets/status_views.dart';
+
+/// Captures a memory for one moment. Pops with `true` when a photo was uploaded.
 class CameraScreen extends StatefulWidget {
   final Moment moment;
 
@@ -12,14 +18,32 @@ class CameraScreen extends StatefulWidget {
 }
 
 class _CameraScreenState extends State<CameraScreen> {
+  PickedPhoto? _photo;
+  bool _uploading = false;
   bool _isCaptured = false;
-  bool _flashOn = false;
 
-  void _takePhoto() {
-    setState(() => _isCaptured = true);
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) Navigator.pop(context);
-    });
+  Future<void> _capture(ImageSource source) async {
+    if (_uploading || _isCaptured) return;
+    try {
+      final photo = await pickPhoto(source);
+      if (photo == null || !mounted) return;
+      setState(() {
+        _photo = photo;
+        _uploading = true;
+      });
+      await SonderApi.instance.uploadMemory(widget.moment.id, photo.bytes, photo.filename);
+      if (!mounted) return;
+      setState(() {
+        _uploading = false;
+        _isCaptured = true;
+      });
+      await Future<void>.delayed(const Duration(milliseconds: 1500));
+      if (mounted) Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _uploading = false);
+      showErrorSnack(context, e);
+    }
   }
 
   @override
@@ -37,7 +61,7 @@ class _CameraScreenState extends State<CameraScreen> {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.close_rounded, color: Colors.white, size: 28),
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () => Navigator.pop(context, _isCaptured),
                   ),
                   const Text(
                     "New instant",
@@ -52,43 +76,45 @@ class _CameraScreenState extends State<CameraScreen> {
             Expanded(
               child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16),
+                clipBehavior: Clip.antiAlias,
                 decoration: BoxDecoration(
                   color: const Color(0xFF1A1A1A),
                   borderRadius: BorderRadius.circular(36), // Curved DazzCam/Instants corners
                   border: Border.all(color: AppTheme.kBorder, width: 2),
                 ),
                 child: Stack(
+                  fit: StackFit.expand,
                   children: [
-                    // Mock Viewfinder Content / Captured State
-                    Center(
-                      child: _isCaptured
-                          ? const Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.check_circle_rounded, color: AppTheme.kSoftMint, size: 80),
-                                SizedBox(height: 16),
-                                Text(
-                                  "MEMORY SECURED 🔒",
-                                  style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 1.5),
-                                ),
-                              ],
-                            )
-                          : const Icon(Icons.camera_rounded, color: Colors.white24, size: 70),
-                    ),
+                    if (_photo != null)
+                      Opacity(
+                        opacity: _isCaptured ? 0.35 : 1,
+                        child: Image.memory(_photo!.bytes, fit: BoxFit.cover),
+                      ),
+                    Center(child: _buildViewfinderOverlay()),
 
                     // Top-left curved text overlay stamp (like Instagram Instants)
                     Positioned(
                       top: 24,
                       left: 24,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.4),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          "${widget.moment.title.toUpperCase()} 📸",
-                          style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1),
+                      right: 24,
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.4),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            "${widget.moment.title.toUpperCase()} 📸",
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1,
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -97,20 +123,21 @@ class _CameraScreenState extends State<CameraScreen> {
               ),
             ),
 
-            // MIDDLE CAMERA CONTROLS (Flash & Flip)
+            // CAMERA CONTROLS (Gallery & Shutter)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 24.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   IconButton(
-                    icon: Icon(_flashOn ? Icons.flash_on_rounded : Icons.flash_off_rounded, color: Colors.white, size: 24),
-                    onPressed: () => setState(() => _flashOn = !_flashOn),
+                    tooltip: 'Choose from gallery',
+                    icon: const Icon(Icons.photo_library_rounded, color: Colors.white, size: 24),
+                    onPressed: () => _capture(ImageSource.gallery),
                   ),
                   const SizedBox(width: 40),
                   // Shutter Button
                   GestureDetector(
-                    onTap: _isCaptured ? null : _takePhoto,
+                    onTap: () => _capture(ImageSource.camera),
                     child: Container(
                       width: 80,
                       height: 80,
@@ -130,11 +157,7 @@ class _CameraScreenState extends State<CameraScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 40),
-                  IconButton(
-                    icon: const Icon(Icons.cameraswitch_rounded, color: Colors.white, size: 24),
-                    onPressed: () {},
-                  ),
+                  const SizedBox(width: 88),
                 ],
               ),
             ),
@@ -158,8 +181,6 @@ class _CameraScreenState extends State<CameraScreen> {
                       widget.moment.title,
                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13),
                     ),
-                    const SizedBox(width: 4),
-                    const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white, size: 18),
                   ],
                 ),
               ),
@@ -167,6 +188,47 @@ class _CameraScreenState extends State<CameraScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildViewfinderOverlay() {
+    if (_uploading) {
+      return const Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
+          SizedBox(height: 16),
+          Text(
+            "SECURING MEMORY...",
+            style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 1.5),
+          ),
+        ],
+      );
+    }
+    if (_isCaptured) {
+      return const Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.check_circle_rounded, color: AppTheme.kSoftMint, size: 80),
+          SizedBox(height: 16),
+          Text(
+            "MEMORY SECURED 🔒",
+            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 1.5),
+          ),
+        ],
+      );
+    }
+    if (_photo != null) return const SizedBox.shrink();
+    return const Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.camera_rounded, color: Colors.white24, size: 70),
+        SizedBox(height: 12),
+        Text(
+          "Tap the shutter to take a photo",
+          style: TextStyle(color: Colors.white38, fontWeight: FontWeight.bold),
+        ),
+      ],
     );
   }
 }

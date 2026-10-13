@@ -1,7 +1,23 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
+
+import '../data/api_client.dart';
+import '../data/models.dart';
 import '../theme/app_theme.dart';
-import '../data/mock_data.dart';
-import 'active_moment_screen.dart';
+import '../utils/time_format.dart';
+import '../widgets/status_views.dart';
+
+const _accentPalette = ['#E6E6FA', '#FFFACD', '#E0F8E6', '#FFE5B4', '#E1F5FE'];
+
+/// "Tonight" reveals at 11 PM, or an hour from now if it's already that late.
+DateTime tonightRevealTime(DateTime now) {
+  final elevenPm = DateTime(now.year, now.month, now.day, 23);
+  final soonest = now.add(const Duration(hours: 1));
+  return soonest.isAfter(elevenPm) ? soonest : elevenPm;
+}
+
+DateTime tomorrowRevealTime(DateTime now) => DateTime(now.year, now.month, now.day + 1, 9);
 
 class CreateMomentScreen extends StatefulWidget {
   const CreateMomentScreen({super.key});
@@ -12,9 +28,18 @@ class CreateMomentScreen extends StatefulWidget {
 
 class _CreateMomentScreenState extends State<CreateMomentScreen> {
   final TextEditingController _titleController = TextEditingController();
-  final List<String> _selectedFriends = [];
+  final Set<String> _selectedFriendIds = {};
+  late Future<List<AppUser>> _friends;
   String _selectedTime = "Tonight";
+  DateTime? _customTime;
   bool _isButtonPressed = false;
+  bool _creating = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _friends = SonderApi.instance.getFriends();
+  }
 
   @override
   void dispose() {
@@ -22,8 +47,72 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
     super.dispose();
   }
 
+  DateTime? get _unlockAt {
+    final now = DateTime.now();
+    return switch (_selectedTime) {
+      "Tonight" => tonightRevealTime(now),
+      "Tomorrow" => tomorrowRevealTime(now),
+      _ => _customTime,
+    };
+  }
+
+  Future<void> _pickCustomTime() async {
+    final now = DateTime.now();
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _customTime ?? now,
+      firstDate: DateTime(now.year, now.month, now.day),
+      lastDate: now.add(const Duration(days: 365)),
+    );
+    if (date == null || !mounted) return;
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(_customTime ?? now.add(const Duration(hours: 1))),
+    );
+    if (time == null || !mounted) return;
+    final picked = DateTime(date.year, date.month, date.day, time.hour, time.minute);
+    if (!picked.isAfter(DateTime.now())) {
+      showErrorSnack(context, 'Pick a time in the future.');
+      return;
+    }
+    setState(() {
+      _customTime = picked;
+      _selectedTime = "Custom";
+    });
+  }
+
+  Future<void> _create() async {
+    final unlockAt = _unlockAt;
+    if (unlockAt == null) {
+      showErrorSnack(context, 'Choose when the moment should reveal.');
+      return;
+    }
+    if (!unlockAt.isAfter(DateTime.now())) {
+      showErrorSnack(context, 'That reveal time has already passed. Pick another one.');
+      return;
+    }
+    final titleText = _titleController.text.trim().isEmpty ? "Unnamed Moment" : _titleController.text.trim();
+
+    setState(() => _creating = true);
+    try {
+      final moment = await SonderApi.instance.createMoment(
+        title: titleText,
+        participantIds: _selectedFriendIds.toList(),
+        unlockAt: unlockAt,
+        accentColor: _accentPalette[Random().nextInt(_accentPalette.length)],
+      );
+      if (mounted) Navigator.pop(context, moment);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _creating = false);
+        showErrorSnack(context, e);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final unlockAt = _unlockAt;
     return Scaffold(
       backgroundColor: AppTheme.kBackground,
       appBar: AppBar(
@@ -34,7 +123,7 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          "Create a memory",
+          "Create a moment",
           style: TextStyle(
             color: AppTheme.kTextPrimary,
             fontSize: 18,
@@ -58,12 +147,15 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
                 boxShadow: const [BoxShadow(color: AppTheme.kLavender, offset: Offset(4, 4))],
               ),
               child: TextField(
+                key: const Key('moment-title-field'),
                 controller: _titleController,
+                maxLength: 120,
                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 decoration: InputDecoration(
                   hintText: "e.g. Birthday Night",
                   hintStyle: TextStyle(color: AppTheme.kTextSecondary.withValues(alpha: 0.5)),
                   border: InputBorder.none,
+                  counterText: '',
                   contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 ),
               ),
@@ -71,13 +163,34 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
             const SizedBox(height: 40),
             const Text("WHO IS COMING?", style: _sectionTitleStyle),
             const SizedBox(height: 16),
-            Wrap(
-              spacing: 12,
-              runSpacing: 16,
-              children: MockData.friends.map((friend) {
-                final isSelected = _selectedFriends.contains(friend);
-                return _buildBouncyFriendChip(friend, isSelected);
-              }).toList(),
+            FutureBuilder<List<AppUser>>(
+              future: _friends,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState != ConnectionState.done) return const LoadingView();
+                if (snapshot.hasError) {
+                  return ErrorView(
+                    message: snapshot.error.toString(),
+                    onRetry: () => setState(() {
+                      _friends = SonderApi.instance.getFriends();
+                    }),
+                  );
+                }
+                final friends = snapshot.data!;
+                if (friends.isEmpty) {
+                  return const Text(
+                    "No friends yet. The moment will just be you for now.",
+                    style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.kTextSecondary),
+                  );
+                }
+                return Wrap(
+                  spacing: 12,
+                  runSpacing: 16,
+                  children: [
+                    for (final friend in friends)
+                      _buildBouncyFriendChip(friend, _selectedFriendIds.contains(friend.id)),
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 40),
             const Text("WHEN SHOULD IT REVEAL?", style: _sectionTitleStyle),
@@ -87,7 +200,13 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
                 final isSelected = _selectedTime == time;
                 return Expanded(
                   child: GestureDetector(
-                    onTap: () => setState(() => _selectedTime = time),
+                    onTap: () {
+                      if (time == "Custom") {
+                        _pickCustomTime();
+                      } else {
+                        setState(() => _selectedTime = time);
+                      }
+                    },
                     child: Container(
                       margin: const EdgeInsets.only(right: 8),
                       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -95,7 +214,7 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
                         color: isSelected ? AppTheme.kPaleYellow : Colors.white,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: AppTheme.kBorder, width: 2),
-                        boxShadow: isSelected 
+                        boxShadow: isSelected
                             ? const [BoxShadow(color: AppTheme.kBorder, offset: Offset(2, 2))]
                             : [],
                       ),
@@ -113,6 +232,13 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
                 );
               }).toList(),
             ),
+            if (unlockAt != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                "🔒 ${revealDescription(unlockAt)}",
+                style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.kTextSecondary),
+              ),
+            ],
             const SizedBox(height: 60),
 
             // CREATE BUTTON
@@ -120,27 +246,7 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
               onTapDown: (_) => setState(() => _isButtonPressed = true),
               onTapUp: (_) {
                 setState(() => _isButtonPressed = false);
-
-                // 1. Grab title or fallback to default
-                final titleText = _titleController.text.trim().isEmpty 
-                    ? "Unnamed Moment" 
-                    : _titleController.text.trim();
-
-                // 2. Create and insert the new moment into MockData
-                final newMoment = Moment(
-                  title: titleText,
-                  memoryCount: 0,
-                  friendCount: _selectedFriends.isEmpty ? 1 : _selectedFriends.length,
-                  unlockText: _selectedTime == "Tonight" ? "04 : 00 : 00" : "tomorrow",
-                  accentColor: AppTheme.kPalePeach,
-                );
-                MockData.addMoment(newMoment);
-
-                // 3. Navigate to active view passing the new moment
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => ActiveMomentScreen(moment: newMoment)),
-                );
+                if (!_creating) _create();
               },
               onTapCancel: () => setState(() => _isButtonPressed = false),
               child: AnimatedScale(
@@ -157,16 +263,22 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
                         ? []
                         : const [BoxShadow(color: AppTheme.kSoftMint, offset: Offset(6, 6))],
                   ),
-                  child: const Center(
-                    child: Text(
-                      "CREATE MOMENT",
-                      style: TextStyle(
-                        color: AppTheme.kBackground,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 2,
-                      ),
-                    ),
+                  child: Center(
+                    child: _creating
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
+                          )
+                        : const Text(
+                            "CREATE MOMENT",
+                            style: TextStyle(
+                              color: AppTheme.kBackground,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 2,
+                            ),
+                          ),
                   ),
                 ),
               ),
@@ -177,11 +289,11 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
     );
   }
 
-  Widget _buildBouncyFriendChip(String name, bool isSelected) {
+  Widget _buildBouncyFriendChip(AppUser friend, bool isSelected) {
     return GestureDetector(
       onTap: () {
         setState(() {
-          isSelected ? _selectedFriends.remove(name) : _selectedFriends.add(name);
+          isSelected ? _selectedFriendIds.remove(friend.id) : _selectedFriendIds.add(friend.id);
         });
       },
       child: AnimatedScale(
@@ -193,8 +305,8 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
             color: isSelected ? AppTheme.kTextPrimary : Colors.white,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: AppTheme.kBorder, width: 2),
-            boxShadow: isSelected 
-                ? const [BoxShadow(color: AppTheme.kPaleYellow, offset: Offset(4, 4))] 
+            boxShadow: isSelected
+                ? const [BoxShadow(color: AppTheme.kPaleYellow, offset: Offset(4, 4))]
                 : [],
           ),
           child: Row(
@@ -207,7 +319,7 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
               ),
               const SizedBox(width: 8),
               Text(
-                name,
+                friend.name,
                 style: TextStyle(
                   color: isSelected ? Colors.white : AppTheme.kTextPrimary,
                   fontWeight: FontWeight.bold,
