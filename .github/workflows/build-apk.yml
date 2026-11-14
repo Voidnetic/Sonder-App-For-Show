@@ -38,8 +38,36 @@ jobs:
       - run: flutter analyze
       - run: flutter test
 
+      # Optional secrets (Settings > Secrets and variables > Actions). Without them the APK is signed with a
+      # throwaway debug key and Google sign-in shows "not set up". See PLAY_STORE.md.
+      - name: Set up release signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "No ANDROID_KEYSTORE_BASE64 secret: signing with the debug key."
+            exit 0
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > android/app/upload-keystore.jks
+          {
+            echo "storeFile=upload-keystore.jks"
+            echo "storePassword=$KEYSTORE_PASSWORD"
+            echo "keyAlias=$KEY_ALIAS"
+            echo "keyPassword=${KEY_PASSWORD:-$KEYSTORE_PASSWORD}"
+          } > android/key.properties
+
       - name: Build release APK
-        run: flutter build apk --release
+        env:
+          GOOGLE_SERVER_CLIENT_ID: ${{ vars.GOOGLE_SERVER_CLIENT_ID }}
+          SONDER_API_URL: ${{ vars.SONDER_API_URL }}
+        run: |
+          ARGS=()
+          if [ -n "$GOOGLE_SERVER_CLIENT_ID" ]; then ARGS+=(--dart-define=GOOGLE_SERVER_CLIENT_ID=$GOOGLE_SERVER_CLIENT_ID); fi
+          if [ -n "$SONDER_API_URL" ]; then ARGS+=(--dart-define=SONDER_API_URL=$SONDER_API_URL); fi
+          flutter build apk --release "${ARGS[@]}"
 
       - name: Rename APK
         run: cp build/app/outputs/flutter-apk/app-release.apk sonder.apk

@@ -11,6 +11,7 @@ from app.models.moment import Moment
 from app.models.user import User
 from app.schemas.message import CreateMessageRequest, MessageResponse
 from app.schemas.user import UserResponse
+from app.relationships import blocked_ids
 from app.security import decode_access_token
 from app.ws_manager import manager
 
@@ -60,7 +61,9 @@ def list_messages(
     messages = db.scalars(
         select(Message).where(Message.moment_id == moment_id).order_by(Message.created_at.asc())
     ).all()
-    return [_to_response(m, db) for m in messages]
+    # Live messages from blocked people are filtered by the app, which knows its block list.
+    hidden = blocked_ids(current_user.id, db)
+    return [_to_response(m, db) for m in messages if m.author_id not in hidden]
 
 
 @router.post(

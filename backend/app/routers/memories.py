@@ -14,6 +14,7 @@ from app.models.moment import Moment
 from app.models.user import User
 from app.schemas.memory import LockedMemoryResponse, MemoryResponse
 from app.schemas.user import UserResponse
+from app.relationships import blocked_ids
 from app.utils import to_utc
 
 router = APIRouter(prefix="/moments/{moment_id}/memories", tags=["Memories"])
@@ -90,9 +91,14 @@ def list_memories(
     db: Session = Depends(get_db),
 ) -> list[MemoryResponse] | list[LockedMemoryResponse]:
     moment = _get_moment_for_participant(moment_id, current_user, db)
-    memories = db.scalars(
-        select(Memory).where(Memory.moment_id == moment_id).order_by(Memory.captured_at.asc())
-    ).all()
+    hidden = blocked_ids(current_user.id, db)
+    memories = [
+        m
+        for m in db.scalars(
+            select(Memory).where(Memory.moment_id == moment_id).order_by(Memory.captured_at.asc())
+        ).all()
+        if m.author_id not in hidden
+    ]
 
     is_locked = to_utc(moment.unlock_at) > datetime.now(timezone.utc)
     if is_locked:

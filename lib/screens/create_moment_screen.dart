@@ -6,7 +6,9 @@ import '../data/api_client.dart';
 import '../data/models.dart';
 import '../theme/app_theme.dart';
 import '../utils/time_format.dart';
+import '../widgets/motion.dart';
 import '../widgets/status_views.dart';
+import 'friends_screen.dart';
 
 const _accentPalette = ['#E6E6FA', '#FFFACD', '#E0F8E6', '#FFE5B4', '#E1F5FE'];
 
@@ -172,18 +174,19 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
                   );
                 }
                 final friends = snapshot.data!;
-                if (friends.isEmpty) {
-                  return const Text(
-                    "No friends yet. The moment will just be you for now.",
-                    style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.kTextSecondary),
-                  );
-                }
                 return Wrap(
                   spacing: 12,
                   runSpacing: 16,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
+                    if (friends.isEmpty)
+                      const Text(
+                        "No friends yet. The moment will just be you for now.",
+                        style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.kTextSecondary),
+                      ),
                     for (final friend in friends)
                       _buildBouncyFriendChip(friend, _selectedFriendIds.contains(friend.id)),
+                    _addFriendsChip(),
                   ],
                 );
               },
@@ -210,9 +213,7 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
                         color: isSelected ? AppTheme.kPaleYellow : Colors.white,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: AppTheme.kBorder, width: 2),
-                        boxShadow: isSelected
-                            ? const [BoxShadow(color: AppTheme.kBorder, offset: Offset(2, 2))]
-                            : [],
+                        boxShadow: isSelected ? const [BoxShadow(color: AppTheme.kBorder, offset: Offset(2, 2))] : [],
                       ),
                       child: Center(
                         child: Text(
@@ -285,6 +286,31 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
     );
   }
 
+  Widget _addFriendsChip() {
+    return Pressable(
+      onTap: () async {
+        await Navigator.push(context, MaterialPageRoute(builder: (context) => const FriendsScreen(initialTab: 2)));
+        if (mounted) setState(() => _friends = SonderApi.instance.getFriends());
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppTheme.kPaleYellow,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppTheme.kBorder, width: 2),
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.person_add_alt_1_rounded, size: 18),
+            SizedBox(width: 6),
+            Text('Add friends', style: TextStyle(fontWeight: FontWeight.w900)),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildBouncyFriendChip(AppUser friend, bool isSelected) {
     return GestureDetector(
       onTap: () {
@@ -301,9 +327,7 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
             color: isSelected ? AppTheme.kTextPrimary : Colors.white,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: AppTheme.kBorder, width: 2),
-            boxShadow: isSelected
-                ? const [BoxShadow(color: AppTheme.kPaleYellow, offset: Offset(4, 4))]
-                : [],
+            boxShadow: isSelected ? const [BoxShadow(color: AppTheme.kPaleYellow, offset: Offset(4, 4))] : [],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,

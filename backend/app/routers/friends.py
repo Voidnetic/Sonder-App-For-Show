@@ -8,6 +8,7 @@ from app.database import get_db
 from app.deps import get_current_user
 from app.models.friendship import Friendship, FriendshipStatus
 from app.models.user import User
+from app.relationships import blocked_ids, friendship_between, is_blocked_between
 from app.schemas.friendship import AddFriendRequest, FriendRequestResponse, FriendResponse
 from app.schemas.user import UserResponse
 
@@ -40,19 +41,26 @@ def send_request(
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "You cannot send a friend request to yourself")
 
     recipient = db.get(User, body.recipient_id)
-    if recipient is None:
+    if recipient is None or is_blocked_between(current_user.id, recipient.id, db):
         raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found")
 
-    existing = db.scalar(
-        select(Friendship).where(
-            or_(
-                (Friendship.requester_id == current_user.id) & (Friendship.recipient_id == body.recipient_id),
-                (Friendship.requester_id == body.recipient_id) & (Friendship.recipient_id == current_user.id),
-            )
-        )
-    )
+    existing = friendship_between(current_user.id, recipient.id, db)
     if existing is not None:
-        raise HTTPException(status.HTTP_409_CONFLICT, "A friend request already exists between these users")
+        if existing.status == FriendshipStatus.ACCEPTED:
+            raise HTTPException(status.HTTP_409_CONFLICT, "You are already friends")
+        if existing.status == FriendshipStatus.PENDING and existing.requester_id == current_user.id:
+            raise HTTPException(status.HTTP_409_CONFLICT, "You already sent this person a request")
+        if existing.status == FriendshipStatus.PENDING:
+            # They already asked us: sending one back simply accepts theirs.
+            existing.status = FriendshipStatus.ACCEPTED
+        else:
+            # A declined request can be sent again later.
+            existing.requester_id = current_user.id
+            existing.recipient_id = recipient.id
+            existing.status = FriendshipStatus.PENDING
+        db.commit()
+        db.refresh(existing)
+        return _to_request_response(existing, db)
 
     friendship = Friendship(requester_id=current_user.id, recipient_id=body.recipient_id)
     db.add(friendship)
@@ -73,7 +81,10 @@ def list_requests(
         .where(column == current_user.id, Friendship.status == FriendshipStatus.PENDING)
         .order_by(Friendship.created_at.desc())
     ).all()
-    return [_to_request_response(r, db) for r in requests]
+    hidden = blocked_ids(current_user.id, db)
+    return [
+        _to_request_response(r, db) for r in requests if not ({r.requester_id, r.recipient_id} & hidden)
+    ]
 
 
 def _respond(
@@ -94,6 +105,25 @@ def _respond(
     db.commit()
     db.refresh(friendship)
     return _to_request_response(friendship, db)
+
+
+@router.delete(
+    "/friends/requests/{request_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Cancel a friend request you sent",
+)
+def cancel_request(
+    request_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> None:
+    friendship = db.get(Friendship, request_id)
+    if friendship is None or friendship.status != FriendshipStatus.PENDING:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Friend request not found")
+    if friendship.requester_id != current_user.id:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Only the sender can cancel this request")
+    db.delete(friendship)
+    db.commit()
 
 
 @router.patch("/friends/requests/{request_id}/accept", response_model=FriendRequestResponse, summary="Accept a friend request")
@@ -128,7 +158,7 @@ def list_friends(current_user: User = Depends(get_current_user), db: Session = D
     ]
     if not friend_ids:
         return []
-    friends = db.scalars(select(User).where(User.id.in_(friend_ids))).all()
+    friends = db.scalars(select(User).where(User.id.in_(friend_ids)).order_by(User.name)).all()
     return [FriendResponse(**UserResponse.model_validate(f).model_dump()) for f in friends]
 
 

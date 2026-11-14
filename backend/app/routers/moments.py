@@ -12,6 +12,7 @@ from app.models.moment import Moment, moment_participants
 from app.models.user import User
 from app.schemas.moment import AddParticipantRequest, CreateMomentRequest, MomentResponse
 from app.schemas.user import UserResponse
+from app.relationships import friend_ids
 from app.utils import to_utc
 
 router = APIRouter(prefix="/moments", tags=["Moments"])
@@ -50,6 +51,10 @@ def create_moment(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> MomentResponse:
+    # Only friends can be added, so nobody can be pulled into a moment by a stranger (or someone they blocked).
+    friends = friend_ids(current_user.id, db)
+    if set(body.participant_ids) - friends - {current_user.id}:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "You can only add friends to a moment")
     participant_ids = {current_user.id, *body.participant_ids}
     participants = db.scalars(select(User).where(User.id.in_(participant_ids))).all()
 
@@ -114,6 +119,8 @@ def add_participant(
     new_participant = db.get(User, body.user_id)
     if new_participant is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found")
+    if new_participant.id not in friend_ids(current_user.id, db):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "You can only add friends to a moment")
 
     if new_participant.id not in {p.id for p in moment.participants}:
         moment.participants.append(new_participant)

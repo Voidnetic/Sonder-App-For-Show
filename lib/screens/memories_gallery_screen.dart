@@ -4,6 +4,7 @@ import '../data/api_client.dart';
 import '../data/models.dart';
 import '../theme/app_theme.dart';
 import '../utils/time_format.dart';
+import '../widgets/safety_sheets.dart';
 import '../widgets/status_views.dart';
 
 /// All photos of an unlocked moment.
@@ -31,6 +32,18 @@ class _MemoriesGalleryScreenState extends State<MemoriesGalleryScreen> {
     });
   }
 
+  bool _isMine(Memory memory) => memory.author.id == SonderApi.instance.currentUser.value?.id;
+
+  Future<void> _photoActions(Memory memory) async {
+    final blocked = await showContentActions(
+      context,
+      target: ReportTarget.memory,
+      targetId: memory.id,
+      author: memory.author,
+    );
+    if (blocked && mounted) _reload(); // the server now hides their photos
+  }
+
   void _openPhoto(Memory memory) {
     showDialog<void>(
       context: context,
@@ -51,6 +64,18 @@ class _MemoriesGalleryScreenState extends State<MemoriesGalleryScreen> {
               ),
             ),
             const SizedBox(height: 16),
+            if (!_isMine(memory))
+              TextButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _photoActions(memory);
+                },
+                icon: const Icon(Icons.flag_outlined, color: Colors.white70, size: 18),
+                label: const Text(
+                  'Report or block',
+                  style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w800),
+                ),
+              ),
             Text(
               [memory.author.name, if (memory.caption != null) memory.caption!].join(' • '),
               textAlign: TextAlign.center,
@@ -171,10 +196,21 @@ class _MemoriesGalleryScreenState extends State<MemoriesGalleryScreen> {
               decoration: const BoxDecoration(
                 border: Border(top: BorderSide(color: AppTheme.kBorder, width: 2)),
               ),
-              child: Text(
-                memory.author.name,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      memory.author.name,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+                    ),
+                  ),
+                  if (!_isMine(memory))
+                    GestureDetector(
+                      onTap: () => _photoActions(memory),
+                      child: const Icon(Icons.more_horiz_rounded, size: 20, semanticLabel: 'Photo options'),
+                    ),
+                ],
               ),
             ),
           ],

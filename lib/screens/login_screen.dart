@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 
+import 'package:flutter/gestures.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 import '../data/api_client.dart';
+import '../data/google_auth.dart';
 import '../theme/app_theme.dart';
 import '../widgets/motion.dart';
 
@@ -61,6 +65,27 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _continueWithGoogle() async {
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      final idToken = await GoogleAuth.getIdToken();
+      if (idToken == null) return; // closed the account picker
+      // The server checks the token with Google, then signs in or creates the account.
+      await _api.loginWithGoogle(idToken);
+    } catch (e) {
+      if (mounted) setState(() => _error = e.toString());
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  void _openLink(String url) {
+    launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication).ignore();
+  }
+
   Future<void> _editServer() async {
     final controller = TextEditingController(text: _api.serverUrl);
     final result = await showDialog<String>(
@@ -104,15 +129,9 @@ class _LoginScreenState extends State<LoginScreen> {
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            const Text(
-              'SONDER',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 3),
-            ),
+            const Text('SONDER', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 3)),
             const SizedBox(height: 32),
-            BubblyText(
-              _isSignUp ? 'Create account ✨' : 'Welcome back 👋',
-              key: ValueKey(_isSignUp),
-            ),
+            BubblyText(_isSignUp ? 'Create account ✨' : 'Welcome back 👋', key: ValueKey(_isSignUp)),
             const SizedBox(height: 8),
             const Text(
               'Capture moments together. Reveal them later.',
@@ -171,20 +190,86 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
             ),
+            const SizedBox(height: 24),
+            const Row(
+              children: [
+                Expanded(child: Divider(color: AppTheme.kBorder, thickness: 1.5)),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12),
+                  child: Text(
+                    'OR',
+                    style: TextStyle(fontWeight: FontWeight.w900, color: AppTheme.kTextSecondary),
+                  ),
+                ),
+                Expanded(child: Divider(color: AppTheme.kBorder, thickness: 1.5)),
+              ],
+            ),
+            const SizedBox(height: 24),
+            Pressable(
+              onTap: _busy ? null : _continueWithGoogle,
+              child: Container(
+                key: const Key('google-button'),
+                padding: const EdgeInsets.symmetric(vertical: 18),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: AppTheme.kBorder, width: 2),
+                  boxShadow: const [BoxShadow(color: AppTheme.kPeriwinkle, offset: Offset(6, 6))],
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _GoogleMark(),
+                    SizedBox(width: 12),
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          'Continue with Google',
+                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             const SizedBox(height: 20),
             Center(
               child: TextButton(
                 onPressed: _busy
                     ? null
                     : () => setState(() {
-                          _isSignUp = !_isSignUp;
-                          _error = null;
-                        }),
+                        _isSignUp = !_isSignUp;
+                        _error = null;
+                      }),
                 child: Text(
                   _isSignUp ? 'Already have an account? Log in' : 'New here? Create an account',
                   style: const TextStyle(fontWeight: FontWeight.w900, color: AppTheme.kTextPrimary),
                 ),
               ),
+            ),
+            const SizedBox(height: 8),
+            Text.rich(
+              TextSpan(
+                style: const TextStyle(fontSize: 12, color: AppTheme.kTextSecondary, fontWeight: FontWeight.w600),
+                children: [
+                  const TextSpan(text: 'By continuing you agree to the '),
+                  TextSpan(
+                    text: 'Terms',
+                    style: const TextStyle(color: AppTheme.kTextPrimary, fontWeight: FontWeight.w900),
+                    recognizer: TapGestureRecognizer()..onTap = () => _openLink(_api.termsUrl),
+                  ),
+                  const TextSpan(text: ' and '),
+                  TextSpan(
+                    text: 'Privacy Policy',
+                    style: const TextStyle(color: AppTheme.kTextPrimary, fontWeight: FontWeight.w900),
+                    recognizer: TapGestureRecognizer()..onTap = () => _openLink(_api.privacyPolicyUrl),
+                  ),
+                  const TextSpan(text: '.'),
+                ],
+              ),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
             Center(
@@ -223,17 +308,17 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _label(String text) => Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: Text(
-          text,
-          style: const TextStyle(
-            color: AppTheme.kTextSecondary,
-            fontSize: 12,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 1.5,
-          ),
-        ),
-      );
+    padding: const EdgeInsets.only(bottom: 12),
+    child: Text(
+      text,
+      style: const TextStyle(
+        color: AppTheme.kTextSecondary,
+        fontSize: 12,
+        fontWeight: FontWeight.w900,
+        letterSpacing: 1.5,
+      ),
+    ),
+  );
 
   Widget _field(
     TextEditingController controller, {
@@ -263,6 +348,23 @@ class _LoginScreenState extends State<LoginScreen> {
           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         ),
       ),
+    );
+  }
+}
+
+/// Google's "G", drawn in its four colours.
+class _GoogleMark extends StatelessWidget {
+  const _GoogleMark();
+
+  @override
+  Widget build(BuildContext context) {
+    return ShaderMask(
+      blendMode: BlendMode.srcIn,
+      shaderCallback: (bounds) => const SweepGradient(
+        colors: [Color(0xFF4285F4), Color(0xFF34A853), Color(0xFFFBBC05), Color(0xFFEA4335), Color(0xFF4285F4)],
+        stops: [0.0, 0.3, 0.55, 0.8, 1.0],
+      ).createShader(bounds),
+      child: const Text('G', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, height: 1)),
     );
   }
 }

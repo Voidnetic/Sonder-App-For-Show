@@ -18,11 +18,11 @@ class AppUser {
   const AppUser({required this.id, required this.name, required this.email, required this.avatarColor});
 
   factory AppUser.fromJson(Map<String, dynamic> json) => AppUser(
-        id: json['id'] as String,
-        name: json['name'] as String,
-        email: json['email'] as String,
-        avatarColor: (json['avatar_color'] as String?) ?? '#E6E6FA',
-      );
+    id: json['id'] as String,
+    name: json['name'] as String,
+    email: json['email'] as String,
+    avatarColor: (json['avatar_color'] as String?) ?? '#E6E6FA',
+  );
 
   Map<String, dynamic> toJson() => {'id': id, 'name': name, 'email': email, 'avatar_color': avatarColor};
 
@@ -36,20 +36,87 @@ class UserProfile {
   final int activeMomentCount;
   final int friendCount;
 
+  /// Google has confirmed this person owns the email address.
+  final bool emailVerified;
+  final bool googleLinked;
+  final bool hasPassword;
+  final bool isAdmin;
+
   const UserProfile({
     required this.user,
     required this.memoryCount,
     required this.activeMomentCount,
     required this.friendCount,
+    this.emailVerified = false,
+    this.googleLinked = false,
+    this.hasPassword = true,
+    this.isAdmin = false,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) => UserProfile(
-        user: AppUser.fromJson(json),
-        memoryCount: json['memory_count'] as int,
-        activeMomentCount: json['active_moment_count'] as int,
-        friendCount: json['friend_count'] as int,
-      );
+    user: AppUser.fromJson(json),
+    memoryCount: json['memory_count'] as int,
+    activeMomentCount: json['active_moment_count'] as int,
+    friendCount: json['friend_count'] as int,
+    emailVerified: (json['email_verified'] as bool?) ?? false,
+    googleLinked: (json['google_linked'] as bool?) ?? false,
+    hasPassword: (json['has_password'] as bool?) ?? true,
+    isAdmin: (json['is_admin'] as bool?) ?? false,
+  );
 }
+
+/// How a person found in search relates to the signed-in user.
+enum Relationship { none, friend, outgoing, incoming }
+
+class UserSearchResult {
+  final AppUser user;
+  final Relationship relationship;
+
+  /// The pending request's id when [relationship] is outgoing or incoming.
+  final String? requestId;
+
+  const UserSearchResult({required this.user, required this.relationship, this.requestId});
+
+  factory UserSearchResult.fromJson(Map<String, dynamic> json) => UserSearchResult(
+    user: AppUser.fromJson(json),
+    relationship: Relationship.values.firstWhere(
+      (r) => r.name == json['relationship'],
+      orElse: () => Relationship.none,
+    ),
+    requestId: json['request_id'] as String?,
+  );
+}
+
+class FriendRequest {
+  final String id;
+  final AppUser requester;
+  final AppUser recipient;
+  final String status;
+
+  const FriendRequest({required this.id, required this.requester, required this.recipient, required this.status});
+
+  factory FriendRequest.fromJson(Map<String, dynamic> json) => FriendRequest(
+    id: json['id'] as String,
+    requester: AppUser.fromJson(json['requester'] as Map<String, dynamic>),
+    recipient: AppUser.fromJson(json['recipient'] as Map<String, dynamic>),
+    status: json['status'] as String,
+  );
+}
+
+/// What can be reported, matching the server's target types.
+enum ReportTarget { user, memory, message }
+
+/// Report reasons: the server's code and the label shown in the app.
+const Map<String, String> reportReasons = {
+  'nudity': 'Nudity or sexual content',
+  'harassment': 'Harassment or bullying',
+  'hate': 'Hate speech',
+  'violence': 'Violence or threats',
+  'self_harm': 'Self-harm',
+  'spam': 'Spam or scam',
+  'impersonation': 'Pretending to be someone',
+  'other': 'Something else',
+};
 
 class Moment {
   final String id;
@@ -75,18 +142,18 @@ class Moment {
   });
 
   factory Moment.fromJson(Map<String, dynamic> json) => Moment(
-        id: json['id'] as String,
-        title: json['title'] as String,
-        creator: AppUser.fromJson(json['creator'] as Map<String, dynamic>),
-        participants: (json['participants'] as List<dynamic>)
-            .map((p) => AppUser.fromJson(p as Map<String, dynamic>))
-            .toList(),
-        accentColor: colorFromHex(json['accent_color'] as String?),
-        unlockAt: _parseDate(json['unlock_at']),
-        revealedAt: json['revealed_at'] == null ? null : _parseDate(json['revealed_at']),
-        memoryCount: json['memory_count'] as int,
-        friendCount: json['friend_count'] as int,
-      );
+    id: json['id'] as String,
+    title: json['title'] as String,
+    creator: AppUser.fromJson(json['creator'] as Map<String, dynamic>),
+    participants: (json['participants'] as List<dynamic>)
+        .map((p) => AppUser.fromJson(p as Map<String, dynamic>))
+        .toList(),
+    accentColor: colorFromHex(json['accent_color'] as String?),
+    unlockAt: _parseDate(json['unlock_at']),
+    revealedAt: json['revealed_at'] == null ? null : _parseDate(json['revealed_at']),
+    memoryCount: json['memory_count'] as int,
+    friendCount: json['friend_count'] as int,
+  );
 
   /// Computed from the clock rather than the server flag, so it flips the moment the countdown ends.
   bool get isUnlocked => !DateTime.now().toUtc().isBefore(unlockAt);
@@ -112,14 +179,14 @@ class Memory {
   });
 
   factory Memory.fromJson(Map<String, dynamic> json) => Memory(
-        id: json['id'] as String,
-        momentId: json['moment_id'] as String,
-        author: AppUser.fromJson(json['author'] as Map<String, dynamic>),
-        locked: json['image_url'] == null,
-        imageUrl: json['image_url'] as String?,
-        caption: json['caption'] as String?,
-        capturedAt: _parseDate(json['captured_at']),
-      );
+    id: json['id'] as String,
+    momentId: json['moment_id'] as String,
+    author: AppUser.fromJson(json['author'] as Map<String, dynamic>),
+    locked: json['image_url'] == null,
+    imageUrl: json['image_url'] as String?,
+    caption: json['caption'] as String?,
+    capturedAt: _parseDate(json['captured_at']),
+  );
 }
 
 class ChatMessage {
@@ -140,11 +207,11 @@ class ChatMessage {
   });
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) => ChatMessage(
-        id: json['id'] as String,
-        momentId: json['moment_id'] as String,
-        author: json['author'] == null ? null : AppUser.fromJson(json['author'] as Map<String, dynamic>),
-        isSystem: json['type'] == 'system',
-        text: json['text'] as String,
-        createdAt: _parseDate(json['created_at']),
-      );
+    id: json['id'] as String,
+    momentId: json['moment_id'] as String,
+    author: json['author'] == null ? null : AppUser.fromJson(json['author'] as Map<String, dynamic>),
+    isSystem: json['type'] == 'system',
+    text: json['text'] as String,
+    createdAt: _parseDate(json['created_at']),
+  );
 }

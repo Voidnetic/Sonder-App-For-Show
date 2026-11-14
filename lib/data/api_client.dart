@@ -7,6 +7,7 @@ import 'package:http_parser/http_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
+import 'google_auth.dart';
 import 'models.dart';
 
 /// 10.0.2.2 is how the Android emulator reaches the computer it runs on. A real phone needs the
@@ -75,15 +76,31 @@ class SonderApi {
   }
 
   Future<void> register(String name, String email, String password) async {
-    final json = await _send('POST', '/auth/register', body: {
-      'name': name.trim(),
-      'email': email.trim(),
-      'password': password,
-    });
+    final json = await _send(
+      'POST',
+      '/auth/register',
+      body: {'name': name.trim(), 'email': email.trim(), 'password': password},
+    );
     await _saveSession(json as Map<String, dynamic>);
   }
 
+  /// Signs in with an ID token from Google Sign-In. Returns true when this created a new account.
+  Future<bool> loginWithGoogle(String idToken) async {
+    final json = await _send('POST', '/auth/google', body: {'id_token': idToken}) as Map<String, dynamic>;
+    await _saveSession(json);
+    return (json['created'] as bool?) ?? false;
+  }
+
+  /// Permanently deletes the account on the server, then signs out (unless [signOut] is false, for callers
+  /// that need to tidy up their UI first and then call [logout] themselves).
+  Future<void> deleteAccount({bool signOut = true}) async {
+    await _send('DELETE', '/users/me');
+    if (signOut) await logout();
+  }
+
   Future<void> logout() async {
+    // Also forget the Google account, so the next sign-in shows the account picker again.
+    unawaited(GoogleAuth.signOut());
     _token = null;
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_kToken);
@@ -107,10 +124,63 @@ class SonderApi {
 
   Future<List<AppUser>> getFriends() async => _list(await _send('GET', '/friends'), AppUser.fromJson);
 
+  // Friends
+
+  Future<List<UserSearchResult>> searchUsers(String query) async =>
+      _list(await _send('GET', '/users/search?q=${Uri.encodeQueryComponent(query.trim())}'), UserSearchResult.fromJson);
+
+  /// [incoming] requests were sent to you; otherwise the ones you sent.
+  Future<List<FriendRequest>> getFriendRequests({bool incoming = true}) async => _list(
+    await _send('GET', '/friends/requests?direction=${incoming ? 'incoming' : 'outgoing'}'),
+    FriendRequest.fromJson,
+  );
+
+  Future<FriendRequest> sendFriendRequest(String userId) async => FriendRequest.fromJson(
+    await _send('POST', '/friends/requests', body: {'recipient_id': userId}) as Map<String, dynamic>,
+  );
+
+  Future<void> acceptFriendRequest(String requestId) => _send('PATCH', '/friends/requests/$requestId/accept');
+
+  Future<void> declineFriendRequest(String requestId) => _send('PATCH', '/friends/requests/$requestId/decline');
+
+  Future<void> cancelFriendRequest(String requestId) => _send('DELETE', '/friends/requests/$requestId');
+
+  Future<void> removeFriend(String userId) => _send('DELETE', '/friends/$userId');
+
+  // Safety
+
+  Future<List<AppUser>> getBlockedUsers() async => _list(await _send('GET', '/blocks'), AppUser.fromJson);
+
+  Future<void> blockUser(String userId) => _send('POST', '/blocks', body: {'user_id': userId});
+
+  Future<void> unblockUser(String userId) => _send('DELETE', '/blocks/$userId');
+
+  Future<void> report({
+    required ReportTarget target,
+    required String targetId,
+    required String reason,
+    String? details,
+    bool alsoBlock = false,
+  }) => _send(
+    'POST',
+    '/reports',
+    body: {
+      'target_type': target.name,
+      'target_id': targetId,
+      'reason': reason,
+      if (details != null && details.trim().isNotEmpty) 'details': details.trim(),
+      'block': alsoBlock,
+    },
+  );
+
+  /// Public web pages served by the backend (also linked from the Play Store listing).
+  String get privacyPolicyUrl => '$_serverUrl/privacy';
+  String get termsUrl => '$_serverUrl/terms';
+  String get deleteAccountUrl => '$_serverUrl/delete-account';
+
   Future<List<Moment>> getActiveMoments() async => _list(await _send('GET', '/moments/active'), Moment.fromJson);
 
-  Future<List<Moment>> getArchivedMoments() async =>
-      _list(await _send('GET', '/moments/archive'), Moment.fromJson);
+  Future<List<Moment>> getArchivedMoments() async => _list(await _send('GET', '/moments/archive'), Moment.fromJson);
 
   Future<Moment> getMoment(String id) async =>
       Moment.fromJson(await _send('GET', '/moments/$id') as Map<String, dynamic>);
@@ -121,12 +191,16 @@ class SonderApi {
     required DateTime unlockAt,
     required String accentColor,
   }) async {
-    final json = await _send('POST', '/moments', body: {
-      'title': title,
-      'participant_ids': participantIds,
-      'unlock_at': unlockAt.toUtc().toIso8601String(),
-      'accent_color': accentColor,
-    });
+    final json = await _send(
+      'POST',
+      '/moments',
+      body: {
+        'title': title,
+        'participant_ids': participantIds,
+        'unlock_at': unlockAt.toUtc().toIso8601String(),
+        'accent_color': accentColor,
+      },
+    );
     return Moment.fromJson(json as Map<String, dynamic>);
   }
 
@@ -192,9 +266,9 @@ class SonderApi {
   Uri _uri(String path) => Uri.parse('$_serverUrl/api$path');
 
   Map<String, String> _headers({bool json = true}) => {
-        if (json) 'Content-Type': 'application/json',
-        if (_token != null) 'Authorization': 'Bearer $_token',
-      };
+    if (json) 'Content-Type': 'application/json',
+    if (_token != null) 'Authorization': 'Bearer $_token',
+  };
 
   Future<dynamic> _send(String method, String path, {Object? body}) {
     return _handle(() {

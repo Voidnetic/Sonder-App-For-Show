@@ -9,6 +9,7 @@ import '../widgets/motion.dart';
 import '../widgets/status_views.dart';
 import 'active_moment_screen.dart';
 import 'create_moment_screen.dart';
+import 'friends_screen.dart';
 import 'reveal_screen.dart';
 
 /// Opens a moment: the reveal flow once it has unlocked, otherwise the live moment screen.
@@ -141,6 +142,23 @@ class _HomeScreenState extends State<HomeScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         const Text('SONDER', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 3)),
+        const Spacer(),
+        Pressable(
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const FriendsScreen())),
+          child: Container(
+            key: const Key('home-friends'),
+            width: 48,
+            height: 48,
+            margin: const EdgeInsets.only(right: 10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              border: Border.all(color: AppTheme.kBorder, width: 1.5),
+              boxShadow: const [BoxShadow(color: AppTheme.kBorder, offset: Offset(2, 2))],
+            ),
+            child: const Icon(Icons.group_add_outlined, size: 24, semanticLabel: 'Friends'),
+          ),
+        ),
         Container(
           width: 48,
           height: 48,
@@ -293,7 +311,10 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     return [
       for (var i = 0; i < moments.length; i++)
-        PopIn(index: i + 3, child: MomentCard(moment: moments[i], onTap: () => _open(moments[i]))),
+        PopIn(
+          index: i + 3,
+          child: MomentCard(moment: moments[i], onTap: () => _open(moments[i])),
+        ),
     ];
   }
 }

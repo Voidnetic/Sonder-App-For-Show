@@ -7,6 +7,7 @@ import '../data/models.dart';
 import '../theme/app_theme.dart';
 import '../utils/time_format.dart';
 import '../widgets/countdown_text.dart';
+import '../widgets/safety_sheets.dart';
 import '../widgets/status_views.dart';
 import 'camera_screen.dart';
 import 'reveal_screen.dart';
@@ -38,6 +39,9 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
   int _reconnectAttempts = 0;
   bool _sending = false;
 
+  /// People the user blocked (or who blocked them). Their live messages are dropped.
+  Set<String> _hiddenAuthors = {};
+
   final TextEditingController _chatController = TextEditingController();
   final ScrollController _chatScroll = ScrollController();
 
@@ -47,13 +51,38 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
   void initState() {
     super.initState();
     _moment = widget.moment;
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 1),
-    )..repeat(reverse: true);
+    _pulseController = AnimationController(vsync: this, duration: const Duration(seconds: 1))..repeat(reverse: true);
     _loadMemories();
     _loadMessages();
     _connectLive();
+    _loadBlocked();
+  }
+
+  Future<void> _loadBlocked() async {
+    try {
+      final blocked = await _api.getBlockedUsers();
+      if (mounted) setState(() => _hiddenAuthors = {for (final u in blocked) u.id});
+    } catch (_) {
+      // Not critical: the server already filters the chat history.
+    }
+  }
+
+  Future<void> _messageActions(ChatMessage message) async {
+    final author = message.author;
+    if (author == null) return;
+    final blocked = await showContentActions(
+      context,
+      target: ReportTarget.message,
+      targetId: message.id,
+      author: author,
+    );
+    if (blocked && mounted) {
+      setState(() {
+        _hiddenAuthors = {..._hiddenAuthors, author.id};
+        _messages = _messages?.where((m) => m.author?.id != author.id).toList();
+        _memories = _memories?.where((m) => m.author.id != author.id).toList();
+      });
+    }
   }
 
   @override
@@ -120,15 +149,17 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
 
   void _connectLive() {
     _live?.cancel();
-    _live = _api.hangoutStream(_moment.id).listen(
-      (message) {
-        _reconnectAttempts = 0;
-        _addMessage(message);
-      },
-      onError: (Object _) => _scheduleReconnect(),
-      onDone: _scheduleReconnect,
-      cancelOnError: true,
-    );
+    _live = _api
+        .hangoutStream(_moment.id)
+        .listen(
+          (message) {
+            _reconnectAttempts = 0;
+            _addMessage(message);
+          },
+          onError: (Object _) => _scheduleReconnect(),
+          onDone: _scheduleReconnect,
+          cancelOnError: true,
+        );
   }
 
   void _scheduleReconnect() {
@@ -143,7 +174,7 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
   }
 
   void _addMessage(ChatMessage message) {
-    if (!mounted) return;
+    if (!mounted || _hiddenAuthors.contains(message.author?.id)) return;
     final messages = _messages ?? [];
     if (messages.any((m) => m.id == message.id)) return;
     setState(() {
@@ -192,10 +223,7 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
   }
 
   void _openReveal() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => RevealScreen(moment: _moment)),
-    );
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => RevealScreen(moment: _moment)));
   }
 
   int get _memoryCount => _memories?.length ?? _moment.memoryCount;
@@ -247,19 +275,12 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
                 border: Border.all(color: AppTheme.kBorder, width: 2),
                 boxShadow: const [BoxShadow(color: AppTheme.kBorder, offset: Offset(3, 3))],
               ),
-              child: Row(
-                children: [
-                  _tabButton("📸 Memories", 0),
-                  _tabButton("💬 Hangout", 1),
-                ],
-              ),
+              child: Row(children: [_tabButton("📸 Memories", 0), _tabButton("💬 Hangout", 1)]),
             ),
           ),
 
           // CONTENT AREA
-          Expanded(
-            child: _selectedTab == 0 ? _buildMemoriesTab() : _buildHangoutTab(),
-          ),
+          Expanded(child: _selectedTab == 0 ? _buildMemoriesTab() : _buildHangoutTab()),
         ],
       ),
     );
@@ -526,10 +547,10 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
                       ),
                     ),
                   ],
-                )
+                ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );
@@ -544,21 +565,21 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
         Expanded(
           child: messages == null
               ? (_messagesError != null
-                  ? ErrorView(message: _messagesError.toString(), onRetry: _loadMessages)
-                  : const LoadingView())
+                    ? ErrorView(message: _messagesError.toString(), onRetry: _loadMessages)
+                    : const LoadingView())
               : messages.isEmpty
-                  ? const Center(
-                      child: Text(
-                        "No messages yet. Say hi 👋",
-                        style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.kTextSecondary),
-                      ),
-                    )
-                  : ListView.builder(
-                      controller: _chatScroll,
-                      padding: const EdgeInsets.all(24),
-                      itemCount: messages.length,
-                      itemBuilder: (context, index) => _buildMessage(messages[index], myId),
-                    ),
+              ? const Center(
+                  child: Text(
+                    "No messages yet. Say hi 👋",
+                    style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.kTextSecondary),
+                  ),
+                )
+              : ListView.builder(
+                  controller: _chatScroll,
+                  padding: const EdgeInsets.all(24),
+                  itemCount: messages.length,
+                  itemBuilder: (context, index) => _buildMessage(messages[index], myId),
+                ),
         ),
 
         // MESSAGE COMPOSER
@@ -658,44 +679,48 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
     final isMe = msg.author?.id == myId;
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        constraints: const BoxConstraints(maxWidth: 280),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isMe ? AppTheme.kTextPrimary : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppTheme.kBorder, width: 2),
-          boxShadow: const [BoxShadow(color: AppTheme.kBorder, offset: Offset(3, 3))],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (!isMe) ...[
+      child: GestureDetector(
+        // Long-press someone else's message to report it or block them.
+        onLongPress: isMe ? null : () => _messageActions(msg),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          constraints: const BoxConstraints(maxWidth: 280),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isMe ? AppTheme.kTextPrimary : Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppTheme.kBorder, width: 2),
+            boxShadow: const [BoxShadow(color: AppTheme.kBorder, offset: Offset(3, 3))],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (!isMe) ...[
+                Text(
+                  msg.author?.name ?? 'Someone',
+                  style: const TextStyle(color: AppTheme.kTextSecondary, fontSize: 12, fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(height: 4),
+              ],
               Text(
-                msg.author?.name ?? 'Someone',
-                style: const TextStyle(color: AppTheme.kTextSecondary, fontSize: 12, fontWeight: FontWeight.w900),
+                msg.text,
+                style: TextStyle(
+                  color: isMe ? Colors.white : AppTheme.kTextPrimary,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 6),
+              Text(
+                formatClock(msg.createdAt, alwaysShowMinutes: true),
+                style: TextStyle(
+                  color: isMe ? Colors.white70 : AppTheme.kTextSecondary,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ],
-            Text(
-              msg.text,
-              style: TextStyle(
-                color: isMe ? Colors.white : AppTheme.kTextPrimary,
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              formatClock(msg.createdAt, alwaysShowMinutes: true),
-              style: TextStyle(
-                color: isMe ? Colors.white70 : AppTheme.kTextSecondary,
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
