@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -12,6 +12,7 @@ from app.models.moment import Moment, moment_participants
 from app.models.user import User
 from app.schemas.moment import AddParticipantRequest, CreateMomentRequest, MomentResponse
 from app.schemas.user import UserResponse
+from app.push import notify_users
 from app.relationships import friend_ids
 from app.utils import to_utc
 
@@ -48,6 +49,7 @@ def _get_moment_for_participant(moment_id: uuid.UUID, current_user: User, db: Se
 @router.post("", response_model=MomentResponse, status_code=status.HTTP_201_CREATED, summary="Create a new moment")
 def create_moment(
     body: CreateMomentRequest,
+    background: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> MomentResponse:
@@ -68,6 +70,13 @@ def create_moment(
     db.add(moment)
     db.commit()
     db.refresh(moment)
+    background.add_task(
+        notify_users,
+        [p.id for p in moment.participants if p.id != current_user.id],
+        f"You're in {moment.title} 📸",
+        f"{current_user.name} added you. Capture photos now, they stay hidden until the reveal.",
+        {"type": "moment_invite", "moment_id": str(moment.id)},
+    )
     return _to_response(moment, db)
 
 
@@ -107,6 +116,7 @@ def get_moment(
 def add_participant(
     moment_id: uuid.UUID,
     body: AddParticipantRequest,
+    background: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> MomentResponse:
@@ -126,6 +136,13 @@ def add_participant(
         moment.participants.append(new_participant)
         db.commit()
         db.refresh(moment)
+        background.add_task(
+            notify_users,
+            [new_participant.id],
+            f"You're in {moment.title} 📸",
+            f"{current_user.name} added you. Capture photos now, they stay hidden until the reveal.",
+            {"type": "moment_invite", "moment_id": str(moment.id)},
+        )
     return _to_response(moment, db)
 
 

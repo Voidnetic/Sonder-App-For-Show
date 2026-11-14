@@ -13,3 +13,4 @@ python-multipart==0.0.32
 python-dotenv==1.2.4
 google-auth==2.62.2
 requests==2.34.2
+boto3==1.44.3

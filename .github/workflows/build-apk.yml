@@ -61,12 +61,19 @@ jobs:
 
       - name: Build release APK
         env:
-          GOOGLE_SERVER_CLIENT_ID: ${{ vars.GOOGLE_SERVER_CLIENT_ID }}
+          # Repository variables (Settings > Secrets and variables > Actions > Variables). All optional.
           SONDER_API_URL: ${{ vars.SONDER_API_URL }}
+          GOOGLE_SERVER_CLIENT_ID: ${{ vars.GOOGLE_SERVER_CLIENT_ID }}
+          FIREBASE_API_KEY: ${{ vars.FIREBASE_API_KEY }}
+          FIREBASE_APP_ID: ${{ vars.FIREBASE_APP_ID }}
+          FIREBASE_MESSAGING_SENDER_ID: ${{ vars.FIREBASE_MESSAGING_SENDER_ID }}
+          FIREBASE_PROJECT_ID: ${{ vars.FIREBASE_PROJECT_ID }}
         run: |
           ARGS=()
-          if [ -n "$GOOGLE_SERVER_CLIENT_ID" ]; then ARGS+=(--dart-define=GOOGLE_SERVER_CLIENT_ID=$GOOGLE_SERVER_CLIENT_ID); fi
-          if [ -n "$SONDER_API_URL" ]; then ARGS+=(--dart-define=SONDER_API_URL=$SONDER_API_URL); fi
+          for NAME in SONDER_API_URL GOOGLE_SERVER_CLIENT_ID FIREBASE_API_KEY FIREBASE_APP_ID \
+                      FIREBASE_MESSAGING_SENDER_ID FIREBASE_PROJECT_ID; do
+            if [ -n "${!NAME}" ]; then ARGS+=("--dart-define=$NAME=${!NAME}"); fi
+          done
           flutter build apk --release "${ARGS[@]}"
 
       - name: Rename APK

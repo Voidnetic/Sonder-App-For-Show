@@ -1,12 +1,11 @@
 import uuid
 from datetime import datetime, timezone
-from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from fastapi.concurrency import run_in_threadpool
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.config import settings
 from app.database import get_db
 from app.deps import get_current_user
 from app.models.memory import Memory
@@ -15,6 +14,7 @@ from app.models.user import User
 from app.schemas.memory import LockedMemoryResponse, MemoryResponse
 from app.schemas.user import UserResponse
 from app.relationships import blocked_ids
+from app.storage import photo_url, save_photo
 from app.utils import to_utc
 
 router = APIRouter(prefix="/moments/{moment_id}/memories", tags=["Memories"])
@@ -55,16 +55,16 @@ async def capture_memory(
     if len(contents) > MAX_FILE_SIZE_BYTES:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Photo must be smaller than 8MB")
 
-    upload_dir = Path(settings.upload_dir)
-    upload_dir.mkdir(parents=True, exist_ok=True)
+    if not contents:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "The photo is empty")
     extension = ALLOWED_CONTENT_TYPES[file.content_type]
-    filename = f"{uuid.uuid4().hex}{extension}"
-    (upload_dir / filename).write_bytes(contents)
+    # Uploading to R2 is blocking network I/O, so keep it off the event loop.
+    image_ref = await run_in_threadpool(save_photo, contents, extension, file.content_type)
 
     memory = Memory(
         moment_id=moment_id,
         author_id=current_user.id,
-        image_url=f"/uploads/{filename}",
+        image_url=image_ref,
         caption=caption,
     )
     db.add(memory)
@@ -75,7 +75,7 @@ async def capture_memory(
         id=memory.id,
         moment_id=memory.moment_id,
         author=UserResponse.model_validate(current_user),
-        image_url=memory.image_url,
+        image_url=photo_url(memory.image_url),
         caption=memory.caption,
         captured_at=memory.captured_at,
     )
@@ -117,7 +117,7 @@ def list_memories(
             id=m.id,
             moment_id=m.moment_id,
             author=UserResponse.model_validate(db.get(User, m.author_id)),
-            image_url=m.image_url,
+            image_url=photo_url(m.image_url),
             caption=m.caption,
             captured_at=m.captured_at,
         )

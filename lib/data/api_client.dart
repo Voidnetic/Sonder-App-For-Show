@@ -40,6 +40,11 @@ class SonderApi {
   String _serverUrl = defaultServerUrl;
   String? _token;
 
+  /// Runs just before signing out while the session is still valid (push notifications use it to
+  /// stop notifications to this phone).
+  Future<void> Function()? beforeLogout;
+  bool _loggingOut = false;
+
   /// The signed-in user, or null when signed out. The app shows the login screen whenever this is null.
   final ValueNotifier<AppUser?> currentUser = ValueNotifier<AppUser?>(null);
 
@@ -99,6 +104,17 @@ class SonderApi {
   }
 
   Future<void> logout() async {
+    final hook = beforeLogout;
+    if (hook != null && !_loggingOut && _token != null) {
+      _loggingOut = true; // a 401 inside the hook calls logout() again; don't recurse
+      try {
+        await hook();
+      } catch (_) {
+        // Signing out must always work.
+      } finally {
+        _loggingOut = false;
+      }
+    }
     // Also forget the Google account, so the next sign-in shows the account picker again.
     unawaited(GoogleAuth.signOut());
     _token = null;
@@ -146,6 +162,14 @@ class SonderApi {
   Future<void> cancelFriendRequest(String requestId) => _send('DELETE', '/friends/requests/$requestId');
 
   Future<void> removeFriend(String userId) => _send('DELETE', '/friends/$userId');
+
+  // Push notifications
+
+  Future<void> registerDevice(String token) =>
+      _send('POST', '/devices', body: {'token': token, 'platform': 'android'});
+
+  Future<void> unregisterDevice(String token) =>
+      _send('POST', '/devices/unregister', body: {'token': token, 'platform': 'android'});
 
   // Safety
 

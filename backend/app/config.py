@@ -24,6 +24,27 @@ class Settings(BaseSettings):
     support_email: str = ""
     developer_name: str = "the Sonder team"
 
+    # First start on an empty database (e.g. a new Railway Postgres): create the tables automatically.
+    auto_create_schema: bool = True
+    # Also load the demo users/moments. Off by default: their password is public, so never in production.
+    seed_demo_data: bool = False
+
+    # Cloudflare R2 photo storage. When these are empty, photos are saved in upload_dir on the server's disk
+    # (fine on a laptop, but Railway's disk is wiped on every deploy).
+    r2_account_id: str = ""
+    r2_access_key_id: str = ""
+    r2_secret_access_key: str = ""
+    r2_bucket: str = ""
+    # How long a photo link handed to the app stays valid.
+    photo_url_expires_seconds: int = 3600
+
+    # Firebase Cloud Messaging: the service account key JSON (raw, or base64 of it). Empty = no push.
+    firebase_service_account: str = ""
+
+    @property
+    def r2_enabled(self) -> bool:
+        return bool(self.r2_account_id and self.r2_access_key_id and self.r2_secret_access_key and self.r2_bucket)
+
     @property
     def cors_origin_list(self) -> list[str]:
         if self.cors_origins.strip() == "*":

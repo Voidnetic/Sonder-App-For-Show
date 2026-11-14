@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, WebSocket, WebSocketDisconnect, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -11,6 +11,7 @@ from app.models.moment import Moment
 from app.models.user import User
 from app.schemas.message import CreateMessageRequest, MessageResponse
 from app.schemas.user import UserResponse
+from app.push import notify_in_background, notify_users
 from app.relationships import blocked_ids
 from app.security import decode_access_token
 from app.ws_manager import manager
@@ -37,6 +38,17 @@ def _assert_participant(moment_id: uuid.UUID, user_id: uuid.UUID, db: Session) -
     if user_id not in {p.id for p in moment.participants}:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "You are not part of this moment")
     return moment
+
+
+def _chat_recipients(moment: Moment, author_id: uuid.UUID, db: Session) -> list[uuid.UUID]:
+    """Everyone else in the moment, except people who blocked the author (or were blocked by them)."""
+    hidden = blocked_ids(author_id, db)
+    return [p.id for p in moment.participants if p.id != author_id and p.id not in hidden]
+
+
+def _chat_notification(moment: Moment, author_name: str, text: str) -> tuple[str, str, dict[str, str]]:
+    preview = text if len(text) <= 120 else text[:117] + "..."
+    return moment.title, f"{author_name}: {preview}", {"type": "chat", "moment_id": str(moment.id)}
 
 
 def _persist_message(moment_id: uuid.UUID, author_id: uuid.UUID, text: str, db: Session) -> Message:
@@ -75,12 +87,18 @@ def list_messages(
 async def send_message(
     moment_id: uuid.UUID,
     body: CreateMessageRequest,
+    background: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> MessageResponse:
-    _assert_participant(moment_id, current_user.id, db)
+    moment = _assert_participant(moment_id, current_user.id, db)
     message = _persist_message(moment_id, current_user.id, body.text, db)
     response = _to_response(message, db)
+    background.add_task(
+        notify_users,
+        _chat_recipients(moment, current_user.id, db),
+        *_chat_notification(moment, current_user.name, body.text),
+    )
     await manager.broadcast(moment_id, response.model_dump(mode="json"))
     return response
 
@@ -123,8 +141,14 @@ async def hangout_websocket(websocket: WebSocket, moment_id: uuid.UUID, token: s
             try:
                 message = _persist_message(moment_id, user_id, text, session)
                 response = _to_response(message, session)
+                room = session.get(Moment, moment_id)
+                recipients = _chat_recipients(room, user_id, session) if room else []
+                author_name = response.author.name if response.author else "Someone"
+                notification = _chat_notification(room, author_name, text) if room else None
             finally:
                 session.close()
+            if notification:
+                notify_in_background(recipients, *notification)
 
             await manager.broadcast(moment_id, response.model_dump(mode="json"))
     except WebSocketDisconnect:

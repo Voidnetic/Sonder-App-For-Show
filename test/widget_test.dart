@@ -524,4 +524,24 @@ void main() {
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getString('access_token'), 'g-tok');
   });
+
+  test('logout runs the push hook first, once, even when the session already expired', () async {
+    final backend = FakeBackend();
+    backend.routes['POST /api/devices/unregister'] =
+        (_) => http.Response(jsonEncode({'detail': 'Invalid or expired token'}), 401);
+    final api = await setUpApi(backend);
+    var calls = 0;
+    api.beforeLogout = () async {
+      calls++;
+      await api.unregisterDevice('phone-token-123');
+    };
+
+    await api.logout();
+
+    expect(calls, 1);
+    expect(backend.lastBody('POST', '/api/devices/unregister'), {'token': 'phone-token-123', 'platform': 'android'});
+    expect(api.currentUser.value, isNull);
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getString('access_token'), isNull);
+  });
 }

@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'data/api_client.dart';
 import 'data/models.dart';
+import 'data/push_service.dart';
 import 'screens/global_camera_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
@@ -13,6 +16,8 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SonderApi.instance.restoreSession();
   runApp(const SonderApp());
+  // After the first frame, so a slow Firebase start never delays the app opening.
+  unawaited(PushService.init());
 }
 
 class SonderApp extends StatelessWidget {
@@ -23,6 +28,7 @@ class SonderApp extends StatelessWidget {
     return MaterialApp(
       title: 'Sonder',
       debugShowCheckedModeBanner: false,
+      scaffoldMessengerKey: rootMessengerKey,
       theme: AppTheme.lightTheme,
       home: const AuthGate(),
     );

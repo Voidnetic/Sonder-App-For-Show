@@ -23,6 +23,7 @@ from app.schemas.safety import (
     ResolveReportRequest,
 )
 from app.schemas.user import UserResponse
+from app.storage import photo_url
 
 router = APIRouter(tags=["Safety"])
 
@@ -144,7 +145,7 @@ def _user_or_none(user_id: uuid.UUID | None, db: Session) -> UserResponse | None
 def _preview(report: Report, db: Session) -> str | None:
     if report.target_type == "memory":
         memory = db.get(Memory, report.target_id)
-        return memory.image_url if memory else "(already removed)"
+        return photo_url(memory.image_url) if memory else "(already removed)"
     if report.target_type == "message":
         message = db.get(Message, report.target_id)
         return message.text if message else "(already removed)"

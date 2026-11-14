@@ -1,30 +1,17 @@
 """Permanently deleting an account and everything that belongs to it."""
 
-from pathlib import Path
-
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
-from app.config import settings
 from app.models.memory import Memory
 from app.models.message import Message
 from app.models.moment import Moment
 from app.models.user import User
-
-
-def _remove_upload(image_url: str) -> None:
-    # Demo photos ship with the repo and are shared by the seed data, so they stay.
-    name = Path(image_url).name
-    if not image_url.startswith("/uploads/") or name.startswith("demo-"):
-        return
-    try:
-        (Path(settings.upload_dir) / name).unlink(missing_ok=True)
-    except OSError:
-        pass  # A missing or locked file must not stop the account from being deleted.
+from app.storage import delete_photo
 
 
 def delete_memory(memory: Memory, db: Session) -> None:
-    _remove_upload(memory.image_url)
+    delete_photo(memory.image_url)
     db.delete(memory)
 
 

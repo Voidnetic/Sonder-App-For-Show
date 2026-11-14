@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
@@ -8,11 +8,24 @@ from app.database import get_db
 from app.deps import get_current_user
 from app.models.friendship import Friendship, FriendshipStatus
 from app.models.user import User
+from app.push import notify_users
 from app.relationships import blocked_ids, friendship_between, is_blocked_between
 from app.schemas.friendship import AddFriendRequest, FriendRequestResponse, FriendResponse
 from app.schemas.user import UserResponse
 
 router = APIRouter(tags=["Friends"])
+
+
+def _notify_request(recipient_id: uuid.UUID, sender_name: str) -> None:
+    notify_users(
+        [recipient_id], "New friend request 👋", f"{sender_name} wants to be friends on Sonder", {"type": "friend_request"}
+    )
+
+
+def _notify_accepted(requester_id: uuid.UUID, accepter_name: str) -> None:
+    notify_users(
+        [requester_id], "Friend request accepted 🎉", f"You and {accepter_name} are now friends", {"type": "friend_accepted"}
+    )
 
 
 def _to_request_response(friendship: Friendship, db: Session) -> FriendRequestResponse:
@@ -34,6 +47,7 @@ def _to_request_response(friendship: Friendship, db: Session) -> FriendRequestRe
 )
 def send_request(
     body: AddFriendRequest,
+    background: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> FriendRequestResponse:
@@ -53,17 +67,20 @@ def send_request(
         if existing.status == FriendshipStatus.PENDING:
             # They already asked us: sending one back simply accepts theirs.
             existing.status = FriendshipStatus.ACCEPTED
+            background.add_task(_notify_accepted, existing.requester_id, current_user.name)
         else:
             # A declined request can be sent again later.
             existing.requester_id = current_user.id
             existing.recipient_id = recipient.id
             existing.status = FriendshipStatus.PENDING
+            background.add_task(_notify_request, recipient.id, current_user.name)
         db.commit()
         db.refresh(existing)
         return _to_request_response(existing, db)
 
     friendship = Friendship(requester_id=current_user.id, recipient_id=body.recipient_id)
     db.add(friendship)
+    background.add_task(_notify_request, recipient.id, current_user.name)
     db.commit()
     db.refresh(friendship)
     return _to_request_response(friendship, db)
@@ -129,10 +146,13 @@ def cancel_request(
 @router.patch("/friends/requests/{request_id}/accept", response_model=FriendRequestResponse, summary="Accept a friend request")
 def accept_request(
     request_id: uuid.UUID,
+    background: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> FriendRequestResponse:
-    return _respond(request_id, True, current_user, db)
+    response = _respond(request_id, True, current_user, db)
+    background.add_task(_notify_accepted, response.requester.id, current_user.name)
+    return response
 
 
 @router.patch("/friends/requests/{request_id}/decline", response_model=FriendRequestResponse, summary="Decline a friend request")
