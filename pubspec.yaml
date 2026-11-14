@@ -7,6 +7,7 @@ environment:
   sdk: ^3.13.4
 
 dependencies:
+  camera: ^0.12.2
   flutter:
     sdk: flutter
   http: ^1.2.2
@@ -22,3 +23,20 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  # Both fonts are SIL Open Font License; the licences are next to the files.
+  fonts:
+    - family: Bagel
+      fonts:
+        - asset: assets/fonts/BagelFatOne.ttf
+    - family: Bricolage
+      fonts:
+        - asset: assets/fonts/BricolageGrotesque-Regular.ttf
+        - asset: assets/fonts/BricolageGrotesque-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/BricolageGrotesque-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/BricolageGrotesque-ExtraBold.ttf
+          weight: 800
+        - asset: assets/fonts/BricolageGrotesque-ExtraBold.ttf
+          weight: 900

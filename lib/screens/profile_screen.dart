@@ -141,11 +141,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: [
                     Text(
                       user.name,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w900,
-                        color: AppTheme.kTextPrimary,
-                      ),
+                      style: AppTheme.display(26),
                     ),
                     const SizedBox(height: 4),
                     Text(

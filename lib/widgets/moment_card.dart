@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/models.dart';
 import '../theme/app_theme.dart';
 import 'countdown_text.dart';
+import 'motion.dart';
 
 class MomentCard extends StatefulWidget {
   final Moment moment;
@@ -19,7 +20,7 @@ class _MomentCardState extends State<MomentCard> {
   Widget build(BuildContext context) {
     final moment = widget.moment;
     final unlocked = moment.isUnlocked;
-    return GestureDetector(
+    return Pressable(
       onTap: widget.onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),

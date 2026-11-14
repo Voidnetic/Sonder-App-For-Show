@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../data/api_client.dart';
 import '../theme/app_theme.dart';
+import '../widgets/motion.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -108,9 +109,9 @@ class _LoginScreenState extends State<LoginScreen> {
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 3),
             ),
             const SizedBox(height: 32),
-            Text(
+            BubblyText(
               _isSignUp ? 'Create account ✨' : 'Welcome back 👋',
-              style: Theme.of(context).textTheme.displayLarge,
+              key: ValueKey(_isSignUp),
             ),
             const SizedBox(height: 8),
             const Text(

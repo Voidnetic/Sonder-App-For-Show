@@ -212,6 +212,8 @@ void main() {
     expect(find.text('BIRTHDAY NIGHT'), findsOneWidget);
     expect(find.text('2 memories • 4 friends'), findsOneWidget);
     expect(find.textContaining(RegExp(r'^\d\d : \d\d : \d\d$')), findsOneWidget);
+    // The stat tiles and "next reveal" banner push the second card below the fold.
+    await tester.scrollUntilVisible(find.text('MURREE TRIP'), 200, scrollable: find.byType(Scrollable).first);
     expect(find.text('MURREE TRIP'), findsOneWidget);
     expect(find.text('tomorrow at 11:59 PM'), findsOneWidget);
 

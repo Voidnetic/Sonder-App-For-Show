@@ -14,6 +14,17 @@ class AppTheme {
   static const Color kPalePeach = Color(0xFFFFE5B4);
   static const Color kLightBlue = Color(0xFFE1F5FE);
 
+  // Stronger accents for the stat tiles and highlights, still soft enough to sit next to the pastels.
+  static const Color kPeriwinkle = Color(0xFFB9C4FF);
+  static const Color kCoral = Color(0xFFFF9F80);
+  static const Color kSunshine = Color(0xFFFFD84D);
+
+  /// Chunky rounded display font for big headings ("Hey, Hassan", "Past Vault").
+  static const String displayFont = 'Bagel';
+
+  static TextStyle display(double size, {Color color = kTextPrimary}) =>
+      TextStyle(fontFamily: displayFont, fontSize: size, color: color, height: 1.1);
+
   // Matches the theme the original prototype ran with. Don't give bodyMedium a colour here:
   // it's the default style for every Text, so it would turn all unstyled text grey.
   static ThemeData get lightTheme {
@@ -21,9 +32,9 @@ class AppTheme {
       brightness: Brightness.light,
       scaffoldBackgroundColor: kBackground,
       primaryColor: kTextPrimary,
-      fontFamily: 'Inter',
+      fontFamily: 'Bricolage',
       textTheme: const TextTheme(
-        displayLarge: TextStyle(color: kTextPrimary, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+        displayLarge: TextStyle(fontFamily: displayFont, color: kTextPrimary, fontSize: 34, height: 1.1),
       ),
     );
   }

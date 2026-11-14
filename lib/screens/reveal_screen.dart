@@ -120,7 +120,7 @@ class _RevealScreenState extends State<RevealScreen> with SingleTickerProviderSt
                 const SizedBox(height: 12),
                 Text(
                   _moment.title,
-                  style: const TextStyle(fontSize: 36, fontWeight: FontWeight.w900, letterSpacing: -0.5),
+                  style: AppTheme.display(38),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),

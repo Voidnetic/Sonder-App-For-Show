@@ -124,11 +124,7 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
         ),
         title: const Text(
           "Create a moment",
-          style: TextStyle(
-            color: AppTheme.kTextPrimary,
-            fontSize: 18,
-            fontWeight: FontWeight.w900,
-          ),
+          style: TextStyle(fontFamily: AppTheme.displayFont, color: AppTheme.kTextPrimary, fontSize: 22),
         ),
         centerTitle: true,
       ),

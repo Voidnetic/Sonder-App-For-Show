@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/api_client.dart';
 import '../data/models.dart';
 import '../theme/app_theme.dart';
+import '../widgets/motion.dart';
 import '../utils/time_format.dart';
 import '../widgets/status_views.dart';
 import 'memories_gallery_screen.dart';
@@ -69,10 +70,7 @@ class _MomentsArchiveScreenState extends State<MomentsArchiveScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              Text(
-                "Past Vault ✨",
-                style: Theme.of(context).textTheme.displayLarge,
-              ),
+              const BubblyText("Past Vault ✨"),
               const SizedBox(height: 8),
               const Text(
                 "Explore all your unlocked time capsules and memories.",
@@ -100,7 +98,11 @@ class _MomentsArchiveScreenState extends State<MomentsArchiveScreen> {
                       subtitle: 'Moments appear here once their countdown ends.',
                     );
                   }
-                  return Column(children: [for (final moment in moments) _buildArchiveCard(moment)]);
+                  return Column(
+                    children: [
+                      for (var i = 0; i < moments.length; i++) PopIn(index: i, child: _buildArchiveCard(moments[i])),
+                    ],
+                  );
                 },
               ),
             ],
@@ -112,7 +114,7 @@ class _MomentsArchiveScreenState extends State<MomentsArchiveScreen> {
 
   Widget _buildArchiveCard(Moment moment) {
     final notRevealed = moment.revealedAt == null;
-    return GestureDetector(
+    return Pressable(
       onTap: () => _open(moment),
       child: Container(
         margin: const EdgeInsets.only(bottom: 20),
