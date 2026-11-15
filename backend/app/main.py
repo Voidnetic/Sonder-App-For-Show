@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 from pathlib import Path
 
@@ -10,7 +11,9 @@ from sqlalchemy.exc import OperationalError
 
 from app.config import settings
 from app.database import engine
+from app.push import enabled as push_enabled
 from app.push import unlock_notifier_loop
+from app.storage import check_storage
 from app.routers import auth, devices, friends, hangout, legal, memories, moments, safety, users
 
 Path(settings.upload_dir).mkdir(parents=True, exist_ok=True)
@@ -101,8 +104,13 @@ def prepare_database() -> None:
         _run_sql_file(path)
 
 
+log = logging.getLogger("uvicorn.error")
+
+
 @app.on_event("startup")
 async def start_background_jobs() -> None:
+    log.info(await asyncio.to_thread(check_storage))
+    log.info("Push notifications: %s", "on" if push_enabled() else "off (set FIREBASE_SERVICE_ACCOUNT)")
     # Keep a reference so the task isn't garbage collected.
     app.state.unlock_notifier = asyncio.create_task(unlock_notifier_loop())
 

@@ -70,3 +70,14 @@ def delete_photo(ref: str) -> None:
             (Path(settings.upload_dir) / name).unlink(missing_ok=True)
     except Exception:  # noqa: BLE001
         pass
+
+
+def check_storage() -> str:
+    """One line for the startup log saying where photos go and whether that works."""
+    if not settings.r2_enabled:
+        return "Photo storage: this server's disk (set R2_* to use Cloudflare R2)"
+    try:
+        _r2_client().head_bucket(Bucket=settings.r2_bucket)
+        return f"Photo storage: Cloudflare R2 bucket '{settings.r2_bucket}' OK"
+    except Exception as exc:  # noqa: BLE001
+        return f"Photo storage: Cloudflare R2 bucket '{settings.r2_bucket}' NOT reachable: {exc}"
