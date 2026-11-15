@@ -1,10 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
-/// The *Web application* OAuth client ID from Google Cloud Console. Google puts it in the ID token's
-/// audience, and the server only accepts tokens for it (GOOGLE_CLIENT_IDS in backend/.env).
-/// Pass it at build time: `flutter build apk --dart-define=GOOGLE_SERVER_CLIENT_ID=123-abc.apps.googleusercontent.com`
-const String googleServerClientId = String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID');
+/// The *Web application* OAuth client ID ("Sonder server") from Google Cloud project sonder-bb41b. Google puts it
+/// in the ID token's audience, and the server only accepts tokens for it (GOOGLE_CLIENT_IDS on Railway).
+/// Not a secret. A build can override it with --dart-define=GOOGLE_SERVER_CLIENT_ID=...
+const String googleServerClientId = String.fromEnvironment(
+  'GOOGLE_SERVER_CLIENT_ID',
+  defaultValue: '1075648757478-k4uk872vklp21cjf8oe9m27015pqhnoj.apps.googleusercontent.com',
+);
 
 class GoogleAuthException implements Exception {
   final String message;
@@ -18,6 +21,10 @@ class GoogleAuthException implements Exception {
 class GoogleAuth {
   static Future<void>? _initializing;
 
+  /// Tests replace Google's account picker with this.
+  @visibleForTesting
+  static Future<String?> Function()? idTokenOverride;
+
   /// Whether this build can show Google's sign-in sheet (Android/iOS with a client ID set).
   static bool get isAvailable =>
       googleServerClientId.isNotEmpty &&
@@ -29,6 +36,8 @@ class GoogleAuth {
 
   /// Shows Google's account picker. Returns null if the person closed it.
   static Future<String?> getIdToken() async {
+    final override = idTokenOverride;
+    if (override != null) return override();
     if (!isAvailable) {
       throw const GoogleAuthException(
         "Google sign-in isn't set up in this version of the app yet. Use email and password for now.",
@@ -51,6 +60,10 @@ class GoogleAuth {
         );
       }
       throw GoogleAuthException('Google sign-in failed: ${e.description ?? e.code.name}');
+    } on GoogleAuthException {
+      rethrow;
+    } catch (e) {
+      throw GoogleAuthException('Google sign-in failed. Please try again. ($e)');
     }
   }
 

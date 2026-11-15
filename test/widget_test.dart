@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sonder_app/data/api_client.dart';
+import 'package:sonder_app/data/google_auth.dart';
 import 'package:sonder_app/data/models.dart';
 import 'package:sonder_app/main.dart';
 
@@ -495,16 +496,31 @@ void main() {
     expect(prefs.getString('access_token'), isNull);
   });
 
-  testWidgets('login: Google button explains when Google sign-in is not set up in this build', (tester) async {
+  testWidgets('login: Continue with Google sends the ID token and opens the app', (tester) async {
     final backend = FakeBackend();
+    backend.routes['POST /api/auth/google'] =
+        (_) => {'user': hassan, 'access_token': 'g-tok', 'token_type': 'bearer', 'created': true};
     await setUpApi(backend, signedIn: false);
+    GoogleAuth.idTokenOverride = () async => 'id-token-from-google';
+    addTearDown(() => GoogleAuth.idTokenOverride = null);
     await startApp(tester);
 
-    expect(find.text('Privacy Policy', findRichText: true), findsNothing); // inside a single rich text
     expect(find.textContaining('Privacy Policy', findRichText: true), findsOneWidget);
     await tapAndSettle(tester, find.byKey(const Key('google-button')));
-    expect(find.textContaining("Google sign-in isn't set up"), findsOneWidget);
+    expect(backend.lastBody('POST', '/api/auth/google'), {'id_token': 'id-token-from-google'});
+    expect(find.text('Hey, Hassan 👋'), findsOneWidget);
+  });
+
+  testWidgets('login: closing the Google account picker stays on the login screen', (tester) async {
+    final backend = FakeBackend();
+    await setUpApi(backend, signedIn: false);
+    GoogleAuth.idTokenOverride = () async => null;
+    addTearDown(() => GoogleAuth.idTokenOverride = null);
+    await startApp(tester);
+
+    await tapAndSettle(tester, find.byKey(const Key('google-button')));
     expect(backend.called('POST', '/api/auth/google'), isFalse);
+    expect(find.text('Welcome back 👋'), findsOneWidget);
   });
 
   test('loginWithGoogle sends the ID token and stores the session', () async {
