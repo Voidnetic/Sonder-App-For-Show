@@ -7,14 +7,16 @@ import 'package:flutter/material.dart';
 
 import 'api_client.dart';
 
-/// Firebase settings for the Android app, from Firebase console > Project settings > Your apps
-/// (or the matching fields in google-services.json). None of these are secret. Passed at build time:
-///   --dart-define=FIREBASE_API_KEY=... --dart-define=FIREBASE_APP_ID=...
-///   --dart-define=FIREBASE_MESSAGING_SENDER_ID=... --dart-define=FIREBASE_PROJECT_ID=...
-const _apiKey = String.fromEnvironment('FIREBASE_API_KEY');
-const _appId = String.fromEnvironment('FIREBASE_APP_ID');
-const _senderId = String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID');
-const _projectId = String.fromEnvironment('FIREBASE_PROJECT_ID');
+/// Firebase settings for the Android app (Firebase project sonder-bb41b, app com.mhcorps.sonder).
+/// None of these are secret: they ship inside every copy of the app and only identify it to Firebase.
+/// A build can override them with --dart-define=FIREBASE_API_KEY=... etc.
+const _apiKey = String.fromEnvironment('FIREBASE_API_KEY', defaultValue: 'AIzaSyC1NewaUSNiufoTUrWjcE_Hs09FrE8Gi7c');
+const _appId = String.fromEnvironment(
+  'FIREBASE_APP_ID',
+  defaultValue: '1:1075648757478:android:9f91ad9a3d4ed79c73c527',
+);
+const _senderId = String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID', defaultValue: '1075648757478');
+const _projectId = String.fromEnvironment('FIREBASE_PROJECT_ID', defaultValue: 'sonder-bb41b');
 
 /// Shows in-app banners for notifications that arrive while Sonder is open.
 final GlobalKey<ScaffoldMessengerState> rootMessengerKey = GlobalKey<ScaffoldMessengerState>();

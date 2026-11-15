@@ -54,7 +54,7 @@ laptop backend for testing, and **Use Sonder server** switches back.
 
 Railway redeploys by itself after you change variables.
 
-## 3. Firebase: push notifications
+## 3. Firebase: push notifications (app side ✅ done)
 
 The app sends notifications for: a friend request, a request being accepted, being added to a moment,
 new chat messages, and **"your moment is unlocked"**.
@@ -63,26 +63,11 @@ new chat messages, and **"your moment is unlocked"**.
    Google Cloud for Google sign-in, pick that one so everything stays together.
 2. **Add app → Android.** Package name: `com.mhcorps.sonder` (it must match exactly). App nickname: `Sonder`.
    Skip downloading `google-services.json` and skip the "add SDK" steps; that's already done in code.
-3. **Project settings (⚙️) → General → Your apps**, and the **Cloud Messaging** tab: copy the four values
-   into GitHub (repo → **Settings → Secrets and variables → Actions → Variables → New repository variable**):
-
-   | GitHub variable | Where it is in Firebase |
-   |---|---|
-   | `FIREBASE_API_KEY` | General → *Web API Key* |
-   | `FIREBASE_APP_ID` | General → Your apps → *App ID* (starts with `1:` and contains `:android:`) |
-   | `FIREBASE_MESSAGING_SENDER_ID` | Cloud Messaging → *Sender ID* |
-   | `FIREBASE_PROJECT_ID` | General → *Project ID* |
-
-   These identify the app and aren't secret, which is why they're *variables*, not secrets.
+3. The app's Firebase values (project `sonder-bb41b`) are built into `lib/data/push_service.dart`. They are not
+   secret. If you ever make a new Firebase project, update them there.
 4. **Project settings → Service accounts → Generate new private key.** A `.json` file downloads. It **is**
-   secret. Turn it into one line in PowerShell:
-
-   ```powershell
-   [Convert]::ToBase64String([IO.File]::ReadAllBytes("$HOME\Downloads\<the file>.json")) | Set-Clipboard
-   ```
-
-   In Railway → API service → **Variables**, add `FIREBASE_SERVICE_ACCOUNT` and paste. Then delete the
-   downloaded file.
+   secret. Open it in Notepad, copy everything, and in Railway → sonder-api → **Variables** add
+   `FIREBASE_SERVICE_ACCOUNT` with the whole file as the value. Click **Deploy**, then delete the downloaded file.
 
 ## 4. Point the app at the server ✅ (done)
 
