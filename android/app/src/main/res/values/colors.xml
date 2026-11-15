@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#E6E6FA</color>
+    <color name="ic_launcher_background">#1E2240</color>
     <!-- Tint for the notification icon. -->
     <color name="sonder_accent">#FF8A65</color>
 </resources>
