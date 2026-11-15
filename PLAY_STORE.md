@@ -57,7 +57,7 @@ Without these the build still works, but uses a throwaway key, so Google sign-in
 3. **Clients → Create client → Web application**, name it *Sonder server*. Copy the **Client ID**
    (looks like `1234-abc.apps.googleusercontent.com`). This is the one the app and server both use.
 4. **Clients → Create client → Android**:
-   - Package name: `com.example.sonder_app` (change this when we change the app ID)
+   - Package name: `com.mhcorps.sonder`
    - SHA-1: the fingerprint from step 1
 5. Back on GitHub → **Settings → Secrets and variables → Actions → Variables → New repository variable**:
    `GOOGLE_SERVER_CLIENT_ID` = the Web client ID from step 3.

@@ -61,9 +61,8 @@ new chat messages, and **"your moment is unlocked"**.
 
 1. Go to <https://console.firebase.google.com> → **Add project**. If you already made the *Sonder* project in
    Google Cloud for Google sign-in, pick that one so everything stays together.
-2. **Add app → Android.** Package name: the app ID (currently `com.example.sonder_app`; it changes when we
-   set the real one, and then you add the new one here). You can skip downloading `google-services.json`
-   and skip the "add SDK" steps; that's already done in code.
+2. **Add app → Android.** Package name: `com.mhcorps.sonder` (it must match exactly). App nickname: `Sonder`.
+   Skip downloading `google-services.json` and skip the "add SDK" steps; that's already done in code.
 3. **Project settings (⚙️) → General → Your apps**, and the **Cloud Messaging** tab: copy the four values
    into GitHub (repo → **Settings → Secrets and variables → Actions → Variables → New repository variable**):
 

@@ -1,4 +1,4 @@
-package com.example.sonder_app
+package com.mhcorps.sonder
 
 import io.flutter.embedding.android.FlutterActivity
 
