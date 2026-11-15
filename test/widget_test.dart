@@ -10,6 +10,7 @@ import 'package:sonder_app/data/api_client.dart';
 import 'package:sonder_app/data/google_auth.dart';
 import 'package:sonder_app/data/models.dart';
 import 'package:sonder_app/main.dart';
+import 'package:sonder_app/screens/intro_splash.dart';
 import 'package:sonder_app/theme/app_theme.dart';
 
 // ----------------------------------------------------------------- fixtures
@@ -584,5 +585,22 @@ void main() {
     expect(find.text('hassan@sonder.app'), findsOneWidget); // still on Profile after the rebuild
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getString('theme_mode'), 'dark');
+  });
+
+  testWidgets('intro: plays over the first screen, then opens like a shutter and goes away', (tester) async {
+    final backend = FakeBackend();
+    await setUpApi(backend, signedIn: false);
+    usePhoneScreen(tester);
+    await tester.pumpWidget(const SonderApp(showIntro: true));
+    await tester.pump();
+
+    expect(find.byType(IntroSplash), findsOneWidget);
+    expect(find.text('capture now · reveal later'), findsOneWidget);
+    expect(find.text('Welcome back 👋'), findsOneWidget); // the real screen is already underneath
+
+    await tester.pump(IntroSplash.duration);
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.byType(IntroSplash), findsNothing);
+    expect(find.text('Welcome back 👋'), findsOneWidget);
   });
 }

@@ -8,6 +8,7 @@ import 'data/models.dart';
 import 'data/push_service.dart';
 import 'screens/global_camera_screen.dart';
 import 'screens/home_screen.dart';
+import 'screens/intro_splash.dart';
 import 'screens/login_screen.dart';
 import 'screens/moments_archive_screen.dart';
 import 'screens/profile_screen.dart';
@@ -16,13 +17,16 @@ import 'theme/app_theme.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Future.wait([SonderApi.instance.restoreSession(), ThemeController.instance.load()]);
-  runApp(const SonderApp());
+  runApp(const SonderApp(showIntro: true));
   // After the first frame, so a slow Firebase start never delays the app opening.
   unawaited(PushService.init());
 }
 
 class SonderApp extends StatefulWidget {
-  const SonderApp({super.key});
+  /// Play the opening animation over the first screen (off in tests).
+  final bool showIntro;
+
+  const SonderApp({super.key, this.showIntro = false});
 
   @override
   State<SonderApp> createState() => _SonderAppState();
@@ -31,6 +35,7 @@ class SonderApp extends StatefulWidget {
 /// Picks light or dark from the user's choice (Profile → Theme) and the phone's own setting.
 class _SonderAppState extends State<SonderApp> with WidgetsBindingObserver {
   final _theme = ThemeController.instance;
+  late bool _introDone = !widget.showIntro;
 
   @override
   void initState() {
@@ -52,7 +57,8 @@ class _SonderAppState extends State<SonderApp> with WidgetsBindingObserver {
 
   void _apply() {
     final dark = _theme.isDarkFor(WidgetsBinding.instance.platformDispatcher.platformBrightness);
-    SystemChrome.setSystemUIOverlayStyle(dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark);
+    // Light status bar icons over the navy intro, then whatever suits the theme.
+    SystemChrome.setSystemUIOverlayStyle(dark || !_introDone ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark);
     if (dark == AppTheme.isDark) return;
     if (mounted) {
       setState(() => AppTheme.isDark = dark);
@@ -72,6 +78,21 @@ class _SonderAppState extends State<SonderApp> with WidgetsBindingObserver {
       scaffoldMessengerKey: rootMessengerKey,
       theme: AppTheme.theme,
       home: const AuthGate(),
+      // The intro sits on top of the first screen and opens like a shutter to reveal it.
+      builder: (context, child) => _introDone
+          ? child!
+          : Stack(
+              fit: StackFit.expand,
+              children: [
+                child!,
+                IntroSplash(
+                  onFinished: () {
+                    setState(() => _introDone = true);
+                    _apply();
+                  },
+                ),
+              ],
+            ),
     );
   }
 }

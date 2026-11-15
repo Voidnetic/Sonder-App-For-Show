@@ -28,6 +28,9 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
+  assets:
+    - assets/brand/
+
   # Both fonts are SIL Open Font License; the licences are next to the files.
   fonts:
     - family: Bagel
