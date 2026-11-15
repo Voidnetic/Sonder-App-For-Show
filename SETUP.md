@@ -14,7 +14,7 @@ database, the backend API, and the Flutter app.
 | `backend/db/03_accounts_and_safety.sql` | Google sign-in, blocks, reports. Applied automatically when the API starts |
 | `PLAY_STORE.md` | Google sign-in, signing key, and the Play Console forms |
 | `DEPLOY.md` | Putting the API online: Railway, Cloudflare R2 (photos), Firebase (notifications) |
-| `backend/Dockerfile`, `backend/railway.json` | How Railway builds and runs the API |
+| `backend/Dockerfile` | How Railway builds and runs the API |
 | `backend/scripts/setup_db.ps1`, `setup_db.sh` | Create the database for you |
 
 ---

@@ -104,13 +104,17 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 12),
             const Text(
-              'Android emulator: http://10.0.2.2:8000\n'
-              'Real phone: http://<computer IP>:8000 (same Wi-Fi)',
+              'Testing with your computer: http://<computer IP>:8000 (same Wi-Fi)\n'
+              'Android emulator: http://10.0.2.2:8000',
               style: TextStyle(fontSize: 12, color: AppTheme.kTextSecondary),
             ),
           ],
         ),
         actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, defaultServerUrl),
+            child: const Text('Use Sonder server'),
+          ),
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
           TextButton(onPressed: () => Navigator.pop(context, controller.text), child: const Text('Save')),
         ],

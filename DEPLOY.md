@@ -13,37 +13,22 @@ the repo: they only go into Railway's **Variables** or GitHub's **Secrets**.
 
 ---
 
-## 1. Railway: the API and database
+## 1. Railway: the API and database ✅ (done)
 
-1. Sign up at <https://railway.com> with your GitHub account and choose the **Hobby** plan.
-2. **New Project → Deploy from GitHub repo →** `Voidnetic/Sonder-App-For-Show`.
-   If it asks, let Railway's GitHub app access this repository.
-3. Click the new service, then **Settings**:
-   - **Source → Root Directory:** `/backend`
-   - **Source → Branch:** the branch with the latest code (`claude/wonderful-johnson-i2ajge` for now, or
-     `main` once it's merged)
-   - **Config-as-code → Railway Config File:** `/backend/railway.json`
-4. In the project, **+ Create → Database → Add PostgreSQL**.
-5. Click the API service → **Variables → New Variable** and add:
+Project **Sonder** on Railway has two services:
 
-   | Name | Value |
-   |---|---|
-   | `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` (type it exactly like this; Railway fills in the real address) |
-   | `JWT_SECRET` | A long random string; see the command below |
-   | `ADMIN_EMAILS` | The email you'll use in the app, so you can review reports |
-   | `SUPPORT_EMAIL` | An email you check (shown on the privacy policy) |
-   | `DEVELOPER_NAME` | Your name |
+- **sonder-api**: built from `backend/Dockerfile` on branch `claude/wonderful-johnson-i2ajge`, Root Directory
+  `/backend`, health check `/`. Live at **https://sonder-api-production.up.railway.app**.
+- **Postgres**: Railway's PostgreSQL template with a volume. The API created its tables on first start.
 
-   To make the `JWT_SECRET` value, run this in PowerShell and paste the 64 characters it prints:
+Variables already set on **sonder-api**: `DATABASE_URL` (`${{Postgres.DATABASE_URL}}`), `JWT_SECRET` (random,
+64 characters), `PORT=8080`, `DEVELOPER_NAME`.
 
-   ```powershell
-   $b = New-Object byte[] 32; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b); [BitConverter]::ToString($b) -replace '-'
-   ```
+Still worth adding yourself (sonder-api → **Variables**): `ADMIN_EMAILS` (the email you use in Sonder, so you
+can review reports) and `SUPPORT_EMAIL` (shown on the privacy policy).
 
-6. **Settings → Networking → Generate Domain.** You get an address like
-   `https://sonder-api-production.up.railway.app`. Open it: you should see `{"status":"ok"}`.
-   The tables are created automatically the first time it starts.
-7. Check `https://<your address>/privacy` and `/docs` work too.
+The app now uses this address by default. The **Server** button on the login screen still lets you switch to a
+laptop backend for testing, and **Use Sonder server** switches back.
 
 > Until step 2 is done, photos are saved on Railway's disk, which is **wiped on every deploy**. Fine for a
 > quick test, but do step 2 before real people use it.
@@ -100,18 +85,10 @@ new chat messages, and **"your moment is unlocked"**.
    In Railway → API service → **Variables**, add `FIREBASE_SERVICE_ACCOUNT` and paste. Then delete the
    downloaded file.
 
-## 4. Point the app at the server
+## 4. Point the app at the server ✅ (done)
 
-GitHub repo → **Settings → Secrets and variables → Actions → Variables**:
-
-| Variable | Value |
-|---|---|
-| `SONDER_API_URL` | Your Railway address from step 1.6, e.g. `https://sonder-api-production.up.railway.app` |
-
-The next APK build uses it as the default server, so people never have to type an address. (The
-*Server* button on the login screen still lets you switch to your laptop for testing.)
-
-To rebuild straight away: repo → **Actions → Build Android APK → Run workflow**.
+The app's default server is `https://sonder-api-production.up.railway.app`. To use a different one for a build,
+set the GitHub repository variable `SONDER_API_URL`.
 
 ## Checking it works
 

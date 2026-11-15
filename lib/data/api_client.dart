@@ -10,10 +10,10 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'google_auth.dart';
 import 'models.dart';
 
-/// 10.0.2.2 is how the Android emulator reaches the computer it runs on. A real phone needs the
-/// computer's Wi-Fi IP instead, which can be changed on the login screen (or with
-/// `flutter run --dart-define=SONDER_API_URL=http://192.168.1.20:8000`).
-const String defaultServerUrl = String.fromEnvironment('SONDER_API_URL', defaultValue: 'http://10.0.2.2:8000');
+/// The live Sonder server on Railway. To test against a backend on your computer, change it on the
+/// login screen (Server button), or build with `--dart-define=SONDER_API_URL=http://192.168.1.20:8000`.
+const String defaultServerUrl =
+    String.fromEnvironment('SONDER_API_URL', defaultValue: 'https://sonder-api-production.up.railway.app');
 
 class ApiException implements Exception {
   final int? statusCode;
