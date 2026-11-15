@@ -70,7 +70,7 @@ class _RevealScreenState extends State<RevealScreen> with SingleTickerProviderSt
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.close_rounded, color: AppTheme.kTextPrimary, size: 28),
+          icon: Icon(Icons.close_rounded, color: AppTheme.kTextPrimary, size: 28),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -93,13 +93,13 @@ class _RevealScreenState extends State<RevealScreen> with SingleTickerProviderSt
                       return ScaleTransition(scale: animation, child: child);
                     },
                     child: _isRevealed
-                        ? const Icon(
+                        ? Icon(
                             Icons.lock_open_rounded,
                             key: ValueKey("open"),
                             size: 100,
                             color: AppTheme.kTextPrimary,
                           )
-                        : const Icon(
+                        : Icon(
                             Icons.lock_rounded,
                             key: ValueKey("closed"),
                             size: 100,
@@ -110,7 +110,7 @@ class _RevealScreenState extends State<RevealScreen> with SingleTickerProviderSt
                 const SizedBox(height: 32),
                 Text(
                   _isRevealed ? "THE MOMENT IS UNLOCKED!" : "THE MOMENT IS READY",
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 1.5,
@@ -126,7 +126,7 @@ class _RevealScreenState extends State<RevealScreen> with SingleTickerProviderSt
                 const SizedBox(height: 8),
                 Text(
                   "${_moment.memoryCount} memories • ${_moment.friendCount} friends",
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.kTextSecondary),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.kTextSecondary),
                 ),
                 const SizedBox(height: 64),
                 if (!_isRevealed)
@@ -143,15 +143,15 @@ class _RevealScreenState extends State<RevealScreen> with SingleTickerProviderSt
                       ),
                       child: Center(
                         child: _revealing
-                            ? const SizedBox(
+                            ? SizedBox(
                                 width: 22,
                                 height: 22,
-                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
+                                child: CircularProgressIndicator(color: AppTheme.kOnPrimary, strokeWidth: 3),
                               )
-                            : const Text(
+                            : Text(
                                 "REVEAL",
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  color: AppTheme.kOnPrimary,
                                   fontSize: 20,
                                   fontWeight: FontWeight.w900,
                                   letterSpacing: 2,
@@ -170,9 +170,9 @@ class _RevealScreenState extends State<RevealScreen> with SingleTickerProviderSt
                         color: AppTheme.kSoftMint,
                         borderRadius: BorderRadius.circular(32),
                         border: Border.all(color: AppTheme.kBorder, width: 2),
-                        boxShadow: const [BoxShadow(color: AppTheme.kBorder, offset: Offset(4, 4))],
+                        boxShadow: [BoxShadow(color: AppTheme.kBorder, offset: Offset(4, 4))],
                       ),
-                      child: const Center(
+                      child: Center(
                         child: Text(
                           "EXPLORE MEMORIES ✨",
                           style: TextStyle(

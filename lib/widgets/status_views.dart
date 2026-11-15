@@ -3,16 +3,16 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
 class LoadingView extends StatelessWidget {
-  final Color color;
+  final Color? color;
 
-  const LoadingView({super.key, this.color = AppTheme.kTextPrimary});
+  const LoadingView({super.key, this.color});
 
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
-        child: CircularProgressIndicator(color: color, strokeWidth: 3),
+        child: CircularProgressIndicator(color: color ?? AppTheme.kTextPrimary, strokeWidth: 3),
       ),
     );
   }
@@ -32,20 +32,20 @@ class ErrorView extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppTheme.kSurface,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: AppTheme.kBorder, width: 2),
-            boxShadow: const [BoxShadow(color: AppTheme.kBorder, offset: Offset(4, 4))],
+            boxShadow: [BoxShadow(color: AppTheme.kBorder, offset: Offset(4, 4))],
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.cloud_off_rounded, size: 40, color: AppTheme.kTextPrimary),
+              Icon(Icons.cloud_off_rounded, size: 40, color: AppTheme.kTextPrimary),
               const SizedBox(height: 12),
               Text(
                 message,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.kTextPrimary),
+                style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.kTextPrimary),
               ),
               const SizedBox(height: 16),
               GestureDetector(
@@ -56,9 +56,9 @@ class ErrorView extends StatelessWidget {
                     color: AppTheme.kTextPrimary,
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: const Text(
+                  child: Text(
                     'RETRY',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, letterSpacing: 1.5),
+                    style: TextStyle(color: AppTheme.kOnPrimary, fontWeight: FontWeight.w900, letterSpacing: 1.5),
                   ),
                 ),
               ),
@@ -82,7 +82,7 @@ class EmptyView extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.kSurface,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: AppTheme.kBorder, width: 2),
       ),
@@ -93,14 +93,14 @@ class EmptyView extends StatelessWidget {
           Text(
             title,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppTheme.kTextPrimary),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppTheme.kTextPrimary),
           ),
           if (subtitle != null) ...[
             const SizedBox(height: 6),
             Text(
               subtitle!,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.kTextSecondary),
+              style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.kTextSecondary),
             ),
           ],
         ],

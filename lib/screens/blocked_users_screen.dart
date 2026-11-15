@@ -57,7 +57,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
                   margin: const EdgeInsets.only(bottom: 12),
                   padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppTheme.kSurface,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: AppTheme.kBorder, width: 2),
                   ),
@@ -68,7 +68,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
                       ),
                       TextButton(
                         onPressed: () => _unblock(user),
-                        child: const Text(
+                        child: Text(
                           'Unblock',
                           style: TextStyle(fontWeight: FontWeight.w900, color: AppTheme.kTextPrimary),
                         ),

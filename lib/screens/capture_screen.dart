@@ -249,7 +249,7 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
                         borderRadius: BorderRadius.circular(18),
                         border: Border.all(color: AppTheme.kBorder, width: 2),
                         boxShadow: m.id == _target?.id
-                            ? const [BoxShadow(color: AppTheme.kBorder, offset: Offset(3, 3))]
+                            ? [BoxShadow(color: AppTheme.kBorder, offset: Offset(3, 3))]
                             : null,
                       ),
                       child: Row(
@@ -259,7 +259,7 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
                           ),
                           Text(
                             revealDescription(m.unlockAt).replaceFirst('Reveals ', ''),
-                            style: const TextStyle(fontWeight: FontWeight.w600, color: AppTheme.kTextSecondary),
+                            style: TextStyle(fontWeight: FontWeight.w600, color: AppTheme.kTextSecondary),
                           ),
                           if (m.id == _target?.id) ...[
                             const SizedBox(width: 8),
@@ -616,20 +616,20 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.group_rounded, size: 18, color: AppTheme.kTextPrimary),
+            Icon(Icons.group_rounded, size: 18, color: AppTheme.kTextPrimary),
             const SizedBox(width: 8),
             if (target != null)
-              const Text('Sending to ', style: TextStyle(fontWeight: FontWeight.w600, color: AppTheme.kTextSecondary)),
+              Text('Sending to ', style: TextStyle(fontWeight: FontWeight.w600, color: AppTheme.kTextSecondary)),
             Flexible(
               child: Text(
                 label,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.w800, color: AppTheme.kTextPrimary),
+                style: TextStyle(fontWeight: FontWeight.w800, color: AppTheme.kTextPrimary),
               ),
             ),
             if (canChoose) ...[
               const SizedBox(width: 4),
-              const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.kTextPrimary),
+              Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.kTextPrimary),
             ],
           ],
         ),
@@ -648,7 +648,7 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.check_circle_rounded, color: AppTheme.kSoftMint, size: 86),
+                  Icon(Icons.check_circle_rounded, color: AppTheme.kSoftMint, size: 86),
                   const SizedBox(height: 14),
                   Text('MEMORY SECURED 🔒', style: AppTheme.display(26, color: Colors.white)),
                   const SizedBox(height: 6),

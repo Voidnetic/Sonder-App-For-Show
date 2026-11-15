@@ -97,7 +97,7 @@ class _LoginScreenState extends State<LoginScreen> {
             const SizedBox(height: 32),
             BubblyText(_isSignUp ? 'Create account ✨' : 'Welcome back 👋', key: ValueKey(_isSignUp)),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Capture moments together. Reveal them later.',
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.kTextSecondary),
             ),
@@ -121,7 +121,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 16),
               Text(
                 _error!,
-                style: const TextStyle(color: Color(0xFFB00020), fontWeight: FontWeight.bold),
+                style: TextStyle(color: AppTheme.kDanger, fontWeight: FontWeight.bold),
               ),
             ],
             const SizedBox(height: 32),
@@ -133,18 +133,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   color: AppTheme.kTextPrimary,
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(color: AppTheme.kBorder, width: 2),
-                  boxShadow: const [BoxShadow(color: AppTheme.kSoftMint, offset: Offset(6, 6))],
+                  boxShadow: [BoxShadow(color: AppTheme.kSoftMint, offset: Offset(6, 6))],
                 ),
                 child: Center(
                   child: _busy
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 22,
                           height: 22,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
+                          child: CircularProgressIndicator(color: AppTheme.kOnPrimary, strokeWidth: 3),
                         )
                       : Text(
                           _isSignUp ? 'SIGN UP' : 'LOG IN',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppTheme.kBackground,
                             fontSize: 18,
                             fontWeight: FontWeight.w900,
@@ -155,7 +155,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            const Row(
+            Row(
               children: [
                 Expanded(child: Divider(color: AppTheme.kBorder, thickness: 1.5)),
                 Padding(
@@ -175,10 +175,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 key: const Key('google-button'),
                 padding: const EdgeInsets.symmetric(vertical: 18),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppTheme.kSurface,
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(color: AppTheme.kBorder, width: 2),
-                  boxShadow: const [BoxShadow(color: AppTheme.kPeriwinkle, offset: Offset(6, 6))],
+                  boxShadow: [BoxShadow(color: AppTheme.kPeriwinkle, offset: Offset(6, 6))],
                 ),
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -209,25 +209,25 @@ class _LoginScreenState extends State<LoginScreen> {
                       }),
                 child: Text(
                   _isSignUp ? 'Already have an account? Log in' : 'New here? Create an account',
-                  style: const TextStyle(fontWeight: FontWeight.w900, color: AppTheme.kTextPrimary),
+                  style: TextStyle(fontWeight: FontWeight.w900, color: AppTheme.kTextPrimary),
                 ),
               ),
             ),
             const SizedBox(height: 8),
             Text.rich(
               TextSpan(
-                style: const TextStyle(fontSize: 12, color: AppTheme.kTextSecondary, fontWeight: FontWeight.w600),
+                style: TextStyle(fontSize: 12, color: AppTheme.kTextSecondary, fontWeight: FontWeight.w600),
                 children: [
                   const TextSpan(text: 'By continuing you agree to the '),
                   TextSpan(
                     text: 'Terms',
-                    style: const TextStyle(color: AppTheme.kTextPrimary, fontWeight: FontWeight.w900),
+                    style: TextStyle(color: AppTheme.kTextPrimary, fontWeight: FontWeight.w900),
                     recognizer: TapGestureRecognizer()..onTap = () => _openLink(_api.termsUrl),
                   ),
                   const TextSpan(text: ' and '),
                   TextSpan(
                     text: 'Privacy Policy',
-                    style: const TextStyle(color: AppTheme.kTextPrimary, fontWeight: FontWeight.w900),
+                    style: TextStyle(color: AppTheme.kTextPrimary, fontWeight: FontWeight.w900),
                     recognizer: TapGestureRecognizer()..onTap = () => _openLink(_api.privacyPolicyUrl),
                   ),
                   const TextSpan(text: '.'),
@@ -246,7 +246,7 @@ class _LoginScreenState extends State<LoginScreen> {
     padding: const EdgeInsets.only(bottom: 12),
     child: Text(
       text,
-      style: const TextStyle(
+      style: TextStyle(
         color: AppTheme.kTextSecondary,
         fontSize: 12,
         fontWeight: FontWeight.w900,
@@ -264,10 +264,10 @@ class _LoginScreenState extends State<LoginScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.kSurface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppTheme.kBorder, width: 2),
-        boxShadow: const [BoxShadow(color: AppTheme.kLavender, offset: Offset(4, 4))],
+        boxShadow: [BoxShadow(color: AppTheme.kLavender, offset: Offset(4, 4))],
       ),
       child: TextField(
         key: key,

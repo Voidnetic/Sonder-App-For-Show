@@ -26,10 +26,10 @@ class _MomentCardState extends State<MomentCard> {
         duration: const Duration(milliseconds: 200),
         margin: const EdgeInsets.only(bottom: 24),
         decoration: BoxDecoration(
-          color: moment.accentColor,
+          color: AppTheme.tint(moment.accentColor),
           borderRadius: BorderRadius.circular(32),
           border: Border.all(color: AppTheme.kBorder, width: 1.5),
-          boxShadow: const [
+          boxShadow: [
             BoxShadow(
               color: AppTheme.kBorder,
               offset: Offset(4, 4),
@@ -47,7 +47,7 @@ class _MomentCardState extends State<MomentCard> {
                   Expanded(
                     child: Text(
                       moment.title.toUpperCase(),
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppTheme.kTextPrimary,
                         fontSize: 22,
                         fontWeight: FontWeight.w900,
@@ -68,7 +68,7 @@ class _MomentCardState extends State<MomentCard> {
                     child: Text(
                       '${moment.memoryCount} memories • ${moment.friendCount} friends',
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppTheme.kTextPrimary,
                         fontWeight: FontWeight.w600,
                       ),

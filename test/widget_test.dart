@@ -10,6 +10,7 @@ import 'package:sonder_app/data/api_client.dart';
 import 'package:sonder_app/data/google_auth.dart';
 import 'package:sonder_app/data/models.dart';
 import 'package:sonder_app/main.dart';
+import 'package:sonder_app/theme/app_theme.dart';
 
 // ----------------------------------------------------------------- fixtures
 
@@ -558,5 +559,30 @@ void main() {
     expect(api.currentUser.value, isNull);
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getString('access_token'), isNull);
+  });
+
+  testWidgets('profile: switching to the dark theme recolours the app, keeps Profile open, and is saved',
+      (tester) async {
+    final backend = FakeBackend();
+    await setUpApi(backend);
+    addTearDown(() async {
+      await ThemeController.instance.set(ThemeMode.system);
+      AppTheme.isDark = false;
+    });
+    await startApp(tester);
+    await tapAndSettle(tester, find.text('Profile'));
+    expect(AppTheme.isDark, isFalse);
+
+    await tester.scrollUntilVisible(find.text('Theme'), 300, scrollable: find.byType(Scrollable).first);
+    await tapAndSettle(tester, find.text('Theme'));
+    await tapAndSettle(tester, find.byKey(const Key('theme-dark')));
+
+    expect(AppTheme.isDark, isTrue);
+    expect(tester.widget<Scaffold>(find.byType(Scaffold).first).backgroundColor ??
+        Theme.of(tester.element(find.byType(Scaffold).first)).scaffoldBackgroundColor, AppTheme.kBackground);
+    expect(AppTheme.kBackground, const Color(0xFF14151C));
+    expect(find.text('hassan@sonder.app'), findsOneWidget); // still on Profile after the rebuild
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getString('theme_mode'), 'dark');
   });
 }

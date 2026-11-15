@@ -25,7 +25,7 @@ Future<bool> showReportSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: AppTheme.kBackground,
-    shape: const RoundedRectangleBorder(
+    shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       side: BorderSide(color: AppTheme.kBorder, width: 2),
     ),
@@ -114,7 +114,7 @@ class _ReportSheetState extends State<_ReportSheet> {
             children: [
               Text('Report $_what', style: AppTheme.display(26)),
               const SizedBox(height: 6),
-              const Text(
+              Text(
                 "Your report is private. The person won't know it was you.",
                 style: TextStyle(fontWeight: FontWeight.w600, color: AppTheme.kTextSecondary),
               ),
@@ -129,9 +129,9 @@ class _ReportSheetState extends State<_ReportSheet> {
                       selected: _reason == entry.key,
                       onSelected: _sending ? null : (_) => setState(() => _reason = entry.key),
                       selectedColor: AppTheme.kSunshine,
-                      backgroundColor: Colors.white,
+                      backgroundColor: AppTheme.kSurface,
                       showCheckmark: false,
-                      side: const BorderSide(color: AppTheme.kBorder, width: 1.5),
+                      side: BorderSide(color: AppTheme.kBorder, width: 1.5),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),
                 ],
@@ -145,10 +145,10 @@ class _ReportSheetState extends State<_ReportSheet> {
                 decoration: InputDecoration(
                   hintText: 'Anything else we should know? (optional)',
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: AppTheme.kSurface,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: AppTheme.kBorder, width: 2),
+                    borderSide: BorderSide(color: AppTheme.kBorder, width: 2),
                   ),
                 ),
               ),
@@ -165,7 +165,7 @@ class _ReportSheetState extends State<_ReportSheet> {
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Text(
                     _error!,
-                    style: const TextStyle(color: Color(0xFFB00020), fontWeight: FontWeight.bold),
+                    style: TextStyle(color: AppTheme.kDanger, fontWeight: FontWeight.bold),
                   ),
                 ),
               const SizedBox(height: 8),
@@ -179,10 +179,10 @@ class _ReportSheetState extends State<_ReportSheet> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                   ),
                   child: _sending
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
+                          child: CircularProgressIndicator(color: AppTheme.kOnPrimary, strokeWidth: 3),
                         )
                       : const Text('SEND REPORT', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.5)),
                 ),
@@ -203,7 +203,7 @@ Future<bool> confirmBlock(BuildContext context, AppUser user) async {
       backgroundColor: AppTheme.kBackground,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(28),
-        side: const BorderSide(color: AppTheme.kBorder, width: 2),
+        side: BorderSide(color: AppTheme.kBorder, width: 2),
       ),
       title: Text('Block ${user.name}?', style: const TextStyle(fontWeight: FontWeight.w900)),
       content: Text(
@@ -213,16 +213,16 @@ Future<bool> confirmBlock(BuildContext context, AppUser user) async {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context, false),
-          child: const Text(
+          child: Text(
             'Cancel',
             style: TextStyle(fontWeight: FontWeight.w800, color: AppTheme.kTextPrimary),
           ),
         ),
         TextButton(
           onPressed: () => Navigator.pop(context, true),
-          child: const Text(
+          child: Text(
             'Block',
-            style: TextStyle(color: Color(0xFFB00020), fontWeight: FontWeight.w900),
+            style: TextStyle(color: AppTheme.kDanger, fontWeight: FontWeight.w900),
           ),
         ),
       ],
@@ -250,7 +250,7 @@ Future<bool> showContentActions(
   final choice = await showModalBottomSheet<String>(
     context: context,
     backgroundColor: AppTheme.kBackground,
-    shape: const RoundedRectangleBorder(
+    shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       side: BorderSide(color: AppTheme.kBorder, width: 2),
     ),
@@ -268,10 +268,10 @@ Future<bool> showContentActions(
             onTap: () => Navigator.pop(context, 'report'),
           ),
           ListTile(
-            leading: const Icon(Icons.block_rounded, color: Color(0xFFB00020)),
+            leading: Icon(Icons.block_rounded, color: AppTheme.kDanger),
             title: Text(
               'Block ${author.name}',
-              style: const TextStyle(fontWeight: FontWeight.w800, color: Color(0xFFB00020)),
+              style: TextStyle(fontWeight: FontWeight.w800, color: AppTheme.kDanger),
             ),
             onTap: () => Navigator.pop(context, 'block'),
           ),

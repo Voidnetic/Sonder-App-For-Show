@@ -89,7 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 28),
                   BubblyText("Hey, ${user?.name ?? 'there'} 👋"),
                   const SizedBox(height: 6),
-                  const PopIn(
+                  PopIn(
                     child: Text(
                       'Which moment are we living today?',
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppTheme.kTextSecondary),
@@ -119,9 +119,9 @@ class _HomeScreenState extends State<HomeScreen> {
             color: AppTheme.kTextPrimary,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: AppTheme.kBorder, width: 1.5),
-            boxShadow: const [BoxShadow(color: AppTheme.kSunshine, offset: Offset(4, 4))],
+            boxShadow: [BoxShadow(color: AppTheme.kSunshine, offset: Offset(4, 4))],
           ),
-          child: const Row(
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.add_rounded, color: AppTheme.kBackground),
@@ -151,10 +151,10 @@ class _HomeScreenState extends State<HomeScreen> {
             height: 48,
             margin: const EdgeInsets.only(right: 10),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppTheme.kSurface,
               shape: BoxShape.circle,
               border: Border.all(color: AppTheme.kBorder, width: 1.5),
-              boxShadow: const [BoxShadow(color: AppTheme.kBorder, offset: Offset(2, 2))],
+              boxShadow: [BoxShadow(color: AppTheme.kBorder, offset: Offset(2, 2))],
             ),
             child: const Icon(Icons.group_add_outlined, size: 24, semanticLabel: 'Friends'),
           ),
@@ -163,10 +163,10 @@ class _HomeScreenState extends State<HomeScreen> {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: user?.color ?? AppTheme.kPaleYellow,
+            color: user == null ? AppTheme.kPaleYellow : AppTheme.tint(user.color),
             shape: BoxShape.circle,
             border: Border.all(color: AppTheme.kBorder, width: 1.5),
-            boxShadow: const [BoxShadow(color: AppTheme.kBorder, offset: Offset(2, 2))],
+            boxShadow: [BoxShadow(color: AppTheme.kBorder, offset: Offset(2, 2))],
           ),
           child: const Center(child: Icon(Icons.face_6_rounded, size: 28)),
         ),
@@ -195,7 +195,7 @@ class _HomeScreenState extends State<HomeScreen> {
         color: color,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: AppTheme.kBorder, width: 2),
-        boxShadow: const [BoxShadow(color: AppTheme.kBorder, offset: Offset(4, 4))],
+        boxShadow: [BoxShadow(color: AppTheme.kBorder, offset: Offset(4, 4))],
       ),
       child: Stack(
         children: [
@@ -227,7 +227,7 @@ class _HomeScreenState extends State<HomeScreen> {
           color: AppTheme.kLightBlue,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: AppTheme.kBorder, width: 2),
-          boxShadow: const [BoxShadow(color: AppTheme.kBorder, offset: Offset(4, 4))],
+          boxShadow: [BoxShadow(color: AppTheme.kBorder, offset: Offset(4, 4))],
         ),
         child: Row(
           children: [
@@ -235,7 +235,7 @@ class _HomeScreenState extends State<HomeScreen> {
               width: 58,
               height: 58,
               decoration: BoxDecoration(
-                color: moment.accentColor,
+                color: AppTheme.tint(moment.accentColor),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: AppTheme.kBorder, width: 2),
               ),
@@ -252,7 +252,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     '${moment.title} · ${revealDescription(moment.unlockAt).replaceFirst('Reveals ', '')}',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.w600, color: AppTheme.kTextSecondary),
+                    style: TextStyle(fontWeight: FontWeight.w600, color: AppTheme.kTextSecondary),
                   ),
                 ],
               ),
@@ -261,10 +261,10 @@ class _HomeScreenState extends State<HomeScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppTheme.kSurface,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: AppTheme.kBorder, width: 2),
-                boxShadow: const [BoxShadow(color: AppTheme.kBorder, offset: Offset(2, 2))],
+                boxShadow: [BoxShadow(color: AppTheme.kBorder, offset: Offset(2, 2))],
               ),
               child: const Text('Open', style: TextStyle(fontWeight: FontWeight.w800)),
             ),

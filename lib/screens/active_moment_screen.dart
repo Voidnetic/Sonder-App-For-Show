@@ -233,12 +233,12 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _moment.accentColor,
+      backgroundColor: AppTheme.tint(_moment.accentColor),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.kTextPrimary, size: 28),
+          icon: Icon(Icons.arrow_back_rounded, color: AppTheme.kTextPrimary, size: 28),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
@@ -246,7 +246,7 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
             Text(
               _moment.title.toUpperCase(),
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppTheme.kTextPrimary,
                 fontSize: 16,
                 fontWeight: FontWeight.w900,
@@ -256,7 +256,7 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
             const SizedBox(height: 2),
             Text(
               "${_moment.friendCount} friends • $_memoryCount memories",
-              style: const TextStyle(color: AppTheme.kTextSecondary, fontSize: 12, fontWeight: FontWeight.bold),
+              style: TextStyle(color: AppTheme.kTextSecondary, fontSize: 12, fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -270,10 +270,10 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
             child: Container(
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppTheme.kSurface,
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(color: AppTheme.kBorder, width: 2),
-                boxShadow: const [BoxShadow(color: AppTheme.kBorder, offset: Offset(3, 3))],
+                boxShadow: [BoxShadow(color: AppTheme.kBorder, offset: Offset(3, 3))],
               ),
               child: Row(children: [_tabButton("📸 Memories", 0), _tabButton("💬 Hangout", 1)]),
             ),
@@ -304,7 +304,7 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
             child: Text(
               label,
               style: TextStyle(
-                color: selected ? Colors.white : AppTheme.kTextPrimary,
+                color: selected ? AppTheme.kOnPrimary : AppTheme.kTextPrimary,
                 fontWeight: FontWeight.w900,
                 fontSize: 14,
               ),
@@ -329,7 +329,7 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
             children: [
               unlocked ? _buildUnlockedBox() : _buildCountdownBox(),
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 "PARTICIPATING MEMORIES",
                 style: TextStyle(
                   fontSize: 12,
@@ -368,15 +368,15 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
                     border: Border.all(color: AppTheme.kBorder, width: 2),
                     boxShadow: _isCapturePressed ? [] : const [BoxShadow(color: Colors.white, offset: Offset(6, 6))],
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.camera_alt_rounded, color: Colors.white, size: 28),
+                      Icon(Icons.camera_alt_rounded, color: AppTheme.kOnPrimary, size: 28),
                       SizedBox(width: 12),
                       Text(
                         "CAPTURE MEMORY",
                         style: TextStyle(
-                          color: Colors.white,
+                          color: AppTheme.kOnPrimary,
                           fontSize: 18,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 2,
@@ -396,10 +396,10 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.kSurface,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: AppTheme.kBorder, width: 2),
-        boxShadow: const [BoxShadow(color: AppTheme.kBorder, offset: Offset(4, 4))],
+        boxShadow: [BoxShadow(color: AppTheme.kBorder, offset: Offset(4, 4))],
       ),
       child: Column(
         children: [
@@ -410,11 +410,11 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
                 animation: _pulseController,
                 builder: (context, child) => Transform.scale(
                   scale: 1.0 + (_pulseController.value * 0.2),
-                  child: const Icon(Icons.lock_rounded, size: 16, color: AppTheme.kTextPrimary),
+                  child: Icon(Icons.lock_rounded, size: 16, color: AppTheme.kTextPrimary),
                 ),
               ),
               const SizedBox(width: 8),
-              const Text(
+              Text(
                 "LOCKED STATE",
                 style: TextStyle(
                   color: AppTheme.kTextSecondary,
@@ -435,7 +435,7 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
           Text(
             "🔒 $_memoryCount memories are currently locked.",
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppTheme.kTextSecondary, fontSize: 14, fontWeight: FontWeight.bold),
+            style: TextStyle(color: AppTheme.kTextSecondary, fontSize: 14, fontWeight: FontWeight.bold),
           ),
         ],
       ),
@@ -449,11 +449,11 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
         color: AppTheme.kPaleYellow,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: AppTheme.kBorder, width: 2),
-        boxShadow: const [BoxShadow(color: AppTheme.kBorder, offset: Offset(4, 4))],
+        boxShadow: [BoxShadow(color: AppTheme.kBorder, offset: Offset(4, 4))],
       ),
       child: Column(
         children: [
-          const Icon(Icons.lock_open_rounded, size: 28, color: AppTheme.kTextPrimary),
+          Icon(Icons.lock_open_rounded, size: 28, color: AppTheme.kTextPrimary),
           const SizedBox(height: 8),
           const Text(
             "THE MOMENT IS READY",
@@ -470,10 +470,10 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: AppTheme.kBorder, width: 2),
               ),
-              child: const Center(
+              child: Center(
                 child: Text(
                   "REVEAL NOW",
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, letterSpacing: 2),
+                  style: TextStyle(color: AppTheme.kOnPrimary, fontWeight: FontWeight.w900, letterSpacing: 2),
                 ),
               ),
             ),
@@ -512,7 +512,7 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.kSurface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppTheme.kBorder, width: 2),
       ),
@@ -526,7 +526,7 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: AppTheme.kBorder, width: 1.5),
             ),
-            child: const Icon(Icons.blur_on_rounded, color: AppTheme.kTextSecondary, size: 26),
+            child: Icon(Icons.blur_on_rounded, color: AppTheme.kTextSecondary, size: 26),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -535,7 +535,7 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
               children: [
                 Text(name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 4),
-                const Row(
+                Row(
                   children: [
                     Icon(Icons.lock_outline_rounded, size: 14, color: AppTheme.kTextSecondary),
                     SizedBox(width: 4),
@@ -568,7 +568,7 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
                     ? ErrorView(message: _messagesError.toString(), onRetry: _loadMessages)
                     : const LoadingView())
               : messages.isEmpty
-              ? const Center(
+              ? Center(
                   child: Text(
                     "No messages yet. Say hi 👋",
                     style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.kTextSecondary),
@@ -585,7 +585,7 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
         // MESSAGE COMPOSER
         Container(
           padding: const EdgeInsets.all(16),
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: AppTheme.kBackground,
             border: Border(top: BorderSide(color: AppTheme.kBorder, width: 2)),
           ),
@@ -598,11 +598,11 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
                     child: Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppTheme.kSurface,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: AppTheme.kBorder, width: 1.5),
                       ),
-                      child: const Icon(Icons.add_rounded, color: AppTheme.kTextPrimary, size: 24),
+                      child: Icon(Icons.add_rounded, color: AppTheme.kTextPrimary, size: 24),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -611,7 +611,7 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppTheme.kSurface,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: AppTheme.kBorder, width: 2),
                     ),
@@ -619,7 +619,7 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
                       key: const Key('chat-field'),
                       controller: _chatController,
                       maxLength: 2000,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         hintText: "Write a message...",
                         border: InputBorder.none,
                         counterText: '',
@@ -639,11 +639,11 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
                       color: AppTheme.kTextPrimary,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: AppTheme.kBorder, width: 2),
-                      boxShadow: const [BoxShadow(color: AppTheme.kSoftMint, offset: Offset(3, 3))],
+                      boxShadow: [BoxShadow(color: AppTheme.kSoftMint, offset: Offset(3, 3))],
                     ),
                     child: Text(
                       _sending ? "..." : "Send",
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14),
+                      style: TextStyle(color: AppTheme.kOnPrimary, fontWeight: FontWeight.w900, fontSize: 14),
                     ),
                   ),
                 ),
@@ -662,13 +662,13 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
           margin: const EdgeInsets.symmetric(vertical: 8),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.6),
+            color: AppTheme.kSurface.withValues(alpha: 0.6),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppTheme.kBorder, width: 1.5),
           ),
           child: Text(
             msg.text,
-            style: const TextStyle(color: AppTheme.kTextSecondary, fontSize: 12, fontWeight: FontWeight.bold),
+            style: TextStyle(color: AppTheme.kTextSecondary, fontSize: 12, fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
         ),
@@ -687,10 +687,10 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
           constraints: const BoxConstraints(maxWidth: 280),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isMe ? AppTheme.kTextPrimary : Colors.white,
+            color: isMe ? AppTheme.kTextPrimary : AppTheme.kSurface,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: AppTheme.kBorder, width: 2),
-            boxShadow: const [BoxShadow(color: AppTheme.kBorder, offset: Offset(3, 3))],
+            boxShadow: [BoxShadow(color: AppTheme.kBorder, offset: Offset(3, 3))],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -698,14 +698,14 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
               if (!isMe) ...[
                 Text(
                   msg.author?.name ?? 'Someone',
-                  style: const TextStyle(color: AppTheme.kTextSecondary, fontSize: 12, fontWeight: FontWeight.w900),
+                  style: TextStyle(color: AppTheme.kTextSecondary, fontSize: 12, fontWeight: FontWeight.w900),
                 ),
                 const SizedBox(height: 4),
               ],
               Text(
                 msg.text,
                 style: TextStyle(
-                  color: isMe ? Colors.white : AppTheme.kTextPrimary,
+                  color: isMe ? AppTheme.kOnPrimary : AppTheme.kTextPrimary,
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
                 ),
@@ -714,7 +714,7 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
               Text(
                 formatClock(msg.createdAt, alwaysShowMinutes: true),
                 style: TextStyle(
-                  color: isMe ? Colors.white70 : AppTheme.kTextSecondary,
+                  color: isMe ? AppTheme.kOnPrimary.withValues(alpha: 0.7) : AppTheme.kTextSecondary,
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
                 ),

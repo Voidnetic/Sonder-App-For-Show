@@ -82,7 +82,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Flexible(
+            Flexible(
               child: Text(
                 "ACCOUNT & PROFILE",
                 overflow: TextOverflow.ellipsis,
@@ -115,7 +115,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             color: AppTheme.kLavender,
             borderRadius: BorderRadius.circular(32),
             border: Border.all(color: AppTheme.kBorder, width: 2),
-            boxShadow: const [BoxShadow(color: AppTheme.kBorder, offset: Offset(4, 4))],
+            boxShadow: [BoxShadow(color: AppTheme.kBorder, offset: Offset(4, 4))],
           ),
           child: Row(
             children: [
@@ -123,7 +123,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 width: 72,
                 height: 72,
                 decoration: BoxDecoration(
-                  color: user.color,
+                  color: AppTheme.tint(user.color),
                   shape: BoxShape.circle,
                   border: Border.all(color: AppTheme.kBorder, width: 2),
                 ),
@@ -139,7 +139,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Text(
                       user.email,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.kTextSecondary),
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.kTextSecondary),
                     ),
                     const SizedBox(height: 6),
                     Container(
@@ -179,7 +179,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         // FRIENDS LIST SECTION
         Row(
           children: [
-            const Expanded(
+            Expanded(
               child: Text(
                 "CONNECTED CIRCLE (FRIENDS)",
                 style: TextStyle(
@@ -199,14 +199,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   color: AppTheme.kTextPrimary,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: AppTheme.kBorder, width: 1.5),
-                  boxShadow: const [BoxShadow(color: AppTheme.kSunshine, offset: Offset(2, 2))],
+                  boxShadow: [BoxShadow(color: AppTheme.kSunshine, offset: Offset(2, 2))],
                 ),
                 child: Text(
                   data.friends.isEmpty ? "+ ADD FRIENDS" : "MANAGE",
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w900,
-                    color: Colors.white,
+                    color: AppTheme.kOnPrimary,
                     letterSpacing: 1,
                   ),
                 ),
@@ -218,12 +218,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppTheme.kSurface,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: AppTheme.kBorder, width: 2),
           ),
           child: data.friends.isEmpty
-              ? const Text(
+              ? Text(
                   "No friends yet. Add friends to start a moment together.",
                   style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.kTextSecondary),
                 )
@@ -232,7 +232,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 32),
 
         // APP SETTINGS SECTION
-        const Text(
+        Text(
           "SETTINGS & PREFERENCES",
           style: TextStyle(
             fontSize: 12,
@@ -244,18 +244,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 16),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppTheme.kSurface,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: AppTheme.kBorder, width: 2),
           ),
           child: Column(
             children: [
               _buildSettingTile(Icons.notifications_active_outlined, "Unlock Reminders", "On"),
-              const Divider(height: 1, color: AppTheme.kBorder, thickness: 1.5),
-              _buildSettingTile(Icons.palette_outlined, "Neo-Brutalist Theme", "Default"),
-              const Divider(height: 1, color: AppTheme.kBorder, thickness: 1.5),
+              Divider(height: 1, color: AppTheme.kBorder, thickness: 1.5),
+              _buildSettingTile(
+                Icons.dark_mode_outlined,
+                "Theme",
+                _themeLabel(ThemeController.instance.mode.value),
+                onTap: _pickTheme,
+              ),
+              Divider(height: 1, color: AppTheme.kBorder, thickness: 1.5),
               _buildSettingTile(Icons.group_outlined, "Friends & requests", "", onTap: () => _openFriends(0)),
-              const Divider(height: 1, color: AppTheme.kBorder, thickness: 1.5),
+              Divider(height: 1, color: AppTheme.kBorder, thickness: 1.5),
               _buildSettingTile(Icons.block_rounded, "Blocked people", "", onTap: _openBlocked),
             ],
           ),
@@ -271,12 +276,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
               color: AppTheme.kTextPrimary,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: AppTheme.kBorder, width: 2),
-              boxShadow: const [BoxShadow(color: AppTheme.kPaleYellow, offset: Offset(3, 3))],
+              boxShadow: [BoxShadow(color: AppTheme.kPaleYellow, offset: Offset(3, 3))],
             ),
-            child: const Center(
+            child: Center(
               child: Text(
                 "LOG OUT",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 2, color: Colors.white),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 2, color: AppTheme.kOnPrimary),
               ),
             ),
           ),
@@ -284,7 +289,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 32),
 
         // PRIVACY SECTION
-        const Text(
+        Text(
           "PRIVACY & SAFETY",
           style: TextStyle(
             fontSize: 12,
@@ -296,7 +301,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 16),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppTheme.kSurface,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: AppTheme.kBorder, width: 2),
           ),
@@ -308,14 +313,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 "",
                 onTap: () => _openLink(SonderApi.instance.privacyPolicyUrl),
               ),
-              const Divider(height: 1, color: AppTheme.kBorder, thickness: 1.5),
+              Divider(height: 1, color: AppTheme.kBorder, thickness: 1.5),
               _buildSettingTile(
                 Icons.gavel_rounded,
                 "Terms & community rules",
                 "",
                 onTap: () => _openLink(SonderApi.instance.termsUrl),
               ),
-              const Divider(height: 1, color: AppTheme.kBorder, thickness: 1.5),
+              Divider(height: 1, color: AppTheme.kBorder, thickness: 1.5),
               _buildSettingTile(
                 Icons.delete_forever_outlined,
                 "Delete account",
@@ -329,6 +334,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 24),
       ],
     );
+  }
+
+  static String _themeLabel(ThemeMode mode) => switch (mode) {
+        ThemeMode.light => "Light",
+        ThemeMode.dark => "Dark",
+        ThemeMode.system => "System",
+      };
+
+  Future<void> _pickTheme() async {
+    final current = ThemeController.instance.mode.value;
+    final picked = await showModalBottomSheet<ThemeMode>(
+      context: context,
+      backgroundColor: AppTheme.kBackground,
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        side: BorderSide(color: AppTheme.kBorder, width: 2),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("Theme", style: AppTheme.display(26)),
+              const SizedBox(height: 12),
+              for (final (mode, icon, hint) in [
+                (ThemeMode.system, Icons.brightness_auto_outlined, "Match your phone's setting"),
+                (ThemeMode.light, Icons.light_mode_outlined, "Cream and pastels"),
+                (ThemeMode.dark, Icons.dark_mode_outlined, "Deep ink with cream outlines"),
+              ])
+                ListTile(
+                  key: Key('theme-${mode.name}'),
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(icon, color: AppTheme.kTextPrimary),
+                  title: Text(
+                    _themeLabel(mode),
+                    style: TextStyle(fontWeight: FontWeight.w800, color: AppTheme.kTextPrimary),
+                  ),
+                  subtitle: Text(hint, style: TextStyle(color: AppTheme.kTextSecondary)),
+                  trailing: mode == current ? Icon(Icons.check_circle_rounded, color: AppTheme.kTextPrimary) : null,
+                  onTap: () => Navigator.pop(context, mode),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+    // Saving it rebuilds the whole app in the new colours (see SonderApp); this tab stays open.
+    if (picked != null && picked != current) await ThemeController.instance.set(picked);
   }
 
   Future<void> _openFriends(int tab) async {
@@ -352,7 +407,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     showDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator(color: Colors.white)),
+      builder: (context) => Center(child: CircularProgressIndicator(color: Colors.white)),
     );
     final navigator = Navigator.of(context, rootNavigator: true);
     final messenger = ScaffoldMessenger.of(context);
@@ -382,7 +437,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: friend.color,
+                    color: AppTheme.tint(friend.color),
                     shape: BoxShape.circle,
                     border: Border.all(color: AppTheme.kBorder, width: 1.5),
                   ),
@@ -395,7 +450,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Text(
                     friend.name,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.kTextPrimary),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.kTextPrimary),
                   ),
                 ),
               ],
@@ -422,19 +477,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
         color: bgColor,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: AppTheme.kBorder, width: 2),
-        boxShadow: const [BoxShadow(color: AppTheme.kBorder, offset: Offset(3, 3))],
+        boxShadow: [BoxShadow(color: AppTheme.kBorder, offset: Offset(3, 3))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             count,
-            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: AppTheme.kTextPrimary),
+            style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: AppTheme.kTextPrimary),
           ),
           const SizedBox(height: 4),
           Text(
             label,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.kTextSecondary),
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.kTextSecondary),
           ),
         ],
       ),
@@ -448,7 +503,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     VoidCallback? onTap,
     bool danger = false,
   }) {
-    final color = danger ? const Color(0xFFB00020) : AppTheme.kTextPrimary;
+    final color = danger ? AppTheme.kDanger : AppTheme.kTextPrimary;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(22),
@@ -468,8 +523,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               )
             else ...[
-              Flexible(
-                flex: 3,
+              Expanded(
                 child: Text(
                   title,
                   overflow: TextOverflow.ellipsis,
@@ -477,13 +531,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              Expanded(
-                flex: 2,
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 140),
                 child: Text(
                   trailingValue,
                   textAlign: TextAlign.right,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: AppTheme.kTextSecondary),
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: AppTheme.kTextSecondary),
                 ),
               ),
             ],
@@ -519,7 +573,7 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
       backgroundColor: AppTheme.kBackground,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(28),
-        side: const BorderSide(color: AppTheme.kBorder, width: 2),
+        side: BorderSide(color: AppTheme.kBorder, width: 2),
       ),
       title: const Text('Delete your account?', style: TextStyle(fontWeight: FontWeight.w900)),
       content: Column(
@@ -540,7 +594,7 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
             textCapitalization: TextCapitalization.characters,
             onChanged: (_) => setState(() {}),
             cursorColor: AppTheme.kTextPrimary,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               hintText: 'DELETE',
               focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppTheme.kTextPrimary, width: 2)),
             ),
@@ -550,7 +604,7 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context, false),
-          child: const Text(
+          child: Text(
             'Cancel',
             style: TextStyle(fontWeight: FontWeight.w800, color: AppTheme.kTextPrimary),
           ),
@@ -559,7 +613,7 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
           onPressed: ready ? () => Navigator.pop(context, true) : null,
           child: Text(
             'Delete forever',
-            style: TextStyle(fontWeight: FontWeight.w900, color: ready ? const Color(0xFFB00020) : Colors.grey),
+            style: TextStyle(fontWeight: FontWeight.w900, color: ready ? AppTheme.kDanger : Colors.grey),
           ),
         ),
       ],

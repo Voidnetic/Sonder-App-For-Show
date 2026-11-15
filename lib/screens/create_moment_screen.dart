@@ -121,10 +121,10 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
         backgroundColor: AppTheme.kBackground,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.close_rounded, color: AppTheme.kTextPrimary, size: 28),
+          icon: Icon(Icons.close_rounded, color: AppTheme.kTextPrimary, size: 28),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           "Create a moment",
           style: TextStyle(fontFamily: AppTheme.displayFont, color: AppTheme.kTextPrimary, fontSize: 22),
         ),
@@ -135,14 +135,14 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("MOMENT NAME", style: _sectionTitleStyle),
+            Text("MOMENT NAME", style: _sectionTitleStyle),
             const SizedBox(height: 12),
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppTheme.kSurface,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: AppTheme.kBorder, width: 2),
-                boxShadow: const [BoxShadow(color: AppTheme.kLavender, offset: Offset(4, 4))],
+                boxShadow: [BoxShadow(color: AppTheme.kLavender, offset: Offset(4, 4))],
               ),
               child: TextField(
                 key: const Key('moment-title-field'),
@@ -159,7 +159,7 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
               ),
             ),
             const SizedBox(height: 40),
-            const Text("WHO IS COMING?", style: _sectionTitleStyle),
+            Text("WHO IS COMING?", style: _sectionTitleStyle),
             const SizedBox(height: 16),
             FutureBuilder<List<AppUser>>(
               future: _friends,
@@ -180,7 +180,7 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     if (friends.isEmpty)
-                      const Text(
+                      Text(
                         "No friends yet. The moment will just be you for now.",
                         style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.kTextSecondary),
                       ),
@@ -192,7 +192,7 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
               },
             ),
             const SizedBox(height: 40),
-            const Text("WHEN SHOULD IT REVEAL?", style: _sectionTitleStyle),
+            Text("WHEN SHOULD IT REVEAL?", style: _sectionTitleStyle),
             const SizedBox(height: 12),
             Row(
               children: ["Tonight", "Tomorrow", "Custom"].map((time) {
@@ -210,10 +210,10 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
                       margin: const EdgeInsets.only(right: 8),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       decoration: BoxDecoration(
-                        color: isSelected ? AppTheme.kPaleYellow : Colors.white,
+                        color: isSelected ? AppTheme.kPaleYellow : AppTheme.kSurface,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: AppTheme.kBorder, width: 2),
-                        boxShadow: isSelected ? const [BoxShadow(color: AppTheme.kBorder, offset: Offset(2, 2))] : [],
+                        boxShadow: isSelected ? [BoxShadow(color: AppTheme.kBorder, offset: Offset(2, 2))] : [],
                       ),
                       child: Center(
                         child: Text(
@@ -233,7 +233,7 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
               const SizedBox(height: 12),
               Text(
                 "🔒 ${revealDescription(unlockAt)}",
-                style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.kTextSecondary),
+                style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.kTextSecondary),
               ),
             ],
             const SizedBox(height: 60),
@@ -258,16 +258,16 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
                     border: Border.all(color: AppTheme.kBorder, width: 2),
                     boxShadow: _isButtonPressed
                         ? []
-                        : const [BoxShadow(color: AppTheme.kSoftMint, offset: Offset(6, 6))],
+                        : [BoxShadow(color: AppTheme.kSoftMint, offset: Offset(6, 6))],
                   ),
                   child: Center(
                     child: _creating
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 22,
                             height: 22,
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
+                            child: CircularProgressIndicator(color: AppTheme.kOnPrimary, strokeWidth: 3),
                           )
-                        : const Text(
+                        : Text(
                             "CREATE MOMENT",
                             style: TextStyle(
                               color: AppTheme.kBackground,
@@ -324,24 +324,24 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: isSelected ? AppTheme.kTextPrimary : Colors.white,
+            color: isSelected ? AppTheme.kTextPrimary : AppTheme.kSurface,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: AppTheme.kBorder, width: 2),
-            boxShadow: isSelected ? const [BoxShadow(color: AppTheme.kPaleYellow, offset: Offset(4, 4))] : [],
+            boxShadow: isSelected ? [BoxShadow(color: AppTheme.kPaleYellow, offset: Offset(4, 4))] : [],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
                 isSelected ? Icons.check_circle : Icons.circle_outlined,
-                color: isSelected ? Colors.white : AppTheme.kTextSecondary,
+                color: isSelected ? AppTheme.kOnPrimary : AppTheme.kTextSecondary,
                 size: 20,
               ),
               const SizedBox(width: 8),
               Text(
                 friend.name,
                 style: TextStyle(
-                  color: isSelected ? Colors.white : AppTheme.kTextPrimary,
+                  color: isSelected ? AppTheme.kOnPrimary : AppTheme.kTextPrimary,
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
                 ),
@@ -353,7 +353,7 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
     );
   }
 
-  static const TextStyle _sectionTitleStyle = TextStyle(
+  static TextStyle get _sectionTitleStyle => TextStyle(
     color: AppTheme.kTextSecondary,
     fontSize: 12,
     fontWeight: FontWeight.w900,

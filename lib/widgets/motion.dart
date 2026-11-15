@@ -59,10 +59,10 @@ class _PopInState extends State<PopIn> with SingleTickerProviderStateMixin {
 class BubblyText extends StatefulWidget {
   final String text;
   final double size;
-  final Color color;
+  final Color? color;
   final TextAlign? textAlign;
 
-  const BubblyText(this.text, {super.key, this.size = 34, this.color = AppTheme.kTextPrimary, this.textAlign});
+  const BubblyText(this.text, {super.key, this.size = 34, this.color, this.textAlign});
 
   @override
   State<BubblyText> createState() => _BubblyTextState();

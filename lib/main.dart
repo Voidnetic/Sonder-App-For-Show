@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'data/api_client.dart';
 import 'data/models.dart';
@@ -14,22 +15,62 @@ import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await SonderApi.instance.restoreSession();
+  await Future.wait([SonderApi.instance.restoreSession(), ThemeController.instance.load()]);
   runApp(const SonderApp());
   // After the first frame, so a slow Firebase start never delays the app opening.
   unawaited(PushService.init());
 }
 
-class SonderApp extends StatelessWidget {
+class SonderApp extends StatefulWidget {
   const SonderApp({super.key});
 
   @override
+  State<SonderApp> createState() => _SonderAppState();
+}
+
+/// Picks light or dark from the user's choice (Profile → Theme) and the phone's own setting.
+class _SonderAppState extends State<SonderApp> with WidgetsBindingObserver {
+  final _theme = ThemeController.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _theme.mode.addListener(_apply);
+    _apply();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _theme.mode.removeListener(_apply);
+    super.dispose();
+  }
+
+  @override
+  void didChangePlatformBrightness() => _apply(); // the phone switched dark mode on or off
+
+  void _apply() {
+    final dark = _theme.isDarkFor(WidgetsBinding.instance.platformDispatcher.platformBrightness);
+    SystemChrome.setSystemUIOverlayStyle(dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark);
+    if (dark == AppTheme.isDark) return;
+    if (mounted) {
+      setState(() => AppTheme.isDark = dark);
+    } else {
+      AppTheme.isDark = dark;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // The colours are read directly by the screens, so a theme change rebuilds the whole app (the key);
+    // MainNavigation remembers which tab was open.
     return MaterialApp(
+      key: ValueKey(AppTheme.isDark),
       title: 'Sonder',
       debugShowCheckedModeBanner: false,
       scaffoldMessengerKey: rootMessengerKey,
-      theme: AppTheme.lightTheme,
+      theme: AppTheme.theme,
       home: const AuthGate(),
     );
   }
@@ -43,7 +84,13 @@ class AuthGate extends StatelessWidget {
   Widget build(BuildContext context) {
     return ValueListenableBuilder<AppUser?>(
       valueListenable: SonderApi.instance.currentUser,
-      builder: (context, user, _) => user == null ? const LoginScreen() : const MainNavigation(),
+      builder: (context, user, _) {
+        if (user == null) {
+          MainNavigation.savedTab = 0;
+          return const LoginScreen();
+        }
+        return const MainNavigation();
+      },
     );
   }
 }
@@ -51,12 +98,16 @@ class AuthGate extends StatelessWidget {
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
 
+  /// The open tab. Kept outside the widget so it survives the app rebuilding for a theme change;
+  /// reset to Home when someone signs out.
+  static int savedTab = 0;
+
   @override
   State<MainNavigation> createState() => _MainNavigationState();
 }
 
 class _MainNavigationState extends State<MainNavigation> {
-  int _currentIndex = 0;
+  int _currentIndex = MainNavigation.savedTab;
 
   // Built fresh on every tab switch so each tab shows up-to-date data.
   Widget _buildScreen() {
@@ -74,16 +125,13 @@ class _MainNavigationState extends State<MainNavigation> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _buildScreen(),
-      bottomNavigationBar: _buildCustomBottomNav(),
-    );
+    return Scaffold(body: _buildScreen(), bottomNavigationBar: _buildCustomBottomNav());
   }
 
   Widget _buildCustomBottomNav() {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppTheme.kBackground,
         border: Border(top: BorderSide(color: AppTheme.kBorder, width: 1.5)),
       ),
@@ -104,7 +152,7 @@ class _MainNavigationState extends State<MainNavigation> {
   Widget _navItem(IconData icon, String label, int index) {
     final isSelected = _currentIndex == index;
     return GestureDetector(
-      onTap: () => setState(() => _currentIndex = index),
+      onTap: () => setState(() => _currentIndex = MainNavigation.savedTab = index),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -115,11 +163,7 @@ class _MainNavigationState extends State<MainNavigation> {
               color: isSelected ? AppTheme.kTextPrimary : Colors.transparent,
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Icon(
-              icon,
-              color: isSelected ? AppTheme.kBackground : AppTheme.kTextSecondary,
-              size: 24,
-            ),
+            child: Icon(icon, color: isSelected ? AppTheme.kBackground : AppTheme.kTextSecondary, size: 24),
           ),
           const SizedBox(height: 2),
           Text(

@@ -126,7 +126,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
     final choice = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: AppTheme.kBackground,
-      shape: const RoundedRectangleBorder(
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
         side: BorderSide(color: AppTheme.kBorder, width: 2),
       ),
@@ -157,10 +157,10 @@ class _FriendsScreenState extends State<FriendsScreen> {
               onTap: () => Navigator.pop(context, 'report'),
             ),
             ListTile(
-              leading: const Icon(Icons.block_rounded, color: Color(0xFFB00020)),
-              title: const Text(
+              leading: Icon(Icons.block_rounded, color: AppTheme.kDanger),
+              title: Text(
                 'Block',
-                style: TextStyle(fontWeight: FontWeight.w800, color: Color(0xFFB00020)),
+                style: TextStyle(fontWeight: FontWeight.w800, color: AppTheme.kDanger),
               ),
               onTap: () => Navigator.pop(context, 'block'),
             ),
@@ -200,7 +200,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Padding(padding: EdgeInsets.fromLTRB(24, 0, 24, 4), child: BubblyText('Your circle 🫶')),
-            const Padding(
+            Padding(
               padding: EdgeInsets.fromLTRB(24, 0, 24, 20),
               child: Text(
                 'Only friends can be added to your moments.',
@@ -236,23 +236,23 @@ class _FriendsScreenState extends State<FriendsScreen> {
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: selected ? AppTheme.kTextPrimary : Colors.white,
+            color: selected ? AppTheme.kTextPrimary : AppTheme.kSurface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppTheme.kBorder, width: 2),
-            boxShadow: selected ? const [BoxShadow(color: AppTheme.kSunshine, offset: Offset(3, 3))] : null,
+            boxShadow: selected ? [BoxShadow(color: AppTheme.kSunshine, offset: Offset(3, 3))] : null,
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (icon != null) ...[
-                Icon(icon, size: 16, color: selected ? Colors.white : AppTheme.kTextPrimary),
+                Icon(icon, size: 16, color: selected ? AppTheme.kOnPrimary : AppTheme.kTextPrimary),
                 const SizedBox(width: 4),
               ],
               Flexible(
                 child: Text(
                   label,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontWeight: FontWeight.w900, color: selected ? Colors.white : AppTheme.kTextPrimary),
+                  style: TextStyle(fontWeight: FontWeight.w900, color: selected ? AppTheme.kOnPrimary : AppTheme.kTextPrimary),
                 ),
               ),
               if (count != null && (count > 0 || index == 0)) ...[
@@ -386,7 +386,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                   ? const _Spinner()
                   : TextButton(
                       onPressed: () => _run(r.id, () => _api.cancelFriendRequest(r.id)),
-                      child: const Text(
+                      child: Text(
                         'Cancel',
                         style: TextStyle(fontWeight: FontWeight.w900, color: AppTheme.kTextPrimary),
                       ),
@@ -404,10 +404,10 @@ class _FriendsScreenState extends State<FriendsScreen> {
       children: [
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppTheme.kSurface,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(color: AppTheme.kBorder, width: 2),
-            boxShadow: const [BoxShadow(color: AppTheme.kPeriwinkle, offset: Offset(4, 4))],
+            boxShadow: [BoxShadow(color: AppTheme.kPeriwinkle, offset: Offset(4, 4))],
           ),
           child: TextField(
             key: const Key('friend-search'),
@@ -513,15 +513,15 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
   // ---------------------------------------------------------------- pieces
 
-  Widget _personCard(AppUser user, {required Widget trailing, Color color = Colors.white}) {
+  Widget _personCard(AppUser user, {required Widget trailing, Color? color}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.fromLTRB(14, 10, 10, 10),
       decoration: BoxDecoration(
-        color: color,
+        color: color ?? AppTheme.kSurface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppTheme.kBorder, width: 2),
-        boxShadow: const [BoxShadow(color: AppTheme.kBorder, offset: Offset(3, 3))],
+        boxShadow: [BoxShadow(color: AppTheme.kBorder, offset: Offset(3, 3))],
       ),
       child: Row(
         children: [
@@ -545,7 +545,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
     padding: const EdgeInsets.only(bottom: 10, top: 4),
     child: Text(
       text,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 12,
         fontWeight: FontWeight.w900,
         letterSpacing: 1.5,
@@ -563,21 +563,21 @@ class _FriendsScreenState extends State<FriendsScreen> {
           color: AppTheme.kTextPrimary,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: AppTheme.kBorder, width: 2),
-          boxShadow: const [BoxShadow(color: AppTheme.kSunshine, offset: Offset(3, 3))],
+          boxShadow: [BoxShadow(color: AppTheme.kSunshine, offset: Offset(3, 3))],
         ),
         child: Text(
           label,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, letterSpacing: 1.2),
+          style: TextStyle(color: AppTheme.kOnPrimary, fontWeight: FontWeight.w900, letterSpacing: 1.2),
         ),
       ),
     );
   }
 
-  Widget _statusTag(String label, {Color color = AppTheme.kLavender}) {
+  Widget _statusTag(String label, {Color? color}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: color,
+        color: color ?? AppTheme.kLavender,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppTheme.kBorder, width: 1.5),
       ),
@@ -594,11 +594,11 @@ class _FriendsScreenState extends State<FriendsScreen> {
           width: 42,
           height: 42,
           decoration: BoxDecoration(
-            color: filled ? AppTheme.kTextPrimary : Colors.white,
+            color: filled ? AppTheme.kTextPrimary : AppTheme.kSurface,
             shape: BoxShape.circle,
             border: Border.all(color: AppTheme.kBorder, width: 2),
           ),
-          child: Icon(icon, color: filled ? Colors.white : AppTheme.kTextPrimary, semanticLabel: tooltip),
+          child: Icon(icon, color: filled ? AppTheme.kOnPrimary : AppTheme.kTextPrimary, semanticLabel: tooltip),
         ),
       ),
     );
@@ -617,7 +617,7 @@ class _Avatar extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: user.color,
+        color: AppTheme.tint(user.color),
         shape: BoxShape.circle,
         border: Border.all(color: AppTheme.kBorder, width: 1.5),
       ),
@@ -635,7 +635,7 @@ class _Spinner extends StatelessWidget {
   const _Spinner();
 
   @override
-  Widget build(BuildContext context) => const SizedBox(
+  Widget build(BuildContext context) => SizedBox(
     width: 22,
     height: 22,
     child: CircularProgressIndicator(strokeWidth: 2.5, color: AppTheme.kTextPrimary),

@@ -60,7 +60,7 @@ class _MomentsArchiveScreenState extends State<MomentsArchiveScreen> {
             padding: const EdgeInsets.all(24.0),
             children: [
               // HEADER
-              const Text(
+              Text(
                 "MOMENTS ARCHIVE",
                 style: TextStyle(
                   fontSize: 14,
@@ -72,7 +72,7 @@ class _MomentsArchiveScreenState extends State<MomentsArchiveScreen> {
               const SizedBox(height: 12),
               const BubblyText("Past Vault ✨"),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 "Explore all your unlocked time capsules and memories.",
                 style: TextStyle(
                   fontSize: 14,
@@ -120,10 +120,10 @@ class _MomentsArchiveScreenState extends State<MomentsArchiveScreen> {
         margin: const EdgeInsets.only(bottom: 20),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: moment.accentColor,
+          color: AppTheme.tint(moment.accentColor),
           borderRadius: BorderRadius.circular(28),
           border: Border.all(color: AppTheme.kBorder, width: 2),
-          boxShadow: const [
+          boxShadow: [
             BoxShadow(
               color: AppTheme.kBorder,
               offset: Offset(4, 4),
@@ -139,7 +139,7 @@ class _MomentsArchiveScreenState extends State<MomentsArchiveScreen> {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.lock_open_rounded, size: 18, color: AppTheme.kTextPrimary),
+                      Icon(Icons.lock_open_rounded, size: 18, color: AppTheme.kTextPrimary),
                       const SizedBox(width: 8),
                       Flexible(
                         child: Text(
@@ -147,7 +147,7 @@ class _MomentsArchiveScreenState extends State<MomentsArchiveScreen> {
                               ? "Ready to reveal ✨"
                               : "Unlocked ${formatMonthDay(moment.revealedAt ?? moment.unlockAt)}",
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w900,
                             color: AppTheme.kTextSecondary,
@@ -159,7 +159,7 @@ class _MomentsArchiveScreenState extends State<MomentsArchiveScreen> {
                   const SizedBox(height: 8),
                   Text(
                     moment.title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w900,
                       color: AppTheme.kTextPrimary,
@@ -168,7 +168,7 @@ class _MomentsArchiveScreenState extends State<MomentsArchiveScreen> {
                   const SizedBox(height: 4),
                   Text(
                     "${moment.memoryCount} memories captured",
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                       color: AppTheme.kTextSecondary,
@@ -180,11 +180,11 @@ class _MomentsArchiveScreenState extends State<MomentsArchiveScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppTheme.kSurface,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: AppTheme.kBorder, width: 1.5),
               ),
-              child: const Icon(Icons.arrow_forward_rounded, color: AppTheme.kTextPrimary),
+              child: Icon(Icons.arrow_forward_rounded, color: AppTheme.kTextPrimary),
             ),
           ],
         ),

@@ -97,12 +97,12 @@ class _MemoriesGalleryScreenState extends State<MemoriesGalleryScreen> {
     final moment = widget.moment;
     final unlockedOn = moment.revealedAt ?? moment.unlockAt;
     return Scaffold(
-      backgroundColor: moment.accentColor,
+      backgroundColor: AppTheme.tint(moment.accentColor),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.kTextPrimary, size: 28),
+          icon: Icon(Icons.arrow_back_rounded, color: AppTheme.kTextPrimary, size: 28),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
@@ -110,7 +110,7 @@ class _MemoriesGalleryScreenState extends State<MemoriesGalleryScreen> {
             Text(
               moment.title.toUpperCase(),
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppTheme.kTextPrimary,
                 fontSize: 16,
                 fontWeight: FontWeight.w900,
@@ -120,7 +120,7 @@ class _MemoriesGalleryScreenState extends State<MemoriesGalleryScreen> {
             const SizedBox(height: 2),
             Text(
               "Unlocked ${formatMonthDay(unlockedOn)} • ${moment.friendCount} friends",
-              style: const TextStyle(color: AppTheme.kTextSecondary, fontSize: 12, fontWeight: FontWeight.bold),
+              style: TextStyle(color: AppTheme.kTextSecondary, fontSize: 12, fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -174,10 +174,10 @@ class _MemoriesGalleryScreenState extends State<MemoriesGalleryScreen> {
       child: Container(
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppTheme.kSurface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: AppTheme.kBorder, width: 2),
-          boxShadow: const [BoxShadow(color: AppTheme.kBorder, offset: Offset(3, 3))],
+          boxShadow: [BoxShadow(color: AppTheme.kBorder, offset: Offset(3, 3))],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -188,12 +188,12 @@ class _MemoriesGalleryScreenState extends State<MemoriesGalleryScreen> {
                 fit: BoxFit.cover,
                 loadingBuilder: (context, child, progress) => progress == null ? child : const LoadingView(),
                 errorBuilder: (context, error, stack) =>
-                    const Icon(Icons.broken_image_outlined, color: AppTheme.kTextSecondary, size: 40),
+                    Icon(Icons.broken_image_outlined, color: AppTheme.kTextSecondary, size: 40),
               ),
             ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 border: Border(top: BorderSide(color: AppTheme.kBorder, width: 2)),
               ),
               child: Row(
