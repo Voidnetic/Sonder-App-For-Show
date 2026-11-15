@@ -205,7 +205,7 @@ void main() {
     await startApp(tester);
 
     expect(find.text('Welcome back 👋'), findsOneWidget);
-    expect(find.text('Server: http://test.local'), findsOneWidget);
+    expect(find.textContaining('Server'), findsNothing); // users can't change the server
 
     await tester.enterText(find.byKey(const Key('email-field')), 'hassan@sonder.app');
     await tester.enterText(find.byKey(const Key('password-field')), 'sonderpass123');
@@ -339,7 +339,6 @@ void main() {
     for (final name in ['Ali', 'Ahmed', 'Hajra']) {
       expect(find.text(name), findsOneWidget);
     }
-    expect(find.text('test.local'), findsOneWidget);
 
     await tester.scrollUntilVisible(find.text('LOG OUT'), 300, scrollable: find.byType(Scrollable).first);
     await tapAndSettle(tester, find.text('LOG OUT'));
@@ -363,7 +362,7 @@ void main() {
     await setUpApi(backend);
     await startApp(tester);
 
-    expect(find.text("Can't reach the server at http://test.local. Is the backend running?"), findsOneWidget);
+    expect(find.text("Can't connect to Sonder. Check your internet connection and try again."), findsOneWidget);
 
     backend.offline = false;
     await tapAndSettle(tester, find.text('RETRY'));

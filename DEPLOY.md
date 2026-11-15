@@ -27,8 +27,8 @@ Variables already set on **sonder-api**: `DATABASE_URL` (`${{Postgres.DATABASE_U
 Still worth adding yourself (sonder-api → **Variables**): `ADMIN_EMAILS` (the email you use in Sonder, so you
 can review reports) and `SUPPORT_EMAIL` (shown on the privacy policy).
 
-The app now uses this address by default. The **Server** button on the login screen still lets you switch to a
-laptop backend for testing, and **Use Sonder server** switches back.
+The app always uses this address; there is no server setting in the app. To test the app against a backend on
+your laptop, build it with `flutter run --dart-define=SONDER_API_URL=http://<laptop IP>:8000`.
 
 > Until step 2 is done, photos are saved on Railway's disk, which is **wiped on every deploy**. Fine for a
 > quick test, but do step 2 before real people use it.

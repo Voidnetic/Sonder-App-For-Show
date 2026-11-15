@@ -86,46 +86,6 @@ class _LoginScreenState extends State<LoginScreen> {
     launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication).ignore();
   }
 
-  Future<void> _editServer() async {
-    final controller = TextEditingController(text: _api.serverUrl);
-    final result = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Server address', style: TextStyle(fontWeight: FontWeight.w900)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextField(
-              controller: controller,
-              keyboardType: TextInputType.url,
-              autocorrect: false,
-              decoration: const InputDecoration(hintText: 'http://192.168.1.20:8000'),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Testing with your computer: http://<computer IP>:8000 (same Wi-Fi)\n'
-              'Android emulator: http://10.0.2.2:8000',
-              style: TextStyle(fontSize: 12, color: AppTheme.kTextSecondary),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, defaultServerUrl),
-            child: const Text('Use Sonder server'),
-          ),
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(context, controller.text), child: const Text('Save')),
-        ],
-      ),
-    );
-    if (result != null && result.trim().isNotEmpty) {
-      await _api.setServerUrl(result);
-      if (mounted) setState(() {});
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -276,35 +236,6 @@ class _LoginScreenState extends State<LoginScreen> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
-            Center(
-              child: GestureDetector(
-                onTap: _busy ? null : _editServer,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: AppTheme.kPaleYellow,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppTheme.kBorder, width: 1.5),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.dns_outlined, size: 16),
-                      const SizedBox(width: 6),
-                      Flexible(
-                        child: Text(
-                          'Server: ${_api.serverUrl}',
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      const Icon(Icons.edit_rounded, size: 14),
-                    ],
-                  ),
-                ),
-              ),
-            ),
           ],
         ),
       ),

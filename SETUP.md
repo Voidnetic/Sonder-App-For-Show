@@ -158,21 +158,21 @@ iPhones need a Mac with Xcode. See https://docs.flutter.dev/get-started/install/
 
 Every push builds an APK on GitHub (workflow **Build Android APK**). On the phone, open the
 repository's **Releases** page, open **Sonder APK (latest build)**, tap `sonder.apk`, and allow
-the browser to install apps when Android asks. The API still has to run on your computer
-(step 3), and the phone needs its address (next section).
+the browser to install apps when Android asks. That APK uses the live Sonder server
+(https://sonder-api-production.up.railway.app), so nothing needs to run on your computer.
 
-### Point the app at your computer (first launch)
+### Point the app at your computer instead (developers)
 
-The app opens on a login screen. At the bottom is a yellow **Server** button. Tap it and enter
-the address of the computer running the API:
+The app has no server setting for users. To run it against the API on your computer, pass the
+address when you start it with `flutter run`:
 
-| Where the app runs | Server address |
+| Where the app runs | Command |
 |---|---|
-| Android emulator | `http://10.0.2.2:8000` (already the default) |
-| Real phone, on the **same Wi-Fi** as the computer | `http://<computer's IP>:8000` |
+| Android emulator | `flutter run --dart-define=SONDER_API_URL=http://10.0.2.2:8000` |
+| Real phone, on the **same Wi-Fi** as the computer | `flutter run --dart-define=SONDER_API_URL=http://<computer's IP>:8000` |
 
 To find the computer's IP, run `ipconfig` on Windows (the "IPv4 Address" line, for example
-`192.168.1.20`) or `ipconfig getifaddr en0` on macOS. The app remembers the address.
+`192.168.1.20`) or `ipconfig getifaddr en0` on macOS.
 
 Then log in with a demo account, for example `hassan@sonder.app` / `sonderpass123`, or tap
 **Create an account**.

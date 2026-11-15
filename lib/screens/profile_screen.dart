@@ -254,12 +254,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const Divider(height: 1, color: AppTheme.kBorder, thickness: 1.5),
               _buildSettingTile(Icons.palette_outlined, "Neo-Brutalist Theme", "Default"),
               const Divider(height: 1, color: AppTheme.kBorder, thickness: 1.5),
-              _buildSettingTile(
-                Icons.dns_outlined,
-                "Server",
-                Uri.tryParse(SonderApi.instance.serverUrl)?.authority ?? SonderApi.instance.serverUrl,
-              ),
-              const Divider(height: 1, color: AppTheme.kBorder, thickness: 1.5),
               _buildSettingTile(Icons.group_outlined, "Friends & requests", "", onTap: () => _openFriends(0)),
               const Divider(height: 1, color: AppTheme.kBorder, thickness: 1.5),
               _buildSettingTile(Icons.block_rounded, "Blocked people", "", onTap: _openBlocked),

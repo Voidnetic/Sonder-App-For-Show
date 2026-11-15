@@ -10,8 +10,8 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'google_auth.dart';
 import 'models.dart';
 
-/// The live Sonder server on Railway. To test against a backend on your computer, change it on the
-/// login screen (Server button), or build with `--dart-define=SONDER_API_URL=http://192.168.1.20:8000`.
+/// The live Sonder server on Railway. To test against a backend on your computer, build with
+/// `--dart-define=SONDER_API_URL=http://192.168.1.20:8000` (users can't change the server in the app).
 const String defaultServerUrl =
     String.fromEnvironment('SONDER_API_URL', defaultValue: 'https://sonder-api-production.up.railway.app');
 
@@ -54,7 +54,15 @@ class SonderApi {
 
   Future<void> restoreSession() async {
     final prefs = await SharedPreferences.getInstance();
-    _serverUrl = prefs.getString(_kServerUrl) ?? defaultServerUrl;
+    // Older test builds let people type a server address. Release builds always use the Sonder server and
+    // forget any saved address, so nobody stays stuck on a laptop IP; debug builds and tests still honour it.
+    final saved = prefs.getString(_kServerUrl);
+    if (kReleaseMode) {
+      if (saved != null) await prefs.remove(_kServerUrl);
+      _serverUrl = defaultServerUrl;
+    } else {
+      _serverUrl = saved ?? defaultServerUrl;
+    }
     _token = prefs.getString(_kToken);
     final userJson = prefs.getString(_kUser);
     if (_token != null && userJson != null) {
@@ -62,6 +70,8 @@ class SonderApi {
     }
   }
 
+  /// Points the client at another backend. Only for tests: the app itself always uses [defaultServerUrl].
+  @visibleForTesting
   Future<void> setServerUrl(String url) async {
     var cleaned = url.trim();
     while (cleaned.endsWith('/')) {
@@ -320,7 +330,7 @@ class SonderApi {
     } on ApiException {
       rethrow;
     } catch (_) {
-      throw ApiException("Can't reach the server at $_serverUrl. Is the backend running?");
+      throw const ApiException("Can't connect to Sonder. Check your internet connection and try again.");
     }
 
     final text = utf8.decode(response.bodyBytes);
