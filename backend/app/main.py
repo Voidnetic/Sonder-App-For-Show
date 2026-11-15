@@ -115,6 +115,6 @@ async def start_background_jobs() -> None:
     app.state.unlock_notifier = asyncio.create_task(unlock_notifier_loop())
 
 
-@app.get("/", tags=["Health"])
+@app.get("/health", tags=["Health"])
 def health() -> dict[str, str]:
     return {"status": "ok", "service": "sonder-api"}

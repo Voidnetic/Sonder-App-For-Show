@@ -18,7 +18,7 @@ the repo: they only go into Railway's **Variables** or GitHub's **Secrets**.
 Project **Sonder** on Railway has two services:
 
 - **sonder-api**: built from `backend/Dockerfile` on branch `claude/wonderful-johnson-i2ajge`, Root Directory
-  `/backend`, health check `/`. Live at **https://sonder-api-production.up.railway.app**.
+  `/backend`, health check `/health`. Live at **https://sonder-api-production.up.railway.app**.
 - **Postgres**: Railway's PostgreSQL template with a volume. The API created its tables on first start.
 
 Variables already set on **sonder-api**: `DATABASE_URL` (`${{Postgres.DATABASE_URL}}`), `JWT_SECRET` (random,
@@ -76,7 +76,7 @@ set the GitHub repository variable `SONDER_API_URL`.
 
 ## Checking it works
 
-- `https://<your address>/` shows `{"status":"ok"}`.
+- `https://<your address>/health` shows `{"status":"ok"}`.
 - Sign up in the app, add a friend (second phone or account), create a moment, take a photo.
   In Cloudflare → R2 → `sonder-photos` a new file appears under `memories/`.
 - On the friend's phone a notification arrives for the friend request and the new moment. Android 13+

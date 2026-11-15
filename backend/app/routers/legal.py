@@ -2,7 +2,8 @@
 Public web pages that Google Play needs links to:
   /privacy         privacy policy (Play Console > App content > Privacy policy)
   /terms           terms of use, including the rules for photos and chat
-  /delete-account  delete an account without the app (Play Console > Data safety > Account deletion URL)
+  /delete-account  delete an account without the app
+  /                home page (Google sign-in's consent screen needs one) (Play Console > Data safety > Account deletion URL)
 """
 
 from html import escape
@@ -63,8 +64,30 @@ def _page(title: str, body: str) -> HTMLResponse:
 <title>{escape(title)} · Sonder</title><style>{STYLE}</style></head>
 <body><main><div class="brand">SONDER</div>{body}
 <p class="muted" style="margin-top:48px">
-<a href="/privacy">Privacy policy</a> · <a href="/terms">Terms</a> · <a href="/delete-account">Delete account</a>
+<a href="/">Home</a> · <a href="/privacy">Privacy policy</a> · <a href="/terms">Terms</a> · <a href="/delete-account">Delete account</a>
 </p></main></body></html>"""
+    )
+
+
+@router.get("/", response_class=HTMLResponse)
+def home() -> HTMLResponse:
+    return _page(
+        "Capture moments together",
+        """
+<h1>Sonder</h1>
+<p style="font-size:20px;font-weight:700">Capture moments together. Reveal them later.</p>
+<div class="card lav">
+<p style="margin-top:0">Start a <strong>moment</strong> with your friends: a trip, a party, a night out. Everyone takes
+photos, but nobody can see them, not even their own, until the moment unlocks at the time you chose.
+Then you reveal them all together.</p>
+<ul>
+<li>Photos stay locked and hidden until the reveal</li>
+<li>Chat with everyone in the moment while it's happening</li>
+<li>Only friends you add can join your moments</li>
+</ul>
+</div>
+<div class="card mint"><strong>Get the app:</strong> Sonder for Android is coming to Google Play.</div>
+""",
     )
 
 
