@@ -15,11 +15,15 @@ import '../widgets/safety_sheets.dart';
 import '../widgets/status_views.dart';
 import 'camera_screen.dart';
 import 'reveal_screen.dart';
+import 'story_viewer_screen.dart';
 
 class ActiveMomentScreen extends StatefulWidget {
   final Moment moment;
 
-  const ActiveMomentScreen({super.key, required this.moment});
+  /// Just the Hangout chat, without the Memories tab (used from the Past Vault).
+  final bool chatOnly;
+
+  const ActiveMomentScreen({super.key, required this.moment, this.chatOnly = false});
 
   @override
   State<ActiveMomentScreen> createState() => _ActiveMomentScreenState();
@@ -65,6 +69,7 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
   void initState() {
     super.initState();
     _moment = widget.moment;
+    if (widget.chatOnly) _selectedTab = 1;
     _pulseController = AnimationController(vsync: this, duration: const Duration(seconds: 1))..repeat(reverse: true);
     _loadMemories();
     _loadMessages();
@@ -281,6 +286,39 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
     }
   }
 
+  /// Opens the slideshow at the photo a chat reply is about.
+  Future<void> _openRepliedPhoto(ChatMessage msg) async {
+    bool isTarget(Memory m) => m.id == msg.memoryId;
+    var photos = [
+      for (final m in _memories ?? const <Memory>[])
+        if (!m.locked && m.imageUrl != null) m,
+    ];
+    if (!photos.any(isTarget)) {
+      try {
+        // It may be one the user hid from their own view.
+        photos = [
+          for (final m in await _api.getMemories(_moment.id, includeHidden: true))
+            if (!m.locked && m.imageUrl != null) m,
+        ];
+      } catch (_) {
+        // Falls through to "no longer available".
+      }
+    }
+    if (!mounted) return;
+    final index = photos.indexWhere(isTarget);
+    if (index < 0) {
+      showSnack(context, 'That photo is no longer available.');
+      return;
+    }
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (context) => StoryViewerScreen(moment: _moment, memories: photos, initialIndex: index),
+      ),
+    );
+  }
+
   void _openReveal() {
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => RevealScreen(moment: _moment)));
   }
@@ -324,19 +362,20 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
       body: Column(
         children: [
           // TAB SWITCHER: 📸 Memories | 💬 Hangout
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: AppTheme.kSurface,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: AppTheme.kBorder, width: 2),
-                boxShadow: [BoxShadow(color: AppTheme.kShadow, offset: Offset(3, 3))],
+          if (!widget.chatOnly)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: AppTheme.kSurface,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: AppTheme.kBorder, width: 2),
+                  boxShadow: [BoxShadow(color: AppTheme.kShadow, offset: Offset(3, 3))],
+                ),
+                child: Row(children: [_tabButton("📸 Memories", 0), _tabButton("💬 Hangout", 1)]),
               ),
-              child: Row(children: [_tabButton("📸 Memories", 0), _tabButton("💬 Hangout", 1)]),
             ),
-          ),
 
           // CONTENT AREA
           Expanded(child: _selectedTab == 0 ? _buildMemoriesTab() : _buildHangoutTab()),
@@ -876,6 +915,7 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
 
     // Normal User Message
     final isMe = msg.author?.id == myId;
+    final photo = msg.memoryImageUrl;
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: GestureDetector(
@@ -896,11 +936,47 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
                 ),
                 const SizedBox(height: 4),
               ],
+              // A reaction or comment from the slideshow: the photo it's about, tap to open it.
+              if (photo != null) ...[
+                GestureDetector(
+                  key: Key('reply-photo-${msg.id}'),
+                  onTap: () => _openRepliedPhoto(msg),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: Container(
+                      width: 150,
+                      height: 150,
+                      decoration: BoxDecoration(
+                        color: AppTheme.kBackground,
+                        border: Border.all(color: AppTheme.kBorder, width: 1.5),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Image.network(
+                        _api.imageUrl(photo),
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stack) =>
+                            Icon(Icons.image_outlined, color: AppTheme.kTextSecondary, size: 36),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  isMe ? 'You replied to a photo' : 'Replied to a photo',
+                  style: TextStyle(
+                    color: isMe ? AppTheme.kOnPrimary.withValues(alpha: 0.7) : AppTheme.kTextSecondary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+              ],
               Text(
                 msg.text,
                 style: TextStyle(
                   color: isMe ? AppTheme.kOnPrimary : AppTheme.kTextPrimary,
-                  fontSize: 15,
+                  // A lone emoji reaction on a photo is shown big.
+                  fontSize: photo != null && msg.text.characters.length <= 2 ? 34 : 15,
                   fontWeight: FontWeight.w600,
                 ),
               ),

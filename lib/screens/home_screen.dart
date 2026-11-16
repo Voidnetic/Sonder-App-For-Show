@@ -81,7 +81,12 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       await SonderApi.instance.declineInvitation(invite.id);
       if (!mounted) return;
-      setState(() => _invitations = [for (final m in _invitations) if (m.id != invite.id) m]);
+      setState(
+        () => _invitations = [
+          for (final m in _invitations)
+            if (m.id != invite.id) m,
+        ],
+      );
       showSnack(context, 'Invitation to ${invite.title} declined.');
     } catch (e) {
       if (mounted) showSnack(context, e.toString());

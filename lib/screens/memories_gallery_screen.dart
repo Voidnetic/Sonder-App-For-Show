@@ -6,6 +6,8 @@ import '../theme/app_theme.dart';
 import '../utils/time_format.dart';
 import '../widgets/safety_sheets.dart';
 import '../widgets/status_views.dart';
+import 'active_moment_screen.dart';
+import 'story_viewer_screen.dart';
 
 /// All photos of an unlocked moment.
 class MemoriesGalleryScreen extends StatefulWidget {
@@ -105,51 +107,29 @@ class _MemoriesGalleryScreenState extends State<MemoriesGalleryScreen> {
     }
   }
 
-  void _openPhoto(Memory memory) {
-    showDialog<void>(
-      context: context,
-      barrierColor: Colors.black87,
-      builder: (context) => GestureDetector(
-        onTap: () => Navigator.pop(context),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Flexible(
-              child: InteractiveViewer(
-                child: Image.network(
-                  SonderApi.instance.imageUrl(memory.imageUrl!),
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stack) =>
-                      const Icon(Icons.broken_image_outlined, color: Colors.white70, size: 64),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            if (!_isMine(memory))
-              TextButton.icon(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _photoActions(memory);
-                },
-                icon: const Icon(Icons.flag_outlined, color: Colors.white70, size: 18),
-                label: const Text(
-                  'Report or block',
-                  style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w800),
-                ),
-              ),
-            Text(
-              [memory.author.name, if (memory.caption != null) memory.caption!].join(' • '),
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w900,
-                fontSize: 14,
-                decoration: TextDecoration.none,
-              ),
-            ),
-          ],
+  /// Opens the story-style slideshow at [index] (of the photos currently shown).
+  Future<void> _openStory(List<Memory> memories, int index) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (context) => StoryViewerScreen(
+          moment: widget.moment,
+          memories: memories,
+          initialIndex: index,
+          onOptions: (memory) async {
+            Navigator.pop(context); // back to the grid, where the change shows
+            await _photoActions(memory);
+          },
         ),
       ),
+    );
+  }
+
+  void _openChat() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => ActiveMomentScreen(moment: widget.moment, chatOnly: true)),
     );
   }
 
@@ -187,6 +167,12 @@ class _MemoriesGalleryScreenState extends State<MemoriesGalleryScreen> {
         ),
         centerTitle: true,
         actions: [
+          IconButton(
+            key: const Key('vault-chat'),
+            tooltip: 'Chat',
+            icon: Icon(Icons.chat_bubble_outline_rounded, color: AppTheme.kTextPrimary),
+            onPressed: _openChat,
+          ),
           FutureBuilder<List<Memory>>(
             future: _memories,
             builder: (context, snapshot) {
@@ -251,16 +237,18 @@ class _MemoriesGalleryScreenState extends State<MemoriesGalleryScreen> {
               childAspectRatio: 0.8,
             ),
             itemCount: memories.length,
-            itemBuilder: (context, index) => _buildPhotoCard(memories[index]),
+            itemBuilder: (context, index) => _buildPhotoCard(memories, index),
           );
         },
       ),
     );
   }
 
-  Widget _buildPhotoCard(Memory memory) {
+  Widget _buildPhotoCard(List<Memory> memories, int index) {
+    final memory = memories[index];
     return GestureDetector(
-      onTap: () => _openPhoto(memory),
+      key: Key('photo-${memory.id}'),
+      onTap: () => _openStory(memories, index),
       child: Opacity(
         opacity: memory.hidden ? 0.45 : 1,
         child: Container(

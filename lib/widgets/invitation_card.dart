@@ -50,7 +50,10 @@ class _InvitationCardState extends State<InvitationCard> {
                 height: 38,
                 decoration: AppTheme.sticker(AppTheme.tint(inviter.color), circle: true, border: 1.5, offset: 0),
                 child: Center(
-                  child: Text(inviter.initial, style: const TextStyle(fontWeight: FontWeight.w900, color: AppTheme.kInk)),
+                  child: Text(
+                    inviter.initial,
+                    style: const TextStyle(fontWeight: FontWeight.w900, color: AppTheme.kInk),
+                  ),
                 ),
               ),
               const SizedBox(width: 10),

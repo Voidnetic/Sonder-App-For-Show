@@ -11,6 +11,7 @@ import 'package:sonder_app/data/google_auth.dart';
 import 'package:sonder_app/data/models.dart';
 import 'package:sonder_app/main.dart';
 import 'package:sonder_app/screens/intro_splash.dart';
+import 'package:sonder_app/screens/story_viewer_screen.dart';
 import 'package:sonder_app/theme/app_theme.dart';
 import 'package:sonder_app/widgets/aurora_sky.dart';
 
@@ -536,6 +537,93 @@ void main() {
     expect(hidden, isFalse);
     expect(find.byKey(const Key('toggle-hidden')), findsNothing);
     await tester.pump(const Duration(seconds: 5));
+  });
+
+  Map<String, dynamic> photoJson(String id, Map<String, dynamic> author) => {
+    'id': id,
+    'moment_id': 'farewell',
+    'author': author,
+    'image_url': '/uploads/$id.jpg',
+    'caption': null,
+    'captured_at': '2026-10-01T10:00:00Z',
+  };
+
+  testWidgets('past vault: story slideshow with tap navigation, auto-advance, and replies to the chat',
+      (tester) async {
+    final backend = FakeBackend();
+    backend.routes['GET /api/moments/farewell/memories'] = (_) => [photoJson('p1', ali), photoJson('p2', ahmed)];
+    backend.routes['POST /api/moments/farewell/messages'] = (req) {
+      final body = jsonDecode(req.body) as Map<String, dynamic>;
+      return {...messageJson('r1', hassan, body['text'] as String), 'memory_id': body['memory_id']};
+    };
+    await setUpApi(backend);
+    await startApp(tester);
+    await tapAndSettle(tester, find.text('Moments'));
+    await tapAndSettle(tester, find.text('University Farewell'));
+
+    await tapAndSettle(tester, find.byKey(const Key('photo-p1')));
+    expect(find.byType(StoryViewerScreen), findsOneWidget);
+    expect(tester.widget<Text>(find.byKey(const Key('story-author'))).data, 'Ali');
+    expect(find.text('1/2'), findsOneWidget);
+
+    // Tap the right side for the next photo, the left side to go back.
+    await tester.tapAt(const Offset(350, 450));
+    await settle(tester, 3);
+    expect(find.text('2/2'), findsOneWidget);
+    expect(tester.widget<Text>(find.byKey(const Key('story-author'))).data, 'Ahmed');
+    await tester.tapAt(const Offset(40, 450));
+    await settle(tester, 3);
+    expect(find.text('1/2'), findsOneWidget);
+
+    // An emoji reaction goes to the chat, linked to this photo.
+    await tapAndSettle(tester, find.byKey(const Key('react-❤️')), 3);
+    expect(backend.lastBody('POST', '/api/moments/farewell/messages'), {'text': '❤️', 'memory_id': 'p1'});
+    expect(find.text('Sent ❤️ to the chat'), findsOneWidget);
+
+    // So does a typed comment.
+    await tester.enterText(find.byKey(const Key('story-reply-field')), 'best night ever');
+    await tapAndSettle(tester, find.byKey(const Key('story-send')), 3);
+    expect(
+      backend.lastBody('POST', '/api/moments/farewell/messages'),
+      {'text': 'best night ever', 'memory_id': 'p1'},
+    );
+    expect(find.text('Sent to the chat 💬'), findsOneWidget);
+
+    // Plays on by itself, and closes after the last photo.
+    await tester.pump(StoryViewerScreen.storyDuration);
+    await settle(tester, 3);
+    expect(find.text('2/2'), findsOneWidget);
+    await tester.pump(StoryViewerScreen.storyDuration);
+    await settle(tester, 6);
+    expect(find.byType(StoryViewerScreen), findsNothing);
+    expect(find.text('Ali'), findsOneWidget); // back on the grid
+  });
+
+  testWidgets('chat: a photo reply shows its thumbnail and opens the slideshow at that photo', (tester) async {
+    final backend = FakeBackend();
+    backend.routes['GET /api/moments/farewell/memories'] = (_) => [photoJson('p1', ali), photoJson('p2', ahmed)];
+    backend.routes['GET /api/moments/farewell/messages'] = (_) => [
+      {...messageJson('r1', ali, '🔥'), 'memory_id': 'p2', 'memory_image_url': '/uploads/p2.jpg'},
+      messageJson('r2', ahmed, 'what a night'),
+    ];
+    backend.routes['GET /api/blocks'] = (_) => [];
+    await setUpApi(backend);
+    await startApp(tester);
+    await tapAndSettle(tester, find.text('Moments'));
+    await tapAndSettle(tester, find.text('University Farewell'));
+    await tapAndSettle(tester, find.byKey(const Key('vault-chat')));
+
+    expect(find.text('📸 Memories'), findsNothing); // just the chat
+    expect(find.text('what a night'), findsOneWidget);
+    expect(find.byKey(const Key('reply-photo-r1')), findsOneWidget);
+    expect(find.text('Replied to a photo'), findsOneWidget);
+
+    await tapAndSettle(tester, find.byKey(const Key('reply-photo-r1')));
+    expect(find.byType(StoryViewerScreen), findsOneWidget);
+    expect(find.text('2/2'), findsOneWidget);
+    expect(tester.widget<Text>(find.byKey(const Key('story-author'))).data, 'Ahmed');
+    await tapAndSettle(tester, find.byKey(const Key('story-close')));
+    expect(find.byType(StoryViewerScreen), findsNothing);
   });
 
   testWidgets('archive: the Past Vault lists opened capsules and opens their photos', (tester) async {
