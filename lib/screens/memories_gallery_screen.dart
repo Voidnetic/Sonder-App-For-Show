@@ -20,28 +20,89 @@ class MemoriesGalleryScreen extends StatefulWidget {
 class _MemoriesGalleryScreenState extends State<MemoriesGalleryScreen> {
   late Future<List<Memory>> _memories;
 
+  /// Also show the photos you hid from your own view (dimmed, so you can bring them back).
+  bool _showHidden = false;
+
   @override
   void initState() {
     super.initState();
-    _memories = SonderApi.instance.getMemories(widget.moment.id);
+    _memories = _fetch();
   }
+
+  // Hidden photos come too, so the "Show hidden" switch needs no extra request.
+  Future<List<Memory>> _fetch() => SonderApi.instance.getMemories(widget.moment.id, includeHidden: true);
 
   void _reload() {
     setState(() {
-      _memories = SonderApi.instance.getMemories(widget.moment.id);
+      _memories = _fetch();
     });
   }
 
   bool _isMine(Memory memory) => memory.author.id == SonderApi.instance.currentUser.value?.id;
 
+  /// Photos are permanent once unlocked, but anyone can hide one from their own view (everyone else still
+  /// sees it), and report or block whoever posted someone else's.
   Future<void> _photoActions(Memory memory) async {
-    final blocked = await showContentActions(
-      context,
-      target: ReportTarget.memory,
-      targetId: memory.id,
-      author: memory.author,
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: AppTheme.kBackground,
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        side: BorderSide(color: AppTheme.kBorder, width: 2),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            ListTile(
+              key: const Key('photo-hide'),
+              leading: Icon(
+                memory.hidden ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                color: AppTheme.kTextPrimary,
+              ),
+              title: Text(
+                memory.hidden ? 'Show it again' : 'Hide from my view',
+                style: const TextStyle(fontWeight: FontWeight.w800),
+              ),
+              subtitle: memory.hidden
+                  ? null
+                  : Text('Only for you. Your friends still see it.', style: TextStyle(color: AppTheme.kTextSecondary)),
+              onTap: () => Navigator.pop(context, memory.hidden ? 'unhide' : 'hide'),
+            ),
+            if (!_isMine(memory))
+              ListTile(
+                leading: const Icon(Icons.flag_outlined),
+                title: const Text('Report or block', style: TextStyle(fontWeight: FontWeight.w800)),
+                onTap: () => Navigator.pop(context, 'report'),
+              ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
     );
-    if (blocked && mounted) _reload(); // the server now hides their photos
+    if (choice == null || !mounted) return;
+    if (choice == 'report') {
+      final blocked = await showContentActions(
+        context,
+        target: ReportTarget.memory,
+        targetId: memory.id,
+        author: memory.author,
+      );
+      if (blocked && mounted) _reload(); // the server now hides their photos
+      return;
+    }
+    try {
+      if (choice == 'hide') {
+        await SonderApi.instance.hideMemory(widget.moment.id, memory.id);
+        if (mounted) showSnack(context, 'Hidden from your view. Show hidden photos from the top right.');
+      } else {
+        await SonderApi.instance.unhideMemory(widget.moment.id, memory.id);
+      }
+      if (mounted) _reload();
+    } catch (e) {
+      if (mounted) showSnack(context, e.toString());
+    }
   }
 
   void _openPhoto(Memory memory) {
@@ -125,13 +186,42 @@ class _MemoriesGalleryScreenState extends State<MemoriesGalleryScreen> {
           ],
         ),
         centerTitle: true,
+        actions: [
+          FutureBuilder<List<Memory>>(
+            future: _memories,
+            builder: (context, snapshot) {
+              final hidden = snapshot.data?.where((m) => m.hidden).length ?? 0;
+              if (hidden == 0) return const SizedBox.shrink();
+              return IconButton(
+                key: const Key('toggle-hidden'),
+                tooltip: _showHidden ? 'Hide hidden photos' : 'Show $hidden hidden',
+                icon: Icon(
+                  _showHidden ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                  color: AppTheme.kTextPrimary,
+                ),
+                onPressed: () => setState(() => _showHidden = !_showHidden),
+              );
+            },
+          ),
+        ],
       ),
       body: FutureBuilder<List<Memory>>(
         future: _memories,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) return const LoadingView();
           if (snapshot.hasError) return ErrorView(message: snapshot.error.toString(), onRetry: _reload);
-          final memories = snapshot.data!;
+          final all = snapshot.data!;
+          final memories = _showHidden ? all : all.where((m) => !m.hidden).toList();
+          if (memories.isEmpty && all.isNotEmpty) {
+            return const Padding(
+              padding: EdgeInsets.all(24),
+              child: EmptyView(
+                icon: Icons.visibility_off_outlined,
+                title: 'You hid every photo',
+                subtitle: 'Tap the eye at the top right to see them again.',
+              ),
+            );
+          }
           if (memories.isEmpty) {
             return const Padding(
               padding: EdgeInsets.all(24),
@@ -171,49 +261,57 @@ class _MemoriesGalleryScreenState extends State<MemoriesGalleryScreen> {
   Widget _buildPhotoCard(Memory memory) {
     return GestureDetector(
       onTap: () => _openPhoto(memory),
-      child: Container(
-        clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(
-          color: AppTheme.kSurface,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppTheme.kBorder, width: 2),
-          boxShadow: [BoxShadow(color: AppTheme.kShadow, offset: Offset(3, 3))],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: Image.network(
-                SonderApi.instance.imageUrl(memory.imageUrl!),
-                fit: BoxFit.cover,
-                loadingBuilder: (context, child, progress) => progress == null ? child : const LoadingView(),
-                errorBuilder: (context, error, stack) =>
-                    Icon(Icons.broken_image_outlined, color: AppTheme.kTextSecondary, size: 40),
+      child: Opacity(
+        opacity: memory.hidden ? 0.45 : 1,
+        child: Container(
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: AppTheme.kSurface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppTheme.kBorder, width: 2),
+            boxShadow: [BoxShadow(color: AppTheme.kShadow, offset: Offset(3, 3))],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: Image.network(
+                  SonderApi.instance.imageUrl(memory.imageUrl!),
+                  fit: BoxFit.cover,
+                  loadingBuilder: (context, child, progress) => progress == null ? child : const LoadingView(),
+                  errorBuilder: (context, error, stack) =>
+                      Icon(Icons.broken_image_outlined, color: AppTheme.kTextSecondary, size: 40),
+                ),
               ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                border: Border(top: BorderSide(color: AppTheme.kBorder, width: 2)),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      memory.author.name,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  border: Border(top: BorderSide(color: AppTheme.kBorder, width: 2)),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        memory.author.name,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+                      ),
                     ),
-                  ),
-                  if (!_isMine(memory))
+                    if (memory.hidden)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: Icon(Icons.visibility_off_outlined, size: 16, color: AppTheme.kTextSecondary),
+                      ),
                     GestureDetector(
+                      key: Key('photo-options-${memory.id}'),
                       onTap: () => _photoActions(memory),
                       child: const Icon(Icons.more_horiz_rounded, size: 20, semanticLabel: 'Photo options'),
                     ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

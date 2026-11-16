@@ -444,6 +444,100 @@ void main() {
     await tester.pump(const Duration(seconds: 5)); // let the snack bar finish
   });
 
+  testWidgets('active moment: you can see and delete your own photo before the reveal', (tester) async {
+    final backend = FakeBackend();
+    var deleted = false;
+    backend.routes['GET /api/moments/m1/memories'] = (_) => [
+      {'id': 'mem1', 'moment_id': 'm1', 'author': ali, 'locked': true, 'captured_at': '2026-10-01T10:00:00Z'},
+      if (!deleted)
+        {
+          'id': 'mem2',
+          'moment_id': 'm1',
+          'author': hassan,
+          'locked': true,
+          'mine': true,
+          'image_url': '/uploads/mine.jpg',
+          'captured_at': '2026-10-01T10:05:00Z',
+        },
+    ];
+    backend.routes['DELETE /api/moments/m1/memories/mem2'] = (_) {
+      deleted = true;
+      return http.Response('', 204);
+    };
+    await setUpApi(backend);
+    await startApp(tester);
+
+    await tapAndSettle(tester, find.text('BIRTHDAY NIGHT'));
+    expect(find.text('Memory hidden securely'), findsOneWidget); // Ali's stays hidden
+    expect(find.text('Only you can see it until the reveal'), findsOneWidget);
+
+    await tapAndSettle(tester, find.byKey(const Key('own-memory-options-mem2')));
+    expect(find.byKey(const Key('photo-swap-camera')), findsOneWidget);
+    expect(find.byKey(const Key('photo-swap-gallery')), findsOneWidget);
+    await tapAndSettle(tester, find.byKey(const Key('photo-delete')));
+    expect(find.text('Delete this photo?'), findsOneWidget);
+    await tapAndSettle(tester, find.text('Delete'));
+    expect(deleted, isTrue);
+    expect(find.text('Only you can see it until the reveal'), findsNothing);
+    await tester.pump(const Duration(seconds: 5)); // let the snack bar finish
+  });
+
+  testWidgets('past vault: hide a photo from your own view, then show it again', (tester) async {
+    final backend = FakeBackend();
+    var hidden = false;
+    backend.routes['GET /api/moments/farewell/memories'] = (req) {
+      expect(req.url.queryParameters['include_hidden'], 'true');
+      return [
+        {
+          'id': 'p1',
+          'moment_id': 'farewell',
+          'author': ali,
+          'image_url': '/uploads/a.jpg',
+          'caption': null,
+          'captured_at': '2026-10-01T10:00:00Z',
+          'hidden': hidden,
+        },
+        {
+          'id': 'p2',
+          'moment_id': 'farewell',
+          'author': ahmed,
+          'image_url': '/uploads/b.jpg',
+          'caption': null,
+          'captured_at': '2026-10-01T10:01:00Z',
+        },
+      ];
+    };
+    backend.routes['POST /api/moments/farewell/memories/p1/hide'] = (_) {
+      hidden = true;
+      return http.Response('', 204);
+    };
+    backend.routes['DELETE /api/moments/farewell/memories/p1/hide'] = (_) {
+      hidden = false;
+      return http.Response('', 204);
+    };
+    await setUpApi(backend);
+    await startApp(tester);
+    await tapAndSettle(tester, find.text('Moments'));
+    await tapAndSettle(tester, find.text('University Farewell'));
+    expect(find.text('Ali'), findsOneWidget);
+    expect(find.byKey(const Key('toggle-hidden')), findsNothing);
+
+    await tapAndSettle(tester, find.byKey(const Key('photo-options-p1')));
+    await tapAndSettle(tester, find.byKey(const Key('photo-hide')));
+    expect(hidden, isTrue);
+    expect(find.text('Ali'), findsNothing); // gone from your view
+    expect(find.text('Ahmed'), findsOneWidget);
+
+    await tapAndSettle(tester, find.byKey(const Key('toggle-hidden')));
+    expect(find.text('Ali'), findsOneWidget); // shown dimmed
+    await tapAndSettle(tester, find.byKey(const Key('photo-options-p1')));
+    expect(find.text('Show it again'), findsOneWidget);
+    await tapAndSettle(tester, find.byKey(const Key('photo-hide')));
+    expect(hidden, isFalse);
+    expect(find.byKey(const Key('toggle-hidden')), findsNothing);
+    await tester.pump(const Duration(seconds: 5));
+  });
+
   testWidgets('archive: the Past Vault lists opened capsules and opens their photos', (tester) async {
     final backend = FakeBackend();
     await setUpApi(backend);

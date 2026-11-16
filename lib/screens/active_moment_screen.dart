@@ -1,12 +1,15 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../data/api_client.dart';
 import '../data/models.dart';
 import '../theme/app_theme.dart';
+import '../utils/photo_picker.dart';
 import '../utils/time_format.dart';
 import '../widgets/countdown_text.dart';
+import '../widgets/group_actions.dart';
 import '../widgets/live_presence.dart';
 import '../widgets/safety_sheets.dart';
 import '../widgets/status_views.dart';
@@ -554,8 +557,143 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
     final myId = _api.currentUser.value?.id;
     return [
       for (final memory in memories)
-        _buildLockedMemoryCard(memory.author.id == myId ? '${memory.author.name} (you)' : memory.author.name),
+        memory.author.id == myId && memory.imageUrl != null && !_moment.isUnlocked
+            ? _buildOwnMemoryCard(memory)
+            : _buildLockedMemoryCard(memory.author.id == myId ? '${memory.author.name} (you)' : memory.author.name),
     ];
+  }
+
+  // ------------------------------------------------------------------ your own photos, before the reveal
+
+  /// Swap or delete one of your own photos. Only possible while the moment is still counting down;
+  /// after the reveal every photo is permanent.
+  Future<void> _ownPhotoActions(Memory memory) async {
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: AppTheme.kBackground,
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        side: BorderSide(color: AppTheme.kBorder, width: 2),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 18, 16, 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Text('Your photo', style: AppTheme.display(24)),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
+                child: Text(
+                  'You can change it until the reveal. After that it stays for good.',
+                  style: TextStyle(color: AppTheme.kTextSecondary, fontWeight: FontWeight.w600),
+                ),
+              ),
+              ListTile(
+                key: const Key('photo-swap-camera'),
+                leading: Icon(Icons.photo_camera_outlined, color: AppTheme.kTextPrimary),
+                title: const Text('Swap: take a new photo', style: TextStyle(fontWeight: FontWeight.w800)),
+                onTap: () => Navigator.pop(context, 'camera'),
+              ),
+              ListTile(
+                key: const Key('photo-swap-gallery'),
+                leading: Icon(Icons.photo_library_outlined, color: AppTheme.kTextPrimary),
+                title: const Text('Swap: choose from gallery', style: TextStyle(fontWeight: FontWeight.w800)),
+                onTap: () => Navigator.pop(context, 'gallery'),
+              ),
+              ListTile(
+                key: const Key('photo-delete'),
+                leading: Icon(Icons.delete_outline_rounded, color: AppTheme.kDanger),
+                title: Text(
+                  'Delete photo',
+                  style: TextStyle(fontWeight: FontWeight.w800, color: AppTheme.kDanger),
+                ),
+                onTap: () => Navigator.pop(context, 'delete'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (choice == null || !mounted) return;
+    try {
+      if (choice == 'delete') {
+        final confirmed = await confirmAction(
+          context,
+          title: 'Delete this photo?',
+          message: "It's removed from ${_moment.title} for good. Nobody will see it at the reveal.",
+          confirmLabel: 'Delete',
+        );
+        if (!confirmed || !mounted) return;
+        await _api.deleteMemory(_moment.id, memory.id);
+        if (mounted) showSnack(context, 'Photo deleted.');
+      } else {
+        final photo = await pickPhoto(choice == 'camera' ? ImageSource.camera : ImageSource.gallery);
+        if (photo == null || !mounted) return;
+        await _api.replaceMemory(_moment.id, memory.id, photo.bytes, photo.filename);
+        if (mounted) showSnack(context, 'Photo swapped.');
+      }
+      if (mounted) await Future.wait([_loadMemories(), _refreshMoment()]);
+    } catch (e) {
+      if (mounted) showErrorSnack(context, e);
+    }
+  }
+
+  Widget _buildOwnMemoryCard(Memory memory) {
+    return GestureDetector(
+      onTap: () => _ownPhotoActions(memory),
+      child: Container(
+        key: Key('own-memory-${memory.id}'),
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(12),
+        decoration: AppTheme.sticker(AppTheme.kSurface, radius: 20, offset: 3),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: SizedBox(
+                width: 56,
+                height: 56,
+                child: Image.network(
+                  _api.imageUrl(memory.imageUrl!),
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stack) =>
+                      Icon(Icons.image_outlined, color: AppTheme.kTextSecondary, size: 26),
+                ),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${memory.author.name} (you)',
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Only you can see it until the reveal',
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: AppTheme.kTextSecondary, fontSize: 13, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              key: Key('own-memory-options-${memory.id}'),
+              tooltip: 'Swap or delete',
+              icon: Icon(Icons.more_horiz_rounded, color: AppTheme.kTextPrimary),
+              onPressed: () => _ownPhotoActions(memory),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildLockedMemoryCard(String name) {
