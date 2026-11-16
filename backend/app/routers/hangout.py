@@ -108,8 +108,10 @@ async def hangout_websocket(websocket: WebSocket, moment_id: uuid.UUID, token: s
     """
     Live connection for the Hangout tab.
 
-    Connect with `?token=<JWT access token>`. Incoming JSON `{"text": "..."}` frames are
-    persisted and rebroadcast to every client connected to this moment's room.
+    Connect with `?token=<JWT access token>`. Incoming JSON frames:
+      {"text": "..."}      a chat message: saved and rebroadcast to everyone in the moment's room
+      {"typing": true}     started / stopped typing: passed on to the others, never saved
+    The server also sends {"event": "presence", "user_ids": [...]} whenever someone opens or leaves.
     """
     user_id = decode_access_token(token)
     if user_id is None:
@@ -125,13 +127,20 @@ async def hangout_websocket(websocket: WebSocket, moment_id: uuid.UUID, token: s
     finally:
         db.close()
 
-    await manager.connect(moment_id, websocket)
+    await manager.connect(moment_id, websocket, user_id)
     try:
         while True:
             try:
                 payload = await websocket.receive_json()
             except ValueError:
                 continue  # ignore frames that aren't valid JSON
+            if isinstance(payload, dict) and isinstance(payload.get("typing"), bool):
+                await manager.broadcast(
+                    moment_id,
+                    {"event": "typing", "user_id": str(user_id), "typing": payload["typing"]},
+                    exclude=websocket,
+                )
+                continue
             raw_text = payload.get("text") if isinstance(payload, dict) else None
             text = raw_text.strip()[:2000] if isinstance(raw_text, str) else ""
             if not text:
@@ -154,4 +163,4 @@ async def hangout_websocket(websocket: WebSocket, moment_id: uuid.UUID, token: s
     except WebSocketDisconnect:
         pass
     finally:
-        manager.disconnect(moment_id, websocket)
+        await manager.disconnect(moment_id, websocket)

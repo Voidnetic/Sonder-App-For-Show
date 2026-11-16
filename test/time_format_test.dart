@@ -30,4 +30,16 @@ void main() {
     expect(tomorrowRevealTime(DateTime(2026, 12, 31, 10)), DateTime(2027, 1, 1, 9));
     expect(revealDescription(DateTime(2026, 10, 9, 9), now: now), 'Reveals tomorrow at 9 AM');
   });
+
+  test('time ago and the "added a memory" line', () {
+    final now = DateTime.utc(2026, 11, 16, 12);
+    expect(timeAgo(now.subtract(const Duration(seconds: 20)), now: now), 'just now');
+    expect(timeAgo(now.subtract(const Duration(minutes: 10)), now: now), '10 min ago');
+    expect(timeAgo(now.subtract(const Duration(hours: 3)), now: now), '3 h ago');
+    expect(timeAgo(now.subtract(const Duration(hours: 30)), now: now), 'yesterday');
+    expect(timeAgo(now.subtract(const Duration(days: 4)), now: now), '4 days ago');
+    expect(lastCapturedLabel('Ahmed', now.subtract(const Duration(minutes: 5)), now: now), 'Ahmed added a memory 5 min ago');
+    expect(lastCapturedLabel('Hassan', now, myId: 'u1', authorId: 'u1', now: now), 'You added a memory just now');
+    expect(lastCapturedLabel(null, now), isNull);
+  });
 }

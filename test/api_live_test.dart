@@ -11,6 +11,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sonder_app/data/api_client.dart';
+import 'package:sonder_app/data/models.dart';
 
 final serverUrl = Platform.environment['SONDER_API_URL'];
 
@@ -73,8 +74,8 @@ void main() {
     expect(seenByAli.single.author.name, 'Hassan');
 
     final received = Completer<String>();
-    final sub = ali.hangoutStream(moment.id).listen((m) {
-      if (!received.isCompleted) received.complete(m.text);
+    final sub = ali.hangoutStream(moment.id).listen((event) {
+      if (event is HangoutMessage && !received.isCompleted) received.complete(event.message.text);
     });
     await Future<void>.delayed(const Duration(milliseconds: 500)); // let the socket connect
     final sent = await hassan.sendMessage(moment.id, 'hello from flutter 👋');
@@ -117,7 +118,7 @@ void main() {
     await api.setServerUrl('http://127.0.0.1:9');
     await expectLater(
       api.login('hassan@sonder.app', 'sonderpass123'),
-      throwsA(isA<ApiException>().having((e) => e.message, 'message', contains("Can't reach the server"))),
+      throwsA(isA<ApiException>().having((e) => e.message, 'message', contains("Can't connect to Sonder"))),
     );
   }, skip: serverUrl == null ? 'Set SONDER_API_URL to run against a live backend' : false);
 }

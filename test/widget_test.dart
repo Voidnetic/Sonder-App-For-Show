@@ -152,10 +152,16 @@ class FakeBackend {
 class TestApi extends SonderApi {
   TestApi(http.Client client) : super(client: client);
 
-  final live = StreamController<ChatMessage>.broadcast();
+  final live = StreamController<HangoutEvent>.broadcast();
+
+  /// Every typing signal the app sent, in order.
+  final typingSent = <bool>[];
 
   @override
-  Stream<ChatMessage> hangoutStream(String momentId) => live.stream;
+  Stream<HangoutEvent> hangoutStream(String momentId) => live.stream;
+
+  @override
+  void sendTyping(String momentId, bool typing) => typingSent.add(typing);
 }
 
 Future<TestApi> setUpApi(FakeBackend backend, {bool signedIn = true}) async {
@@ -295,12 +301,12 @@ void main() {
     expect(find.text('Cominggg'), findsOneWidget);
 
     // A friend's message arrives over the live connection.
-    api.live.add(ChatMessage.fromJson(messageJson('msg3', ahmed, 'Someone save me food')));
+    api.live.add(HangoutMessage(ChatMessage.fromJson(messageJson('msg3', ahmed, 'Someone save me food'))));
     await settle(tester, 3);
     expect(find.text('Someone save me food'), findsOneWidget);
 
     // Our own message echoed back by the server is not shown twice.
-    api.live.add(ChatMessage.fromJson(messageJson('sent-1', hassan, 'Cominggg')));
+    api.live.add(HangoutMessage(ChatMessage.fromJson(messageJson('sent-1', hassan, 'Cominggg'))));
     await settle(tester, 3);
     expect(find.text('Cominggg'), findsOneWidget);
   });
@@ -602,5 +608,60 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
     expect(find.byType(IntroSplash), findsNothing);
     expect(find.text('Welcome back 👋'), findsOneWidget);
+  });
+
+  testWidgets('hangout: "here now", typing dots both ways, and dots clear when the message arrives', (tester) async {
+    final backend = FakeBackend();
+    backend.routes['GET /api/blocks'] = (_) => [];
+    final api = await setUpApi(backend);
+    await startApp(tester);
+
+    await tapAndSettle(tester, find.text('BIRTHDAY NIGHT'));
+    await tapAndSettle(tester, find.text('💬 Hangout'));
+    expect(find.text('Just you here right now'), findsOneWidget);
+
+    api.live.add(const HangoutPresence({'u1', 'u2', 'u4'})); // Hassan (me), Ali, Hajra
+    await settle(tester, 2);
+    expect(find.text('Ali and Hajra are here now'), findsOneWidget);
+
+    api.live.add(const HangoutTyping('u2', true));
+    await settle(tester, 2);
+    expect(find.text('Ali is typing'), findsOneWidget);
+
+    api.live.add(HangoutMessage(ChatMessage.fromJson(messageJson('msg7', ali, 'almost there'))));
+    await settle(tester, 2);
+    expect(find.text('almost there'), findsOneWidget);
+    expect(find.byKey(const Key('typing-indicator')), findsNothing);
+
+    // Our own typing: "typing" once while typing, "stopped" when sent.
+    await tester.enterText(find.byKey(const Key('chat-field')), 'on my');
+    await tester.enterText(find.byKey(const Key('chat-field')), 'on my way');
+    expect(api.typingSent, [true]);
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tapAndSettle(tester, find.text('Send'));
+    expect(api.typingSent, [true, false]);
+
+    // Someone who stops typing without sending disappears after a few seconds.
+    api.live.add(const HangoutTyping('u4', true));
+    await settle(tester, 2);
+    expect(find.text('Hajra is typing'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 7));
+    expect(find.byKey(const Key('typing-indicator')), findsNothing);
+  });
+
+  testWidgets('home: a locked moment shows who added the latest memory', (tester) async {
+    final backend = FakeBackend();
+    final now = DateTime.now();
+    backend.routes['GET /api/moments/active'] = (_) => [
+          {
+            ...momentJson(id: 'm1', title: 'Birthday Night', unlockAt: now.add(const Duration(hours: 2)), memoryCount: 2),
+            'last_captured_at': now.subtract(const Duration(minutes: 10)).toUtc().toIso8601String(),
+            'last_captured_by': ahmed,
+          },
+        ];
+    await setUpApi(backend);
+    await startApp(tester);
+
+    expect(find.text('Ahmed added a memory 10 min ago'), findsOneWidget);
   });
 }

@@ -29,4 +29,7 @@ class MomentResponse(BaseModel):
     revealed_at: datetime | None
     is_locked: bool
     memory_count: int
+    # Who added the newest photo and when ("Ahmed added a memory 10 min ago"). The photo stays hidden.
+    last_captured_at: datetime | None = None
+    last_captured_by: UserResponse | None = None
     friend_count: int

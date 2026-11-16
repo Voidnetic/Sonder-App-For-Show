@@ -21,6 +21,10 @@ router = APIRouter(prefix="/moments", tags=["Moments"])
 
 def _to_response(moment: Moment, db: Session) -> MomentResponse:
     memory_count = db.scalar(select(func.count(Memory.id)).where(Memory.moment_id == moment.id)) or 0
+    latest = db.scalar(
+        select(Memory).where(Memory.moment_id == moment.id).order_by(Memory.captured_at.desc()).limit(1)
+    )
+    latest_author = db.get(User, latest.author_id) if latest else None
     creator = db.get(User, moment.creator_id)
     now = datetime.now(timezone.utc)
     return MomentResponse(
@@ -34,6 +38,8 @@ def _to_response(moment: Moment, db: Session) -> MomentResponse:
         is_locked=to_utc(moment.unlock_at) > now,
         memory_count=memory_count,
         friend_count=len(moment.participants),
+        last_captured_at=latest.captured_at if latest else None,
+        last_captured_by=UserResponse.model_validate(latest_author) if latest_author else None,
     )
 
 

@@ -7,6 +7,7 @@ import '../data/models.dart';
 import '../theme/app_theme.dart';
 import '../utils/time_format.dart';
 import '../widgets/countdown_text.dart';
+import '../widgets/live_presence.dart';
 import '../widgets/safety_sheets.dart';
 import '../widgets/status_views.dart';
 import 'camera_screen.dart';
@@ -34,7 +35,17 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
 
   List<ChatMessage>? _messages;
   Object? _messagesError;
-  StreamSubscription<ChatMessage>? _live;
+  StreamSubscription<HangoutEvent>? _live;
+
+  /// Everyone with this moment open right now ("Here now"), including you.
+  Set<String> _hereNow = {};
+
+  /// Who's typing, each with a timer that clears them if their "stopped typing" never arrives.
+  final Map<String, Timer> _typing = {};
+
+  /// Whether we told the others we're typing, and when to tell them we stopped.
+  bool _iAmTyping = false;
+  Timer? _typingIdle;
   Timer? _reconnectTimer;
   int _reconnectAttempts = 0;
   bool _sending = false;
@@ -88,6 +99,11 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
   @override
   void dispose() {
     _reconnectTimer?.cancel();
+    _typingIdle?.cancel();
+    for (final t in _typing.values) {
+      t.cancel();
+    }
+    if (_iAmTyping) _api.sendTyping(_moment.id, false);
     _live?.cancel();
     _pulseController.dispose();
     _chatController.dispose();
@@ -152,14 +168,52 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
     _live = _api
         .hangoutStream(_moment.id)
         .listen(
-          (message) {
+          (event) {
             _reconnectAttempts = 0;
-            _addMessage(message);
+            switch (event) {
+              case HangoutMessage(:final message):
+                _clearTyping(message.author?.id); // their message arrived, so they've stopped typing
+                _addMessage(message);
+              case HangoutPresence(:final userIds):
+                if (mounted) setState(() => _hereNow = userIds);
+              case HangoutTyping(:final userId, :final typing):
+                typing ? _markTyping(userId) : _clearTyping(userId);
+            }
           },
           onError: (Object _) => _scheduleReconnect(),
           onDone: _scheduleReconnect,
           cancelOnError: true,
         );
+  }
+
+  void _markTyping(String userId) {
+    if (!mounted || userId == _api.currentUser.value?.id || _hiddenAuthors.contains(userId)) return;
+    _typing[userId]?.cancel();
+    setState(() => _typing[userId] = Timer(const Duration(seconds: 6), () => _clearTyping(userId)));
+  }
+
+  void _clearTyping(String? userId) {
+    final timer = _typing.remove(userId);
+    if (timer == null) return;
+    timer.cancel();
+    if (mounted) setState(() {});
+  }
+
+  /// Called as you type: says "typing" once, then "stopped" after 3 quiet seconds.
+  void _onComposerChanged(String text) {
+    _typingIdle?.cancel();
+    if (text.trim().isEmpty) {
+      _setTyping(false);
+      return;
+    }
+    _setTyping(true);
+    _typingIdle = Timer(const Duration(seconds: 3), () => _setTyping(false));
+  }
+
+  void _setTyping(bool typing) {
+    if (typing == _iAmTyping) return;
+    _iAmTyping = typing;
+    _api.sendTyping(_moment.id, typing);
   }
 
   void _scheduleReconnect() {
@@ -200,6 +254,8 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
     if (text.isEmpty || _sending) return;
     setState(() => _sending = true);
     _chatController.clear();
+    _typingIdle?.cancel();
+    _setTyping(false);
     try {
       _addMessage(await _api.sendMessage(_moment.id, text));
     } catch (e) {
@@ -255,7 +311,7 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
             ),
             const SizedBox(height: 2),
             Text(
-              "${_moment.friendCount} friends • $_memoryCount memories",
+              "${countLabel(_moment.friendCount, 'friend', 'friends')} • ${countLabel(_memoryCount, 'memory', 'memories')}",
               style: TextStyle(color: AppTheme.kTextSecondary, fontSize: 12, fontWeight: FontWeight.bold),
             ),
           ],
@@ -433,7 +489,7 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
           ),
           const SizedBox(height: 8),
           Text(
-            "🔒 $_memoryCount memories are currently locked.",
+            _memoryCount == 1 ? "🔒 1 memory is currently locked." : "🔒 $_memoryCount memories are currently locked.",
             textAlign: TextAlign.center,
             style: TextStyle(color: AppTheme.kTextSecondary, fontSize: 14, fontWeight: FontWeight.bold),
           ),
@@ -560,8 +616,15 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
   Widget _buildHangoutTab() {
     final messages = _messages;
     final myId = _api.currentUser.value?.id;
+    final people = {for (final p in _moment.participants) p.id: p};
+    final hereNow = [
+      for (final id in _hereNow)
+        if (id != myId && !_hiddenAuthors.contains(id) && people[id] != null) people[id]!,
+    ];
+    final typingNames = [for (final id in _typing.keys) people[id]?.name ?? 'Someone'];
     return Column(
       children: [
+        if (!_moment.isUnlocked) HereNowStrip(others: hereNow),
         Expanded(
           child: messages == null
               ? (_messagesError != null
@@ -581,6 +644,8 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
                   itemBuilder: (context, index) => _buildMessage(messages[index], myId),
                 ),
         ),
+
+        if (typingNames.isNotEmpty) TypingIndicator(names: typingNames),
 
         // MESSAGE COMPOSER
         Container(
@@ -618,6 +683,7 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
                     child: TextField(
                       key: const Key('chat-field'),
                       controller: _chatController,
+                      onChanged: _onComposerChanged,
                       maxLength: 2000,
                       decoration: InputDecoration(
                         hintText: "Write a message...",

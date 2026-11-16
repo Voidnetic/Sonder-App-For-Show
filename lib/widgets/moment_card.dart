@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../data/api_client.dart';
 import '../data/models.dart';
+import '../utils/time_format.dart';
 import '../theme/app_theme.dart';
 import 'countdown_text.dart';
 import 'motion.dart';
@@ -20,6 +22,12 @@ class _MomentCardState extends State<MomentCard> {
   Widget build(BuildContext context) {
     final moment = widget.moment;
     final unlocked = moment.isUnlocked;
+    final lastCaptured = lastCapturedLabel(
+      moment.lastCapturedBy?.name,
+      moment.lastCapturedAt,
+      myId: SonderApi.instance.currentUser.value?.id,
+      authorId: moment.lastCapturedBy?.id,
+    );
     return Pressable(
       onTap: widget.onTap,
       child: AnimatedContainer(
@@ -66,7 +74,7 @@ class _MomentCardState extends State<MomentCard> {
                   const SizedBox(width: 8),
                   Flexible(
                     child: Text(
-                      '${moment.memoryCount} memories • ${moment.friendCount} friends',
+                      '${countLabel(moment.memoryCount, 'memory', 'memories')} • ${countLabel(moment.friendCount, 'friend', 'friends')}',
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: AppTheme.kTextPrimary,
@@ -76,6 +84,24 @@ class _MomentCardState extends State<MomentCard> {
                   ),
                 ],
               ),
+              // "Ahmed added a memory 10 min ago": shows activity while the photos stay hidden.
+              if (!unlocked && lastCaptured != null) ...[
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Icon(Icons.photo_camera_outlined, size: 18, color: AppTheme.kTextSecondary),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        lastCaptured,
+                        key: const Key('last-captured'),
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: AppTheme.kTextSecondary, fontWeight: FontWeight.w700, fontSize: 13),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
               const SizedBox(height: 32),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

@@ -129,6 +129,10 @@ class Moment {
   final int memoryCount;
   final int friendCount;
 
+  /// Who added the newest photo and when ("Ahmed added a memory 10 min ago"). The photo itself stays hidden.
+  final DateTime? lastCapturedAt;
+  final AppUser? lastCapturedBy;
+
   const Moment({
     required this.id,
     required this.title,
@@ -139,6 +143,8 @@ class Moment {
     required this.revealedAt,
     required this.memoryCount,
     required this.friendCount,
+    this.lastCapturedAt,
+    this.lastCapturedBy,
   });
 
   factory Moment.fromJson(Map<String, dynamic> json) => Moment(
@@ -153,6 +159,10 @@ class Moment {
     revealedAt: json['revealed_at'] == null ? null : _parseDate(json['revealed_at']),
     memoryCount: json['memory_count'] as int,
     friendCount: json['friend_count'] as int,
+    lastCapturedAt: json['last_captured_at'] == null ? null : _parseDate(json['last_captured_at']),
+    lastCapturedBy: json['last_captured_by'] == null
+        ? null
+        : AppUser.fromJson(json['last_captured_by'] as Map<String, dynamic>),
   );
 
   /// Computed from the clock rather than the server flag, so it flips the moment the countdown ends.
@@ -214,4 +224,33 @@ class ChatMessage {
     text: json['text'] as String,
     createdAt: _parseDate(json['created_at']),
   );
+}
+
+/// Something that happened in a moment's live Hangout connection.
+sealed class HangoutEvent {
+  const HangoutEvent();
+
+  /// Chat messages have no "event" key (the original format); presence and typing do.
+  factory HangoutEvent.fromJson(Map<String, dynamic> json) => switch (json['event']) {
+    'presence' => HangoutPresence({for (final id in json['user_ids'] as List<dynamic>) id as String}),
+    'typing' => HangoutTyping(json['user_id'] as String, json['typing'] as bool),
+    _ => HangoutMessage(ChatMessage.fromJson(json)),
+  };
+}
+
+class HangoutMessage extends HangoutEvent {
+  final ChatMessage message;
+  const HangoutMessage(this.message);
+}
+
+/// Everyone who has this moment open right now ("Here now"), including you.
+class HangoutPresence extends HangoutEvent {
+  final Set<String> userIds;
+  const HangoutPresence(this.userIds);
+}
+
+class HangoutTyping extends HangoutEvent {
+  final String userId;
+  final bool typing;
+  const HangoutTyping(this.userId, this.typing);
 }

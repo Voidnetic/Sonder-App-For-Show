@@ -119,7 +119,7 @@ class _MemoriesGalleryScreenState extends State<MemoriesGalleryScreen> {
             ),
             const SizedBox(height: 2),
             Text(
-              "Unlocked ${formatMonthDay(unlockedOn)} • ${moment.friendCount} friends",
+              "Unlocked ${formatMonthDay(unlockedOn)} • ${countLabel(moment.friendCount, 'friend', 'friends')}",
               style: TextStyle(color: AppTheme.kTextSecondary, fontSize: 12, fontWeight: FontWeight.bold),
             ),
           ],

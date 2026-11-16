@@ -263,8 +263,12 @@ class SonderApi {
     return ChatMessage.fromJson(json as Map<String, dynamic>);
   }
 
-  /// Live Hangout messages for a moment. Cancelling the subscription closes the connection.
-  Stream<ChatMessage> hangoutStream(String momentId) {
+  /// Open Hangout connections, so [sendTyping] can reach the right one.
+  final Map<String, WebSocketChannel> _hangouts = {};
+
+  /// Live events for a moment: chat messages, who's here, who's typing. Cancelling the subscription
+  /// closes the connection.
+  Stream<HangoutEvent> hangoutStream(String momentId) {
     final base = Uri.parse(_serverUrl);
     final uri = base.replace(
       scheme: base.scheme == 'https' ? 'wss' : 'ws',
@@ -274,22 +278,33 @@ class SonderApi {
     final channel = WebSocketChannel.connect(uri);
     // Connection failures also arrive as a stream error, which the caller handles.
     channel.ready.ignore();
-    late final StreamController<ChatMessage> controller;
+    late final StreamController<HangoutEvent> controller;
     StreamSubscription<dynamic>? subscription;
-    controller = StreamController<ChatMessage>(
+    controller = StreamController<HangoutEvent>(
       onListen: () {
+        _hangouts[momentId] = channel;
         subscription = channel.stream.listen(
-          (data) => controller.add(ChatMessage.fromJson(jsonDecode(data as String) as Map<String, dynamic>)),
+          (data) => controller.add(HangoutEvent.fromJson(jsonDecode(data as String) as Map<String, dynamic>)),
           onError: controller.addError,
           onDone: controller.close,
         );
       },
       onCancel: () async {
+        if (_hangouts[momentId] == channel) _hangouts.remove(momentId);
         await subscription?.cancel();
         await channel.sink.close();
       },
     );
     return controller.stream;
+  }
+
+  /// Tells the others in the moment that you started or stopped typing. Never stored.
+  void sendTyping(String momentId, bool typing) {
+    try {
+      _hangouts[momentId]?.sink.add(jsonEncode({'typing': typing}));
+    } catch (_) {
+      // A dropped connection just means nobody sees the typing dots; it reconnects by itself.
+    }
   }
 
   /// Uploaded photos are stored as `/uploads/<file>` paths on the server.

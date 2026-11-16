@@ -52,3 +52,24 @@ String revealDescription(DateTime unlockAt, {DateTime? now}) {
   if (days == 1) return 'Reveals tomorrow at $clock';
   return 'Reveals ${formatMonthDay(target)} at $clock';
 }
+
+/// "just now", "10 min ago", "3 h ago", "yesterday", "4 days ago", then the date.
+String timeAgo(DateTime time, {DateTime? now}) {
+  final diff = (now ?? DateTime.now()).toUtc().difference(time.toUtc());
+  if (diff.inSeconds < 60) return 'just now';
+  if (diff.inMinutes < 60) return '${diff.inMinutes} min ago';
+  if (diff.inHours < 24) return '${diff.inHours} h ago';
+  if (diff.inDays < 2) return 'yesterday';
+  if (diff.inDays < 7) return '${diff.inDays} days ago';
+  return formatMonthDay(time);
+}
+
+/// "Ahmed added a memory 10 min ago" for a moment's newest photo (the photo itself stays hidden).
+String? lastCapturedLabel(String? name, DateTime? at, {String? myId, String? authorId, DateTime? now}) {
+  if (name == null || at == null) return null;
+  final who = authorId != null && authorId == myId ? 'You' : name;
+  return '$who added a memory ${timeAgo(at, now: now)}';
+}
+
+/// "1 memory", "3 memories", "1 friend", "4 friends".
+String countLabel(int n, String one, String many) => '$n ${n == 1 ? one : many}';

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/api_client.dart';
 import '../data/models.dart';
 import '../theme/app_theme.dart';
+import '../utils/time_format.dart';
 import '../widgets/status_views.dart';
 import 'memories_gallery_screen.dart';
 
@@ -125,7 +126,7 @@ class _RevealScreenState extends State<RevealScreen> with SingleTickerProviderSt
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  "${_moment.memoryCount} memories • ${_moment.friendCount} friends",
+                  "${countLabel(_moment.memoryCount, 'memory', 'memories')} • ${countLabel(_moment.friendCount, 'friend', 'friends')}",
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.kTextSecondary),
                 ),
                 const SizedBox(height: 64),

@@ -167,7 +167,7 @@ class _MomentsArchiveScreenState extends State<MomentsArchiveScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    "${moment.memoryCount} memories captured",
+                    "${countLabel(moment.memoryCount, 'memory', 'memories')} captured",
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
