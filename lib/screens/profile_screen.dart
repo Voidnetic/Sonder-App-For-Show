@@ -361,9 +361,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Text("Theme", style: AppTheme.display(26)),
               const SizedBox(height: 12),
               for (final (mode, icon, hint) in [
-                (ThemeMode.system, Icons.brightness_auto_outlined, "Match your phone's setting"),
-                (ThemeMode.light, Icons.light_mode_outlined, "Cream and pastels"),
+                (ThemeMode.light, Icons.light_mode_outlined, "Cream and pastels (default)"),
                 (ThemeMode.dark, Icons.dark_mode_outlined, "Deep ink with cream outlines"),
+                (ThemeMode.system, Icons.brightness_auto_outlined, "Match your phone's setting"),
               ])
                 ListTile(
                   key: Key('theme-${mode.name}'),

@@ -24,3 +24,19 @@ class AuthResponse(BaseModel):
     token_type: str = "bearer"
     # True when this request created the account (the app shows a welcome message).
     created: bool = False
+    # The app must ask for the emailed code before the person can add friends or create moments.
+    verification_required: bool = False
+
+
+class VerifyEmailRequest(BaseModel):
+    code: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    code: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")
+    new_password: str = Field(min_length=8, max_length=128)

@@ -21,6 +21,7 @@ class UserProfileResponse(UserResponse):
     google_linked: bool = False
     has_password: bool = True
     is_admin: bool = False
+    verification_required: bool = False
 
 
 class UpdateUserRequest(BaseModel):

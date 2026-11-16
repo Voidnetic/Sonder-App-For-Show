@@ -93,11 +93,12 @@ class ThemeController {
   static final ThemeController instance = ThemeController._();
 
   static const _key = 'theme_mode';
-  final ValueNotifier<ThemeMode> mode = ValueNotifier(ThemeMode.system);
+  /// Light unless the person picks Dark or System in Profile → Theme (even when the phone is in dark mode).
+  final ValueNotifier<ThemeMode> mode = ValueNotifier(ThemeMode.light);
 
   Future<void> load() async {
     final saved = (await SharedPreferences.getInstance()).getString(_key);
-    mode.value = ThemeMode.values.firstWhere((m) => m.name == saved, orElse: () => ThemeMode.system);
+    mode.value = ThemeMode.values.firstWhere((m) => m.name == saved, orElse: () => ThemeMode.light);
   }
 
   Future<void> set(ThemeMode value) async {

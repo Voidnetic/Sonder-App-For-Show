@@ -573,7 +573,7 @@ void main() {
     final backend = FakeBackend();
     await setUpApi(backend);
     addTearDown(() async {
-      await ThemeController.instance.set(ThemeMode.system);
+      await ThemeController.instance.set(ThemeMode.light);
       AppTheme.isDark = false;
     });
     await startApp(tester);
@@ -663,5 +663,70 @@ void main() {
     await startApp(tester);
 
     expect(find.text('Ahmed added a memory 10 min ago'), findsOneWidget);
+  });
+
+  testWidgets('sign-up: enter the emailed code, a wrong one shows an error, the right one opens the app',
+      (tester) async {
+    final backend = FakeBackend();
+    var verified = false;
+    backend.routes.addAll({
+      'POST /api/auth/register': (_) =>
+          {'user': hassan, 'access_token': 'tok', 'token_type': 'bearer', 'created': true, 'verification_required': true},
+      'POST /api/auth/verify-email/send': (_) =>
+          http.Response(jsonEncode({'detail': 'Please wait a minute before asking for another code'}), 429),
+      'POST /api/auth/verify-email': (req) {
+        final code = (jsonDecode(req.body) as Map<String, dynamic>)['code'];
+        if (code != '424242') return http.Response(jsonEncode({'detail': "That code isn't right. 4 tries left."}), 400);
+        verified = true;
+        return {'user': hassan, 'access_token': 'tok', 'token_type': 'bearer', 'verification_required': false};
+      },
+    });
+    await setUpApi(backend, signedIn: false);
+    await startApp(tester);
+
+    await tapAndSettle(tester, find.text('New here? Create an account'));
+    await tester.enterText(find.byKey(const Key('name-field')), 'Hassan');
+    await tester.enterText(find.byKey(const Key('email-field')), 'hassan@sonder.app');
+    await tester.enterText(find.byKey(const Key('password-field')), 'sonderpass123');
+    await tapAndSettle(tester, find.text('SIGN UP'));
+
+    expect(find.text('Check your email ✉️'), findsOneWidget);
+    expect(find.textContaining('hassan@sonder.app', findRichText: true), findsOneWidget);
+    expect(find.text("Please wait a minute before asking for another code"), findsNothing); // quiet on open
+
+    await tester.enterText(find.byKey(const Key('code-field')), '111111');
+    await settle(tester);
+    expect(find.text("That code isn't right. 4 tries left."), findsOneWidget);
+
+    await tester.enterText(find.byKey(const Key('code-field')), '424242'); // six digits verify by themselves
+    await settle(tester);
+    expect(verified, isTrue);
+    expect(find.text('Hey, Hassan 👋'), findsOneWidget);
+  });
+
+  testWidgets('login: forgot password emails a code, then a new password signs you in', (tester) async {
+    final backend = FakeBackend();
+    backend.routes.addAll({
+      'POST /api/auth/forgot-password': (_) => http.Response('', 204),
+      'POST /api/auth/reset-password': (_) =>
+          {'user': hassan, 'access_token': 'new-tok', 'token_type': 'bearer', 'verification_required': false},
+    });
+    await setUpApi(backend, signedIn: false);
+    await startApp(tester);
+
+    await tester.enterText(find.byKey(const Key('email-field')), 'hassan@sonder.app');
+    await tapAndSettle(tester, find.byKey(const Key('forgot-password')));
+    expect(find.text('Forgot password? 🔑'), findsOneWidget);
+    await tapAndSettle(tester, find.text('SEND CODE'));
+    expect(backend.lastBody('POST', '/api/auth/forgot-password'), {'email': 'hassan@sonder.app'});
+
+    await tester.enterText(find.byKey(const Key('reset-code')), '123456');
+    await tester.enterText(find.byKey(const Key('reset-password')), 'brandnew99');
+    await tapAndSettle(tester, find.text('SET NEW PASSWORD'));
+    expect(backend.lastBody('POST', '/api/auth/reset-password'),
+        {'email': 'hassan@sonder.app', 'code': '123456', 'new_password': 'brandnew99'});
+    expect(find.text('Hey, Hassan 👋'), findsOneWidget);
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getString('access_token'), 'new-tok');
   });
 }

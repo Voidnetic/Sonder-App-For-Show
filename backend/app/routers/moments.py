@@ -6,7 +6,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.deps import get_current_user
+from app.deps import get_current_user, get_verified_user
 from app.models.memory import Memory
 from app.models.moment import Moment, moment_participants
 from app.models.user import User
@@ -56,7 +56,7 @@ def _get_moment_for_participant(moment_id: uuid.UUID, current_user: User, db: Se
 def create_moment(
     body: CreateMomentRequest,
     background: BackgroundTasks,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_verified_user),
     db: Session = Depends(get_db),
 ) -> MomentResponse:
     # Only friends can be added, so nobody can be pulled into a moment by a stranger (or someone they blocked).
@@ -123,7 +123,7 @@ def add_participant(
     moment_id: uuid.UUID,
     body: AddParticipantRequest,
     background: BackgroundTasks,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_verified_user),
     db: Session = Depends(get_db),
 ) -> MomentResponse:
     moment = db.get(Moment, moment_id)

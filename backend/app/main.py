@@ -59,7 +59,11 @@ DB_DIR = Path(__file__).resolve().parent.parent / "db"
 SCHEMA = DB_DIR / "01_schema.sql"
 DEMO_DATA = DB_DIR / "02_seed.sql"
 # Each file is safe to run again, so they are applied on every start.
-MIGRATIONS = [DB_DIR / "03_accounts_and_safety.sql", DB_DIR / "04_push_notifications.sql"]
+MIGRATIONS = [
+    DB_DIR / "03_accounts_and_safety.sql",
+    DB_DIR / "04_push_notifications.sql",
+    DB_DIR / "05_email_codes.sql",
+]
 
 
 def _run_sql_file(path: Path) -> None:
@@ -111,6 +115,11 @@ log = logging.getLogger("uvicorn.error")
 async def start_background_jobs() -> None:
     log.info(await asyncio.to_thread(check_storage))
     log.info("Push notifications: %s", "on" if push_enabled() else "off (set FIREBASE_SERVICE_ACCOUNT)")
+    log.info(
+        "Email codes: %s",
+        ("on (Resend)" if settings.resend_api_key else "on (SMTP)") if settings.email_enabled
+        else "off (set RESEND_API_KEY or SMTP_*, and EMAIL_FROM)",
+    )
     # Keep a reference so the task isn't garbage collected.
     app.state.unlock_notifier = asyncio.create_task(unlock_notifier_loop())
 

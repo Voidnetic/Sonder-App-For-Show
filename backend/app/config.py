@@ -38,8 +38,25 @@ class Settings(BaseSettings):
     # How long a photo link handed to the app stays valid.
     photo_url_expires_seconds: int = 3600
 
+    # Sending emails (verification and password-reset codes). Set ONE of:
+    #   RESEND_API_KEY                     Resend (resend.com), sent over HTTPS
+    #   SMTP_HOST/PORT/USERNAME/PASSWORD   any SMTP server, e.g. Gmail with an app password
+    # plus EMAIL_FROM (the address the codes come from). With neither, verification is switched off and
+    # email/password accounts work exactly as before.
+    resend_api_key: str = ""
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_username: str = ""
+    smtp_password: str = ""
+    email_from: str = ""
+    email_from_name: str = "Sonder"
+
     # Firebase Cloud Messaging: the service account key JSON (raw, or base64 of it). Empty = no push.
     firebase_service_account: str = ""
+
+    @property
+    def email_enabled(self) -> bool:
+        return bool(self.email_from and (self.resend_api_key or (self.smtp_host and self.smtp_password)))
 
     @property
     def r2_enabled(self) -> bool:

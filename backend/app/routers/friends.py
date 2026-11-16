@@ -5,7 +5,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.deps import get_current_user
+from app.deps import get_current_user, get_verified_user
 from app.models.friendship import Friendship, FriendshipStatus
 from app.models.user import User
 from app.push import notify_users
@@ -48,7 +48,7 @@ def _to_request_response(friendship: Friendship, db: Session) -> FriendRequestRe
 def send_request(
     body: AddFriendRequest,
     background: BackgroundTasks,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_verified_user),
     db: Session = Depends(get_db),
 ) -> FriendRequestResponse:
     if body.recipient_id == current_user.id:
@@ -147,7 +147,7 @@ def cancel_request(
 def accept_request(
     request_id: uuid.UUID,
     background: BackgroundTasks,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_verified_user),
     db: Session = Depends(get_db),
 ) -> FriendRequestResponse:
     response = _respond(request_id, True, current_user, db)

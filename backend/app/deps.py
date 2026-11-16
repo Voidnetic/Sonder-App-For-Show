@@ -24,3 +24,12 @@ def get_current_user(
     if user is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "User no longer exists")
     return user
+
+
+def get_verified_user(current_user: User = Depends(get_current_user)) -> User:
+    """For adding friends and creating moments: needs a confirmed email once the server sends email."""
+    from app.verification import verification_required
+
+    if verification_required(current_user):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Please verify your email first")
+    return current_user

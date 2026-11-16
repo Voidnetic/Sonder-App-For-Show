@@ -34,6 +34,7 @@ class SonderApi {
   static const _kServerUrl = 'server_url';
   static const _kToken = 'access_token';
   static const _kUser = 'user';
+  static const _kVerify = 'verification_required';
   static const _timeout = Duration(seconds: 20);
 
   final http.Client _client;
@@ -44,6 +45,10 @@ class SonderApi {
   /// stop notifications to this phone).
   Future<void> Function()? beforeLogout;
   bool _loggingOut = false;
+
+  /// True while the signed-in person still has to enter the code emailed to them. The app shows the
+  /// "Check your email" screen until it's done (only when the server sends email).
+  final ValueNotifier<bool> verificationRequired = ValueNotifier<bool>(false);
 
   /// The signed-in user, or null when signed out. The app shows the login screen whenever this is null.
   final ValueNotifier<AppUser?> currentUser = ValueNotifier<AppUser?>(null);
@@ -67,6 +72,7 @@ class SonderApi {
     final userJson = prefs.getString(_kUser);
     if (_token != null && userJson != null) {
       currentUser.value = AppUser.fromJson(jsonDecode(userJson) as Map<String, dynamic>);
+      verificationRequired.value = prefs.getBool(_kVerify) ?? false;
     }
   }
 
@@ -106,6 +112,44 @@ class SonderApi {
     return (json['created'] as bool?) ?? false;
   }
 
+  Future<void> _setVerificationRequired(bool value) async {
+    verificationRequired.value = value;
+    await (await SharedPreferences.getInstance()).setBool(_kVerify, value);
+  }
+
+  /// Re-checks with the server whether this account still needs its email confirmed (for example after the
+  /// server starts sending email). Best effort.
+  Future<void> refreshVerification() async {
+    if (_token == null) return;
+    try {
+      final json = await _send('GET', '/users/me') as Map<String, dynamic>;
+      await _setVerificationRequired((json['verification_required'] as bool?) ?? false);
+    } catch (_) {
+      // Offline: keep the last known state.
+    }
+  }
+
+  /// Emails a fresh 6-digit code. Asking again within a minute is refused by the server.
+  Future<void> sendVerificationCode() => _send('POST', '/auth/verify-email/send');
+
+  Future<void> verifyEmail(String code) async {
+    final json = await _send('POST', '/auth/verify-email', body: {'code': code.trim()}) as Map<String, dynamic>;
+    await _setVerificationRequired((json['verification_required'] as bool?) ?? false);
+  }
+
+  /// Emails a password-reset code if an account has this email (the answer is the same either way).
+  Future<void> forgotPassword(String email) => _send('POST', '/auth/forgot-password', body: {'email': email.trim()});
+
+  /// Sets a new password with the emailed code and signs in.
+  Future<void> resetPassword(String email, String code, String newPassword) async {
+    final json = await _send('POST', '/auth/reset-password', body: {
+      'email': email.trim(),
+      'code': code.trim(),
+      'new_password': newPassword,
+    });
+    await _saveSession(json as Map<String, dynamic>);
+  }
+
   /// Permanently deletes the account on the server, then signs out (unless [signOut] is false, for callers
   /// that need to tidy up their UI first and then call [logout] themselves).
   Future<void> deleteAccount({bool signOut = true}) async {
@@ -131,6 +175,8 @@ class SonderApi {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_kToken);
     await prefs.remove(_kUser);
+    await prefs.remove(_kVerify);
+    verificationRequired.value = false;
     currentUser.value = null;
   }
 
@@ -140,6 +186,7 @@ class SonderApi {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_kToken, _token!);
     await prefs.setString(_kUser, jsonEncode(user.toJson()));
+    await _setVerificationRequired((json['verification_required'] as bool?) ?? false);
     currentUser.value = user;
   }
 

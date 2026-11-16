@@ -12,6 +12,7 @@ from app.models.moment import Moment, moment_participants
 from app.models.user import User
 from app.relationships import blocked_ids, friend_ids
 from app.schemas.user import UpdateUserRequest, UserProfileResponse, UserResponse, UserSearchResult
+from app.verification import verification_required
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -38,6 +39,7 @@ def get_me(current_user: User = Depends(get_current_user), db: Session = Depends
         google_linked=current_user.google_linked,
         has_password=current_user.has_password,
         is_admin=current_user.email.lower() in settings.admin_email_list,
+        verification_required=verification_required(current_user),
     )
 
 

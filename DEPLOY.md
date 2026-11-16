@@ -69,6 +69,39 @@ new chat messages, and **"your moment is unlocked"**.
    secret. Open it in Notepad, copy everything, and in Railway → sonder-api → **Variables** add
    `FIREBASE_SERVICE_ACCOUNT` with the whole file as the value. Click **Deploy**, then delete the downloaded file.
 
+## 3b. Email codes: verification and "Forgot password?"
+
+Until this is set up, nothing changes: email/password accounts work without a code and "Forgot password?"
+says it isn't available yet. Once it's set up, new email sign-ups confirm their address with a 6-digit code
+(Google sign-ins are already verified), and unverified accounts can't add friends or create moments.
+
+Pick **one** sender and add its variables to Railway → sonder-api → **Variables**, then **Deploy**. The deploy
+log then says `Email codes: on`.
+
+**Option A: Gmail (free, quickest).** Use the app's own Gmail (e.g. your support Gmail), not your personal one.
+1. In that Google account: **Security → 2-Step Verification** → turn it on.
+2. **Security → App passwords** (search "App passwords" in the account settings) → create one called
+   `Sonder`. Copy the 16-letter password.
+3. Railway variables:
+
+   | Name | Value |
+   |---|---|
+   | `SMTP_HOST` | `smtp.gmail.com` |
+   | `SMTP_PORT` | `587` |
+   | `SMTP_USERNAME` | the Gmail address |
+   | `SMTP_PASSWORD` | the 16-letter app password (no spaces) |
+   | `EMAIL_FROM` | the same Gmail address |
+
+   Gmail allows about 500 emails a day. Codes may land in spam more often than with Resend.
+
+**Option B: Resend (best delivery, needs your own domain).**
+1. Sign up at <https://resend.com>, **Domains → Add domain** (e.g. `sonderapp.com`) and add the DNS records it
+   shows (easy if the domain is on Cloudflare).
+2. **API Keys → Create API key** (sending access).
+3. Railway variables: `RESEND_API_KEY` = the key, `EMAIL_FROM` = e.g. `hello@sonderapp.com`.
+
+   Free for 3,000 emails a month.
+
 ## 4. Point the app at the server ✅ (done)
 
 The app's default server is `https://sonder-api-production.up.railway.app`. To use a different one for a build,

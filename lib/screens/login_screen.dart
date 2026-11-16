@@ -7,6 +7,7 @@ import '../data/api_client.dart';
 import '../data/google_auth.dart';
 import '../theme/app_theme.dart';
 import '../widgets/motion.dart';
+import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -117,6 +118,25 @@ class _LoginScreenState extends State<LoginScreen> {
             const SizedBox(height: 24),
             _label('PASSWORD'),
             _field(_passwordController, hint: '••••••••', obscure: true, key: const Key('password-field')),
+            if (!_isSignUp)
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  key: const Key('forgot-password'),
+                  onPressed: _busy
+                      ? null
+                      : () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ForgotPasswordScreen(initialEmail: _emailController.text.trim()),
+                          ),
+                        ),
+                  child: Text(
+                    'Forgot password?',
+                    style: TextStyle(fontWeight: FontWeight.w800, color: AppTheme.kTextSecondary),
+                  ),
+                ),
+              ),
             if (_error != null) ...[
               const SizedBox(height: 16),
               Text(

@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'data/api_client.dart';
-import 'data/models.dart';
 import 'data/push_service.dart';
 import 'screens/global_camera_screen.dart';
 import 'screens/home_screen.dart';
@@ -12,12 +11,15 @@ import 'screens/intro_splash.dart';
 import 'screens/login_screen.dart';
 import 'screens/moments_archive_screen.dart';
 import 'screens/profile_screen.dart';
+import 'screens/verify_email_screen.dart';
 import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Future.wait([SonderApi.instance.restoreSession(), ThemeController.instance.load()]);
   runApp(const SonderApp(showIntro: true));
+  // Picks up a verification requirement that started after this phone signed in.
+  unawaited(SonderApi.instance.refreshVerification());
   // After the first frame, so a slow Firebase start never delays the app opening.
   unawaited(PushService.init());
 }
@@ -103,13 +105,16 @@ class AuthGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<AppUser?>(
-      valueListenable: SonderApi.instance.currentUser,
-      builder: (context, user, _) {
-        if (user == null) {
+    final api = SonderApi.instance;
+    return ListenableBuilder(
+      listenable: Listenable.merge([api.currentUser, api.verificationRequired]),
+      builder: (context, _) {
+        if (api.currentUser.value == null) {
           MainNavigation.savedTab = 0;
           return const LoginScreen();
         }
+        // Email sign-ups confirm their address first (only when the server sends email).
+        if (api.verificationRequired.value) return const VerifyEmailScreen();
         return const MainNavigation();
       },
     );
