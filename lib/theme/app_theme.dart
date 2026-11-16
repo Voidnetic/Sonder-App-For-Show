@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../widgets/aurora_sky.dart';
+
 /// Which look the app is in.
 enum AppLook {
   /// Cream and pastels with black ink outlines (the original).
@@ -10,8 +12,11 @@ enum AppLook {
   /// "Pastel Glow": near-black, the same bright pastels with a soft glow, black text on them.
   dark,
 
-  /// "Aurora": like dark, on a deep violet with a lavender-to-teal glow behind Home and the chat.
+  /// "Northern Lights": a starry night sky with green and magenta light streaks, mint buttons.
   aurora,
+
+  /// "Aurora Blossom": a navy-to-teal sky with a pink and orchid glow rising from below, pink buttons.
+  blossom,
 }
 
 /// The app's colours for each look.
@@ -28,26 +33,41 @@ class AppTheme {
 
   static bool get isDark => look != AppLook.light;
 
-  static Color _pick(int light, int dark, [int? aurora]) => Color(switch (look) {
+  /// The two aurora looks paint a sky behind every screen (see `AuroraSky`), so screens are see-through.
+  static bool get hasSky => look == AppLook.aurora || look == AppLook.blossom;
+
+  /// [northern] and [blossom] fall back to [dark] when not given.
+  static Color _pick(int light, int dark, {int? northern, int? blossom}) => Color(switch (look) {
     AppLook.light => light,
     AppLook.dark => dark,
-    AppLook.aurora => aurora ?? dark,
+    AppLook.aurora => northern ?? dark,
+    AppLook.blossom => blossom ?? dark,
   });
 
   // Background and panels
-  static Color get kBackground => _pick(0xFFFAF9F6, 0xFF0E0E11, 0xFF1C1830);
-  static Color get kSurface => _pick(0xFFFFFFFF, 0xFF1E1E25, 0xFF2A2442); // lists, fields, sheets, chat
-  static Color get kTextPrimary => _pick(0xFF1C1C1C, 0xFFF5F2EA);
-  static Color get kTextSecondary => _pick(0xFF6B6B6B, 0xFF9C9CA8, 0xFFB7B3C8);
+  /// Solid background: sheets, dialogs, and the base colour of the aurora skies.
+  static Color get kBackground => _pick(0xFFFAF9F6, 0xFF0E0E11, northern: 0xFF05070F, blossom: 0xFF14284A);
+
+  /// Behind whole screens: [kBackground], or see-through in the aurora looks so the sky shows.
+  static Color get kCanvas => hasSky ? Colors.transparent : kBackground;
+
+  /// Bars that sit over the screen (bottom tabs, the chat box): frosted over the sky in the aurora looks.
+  static Color get kBar => hasSky ? kBackground.withValues(alpha: 0.8) : kBackground;
+
+  /// Lists, fields, other people's chat bubbles. Slightly see-through over the aurora skies.
+  static Color get kSurface => _pick(0xFFFFFFFF, 0xFF1E1E25, northern: 0xE6141A2B, blossom: 0xE01A3456);
+  static Color get kTextPrimary => _pick(0xFF1C1C1C, 0xFFF5F2EA, northern: 0xFFF2F6FF, blossom: 0xFFFFF4F8);
+  static Color get kTextSecondary => _pick(0xFF6B6B6B, 0xFF9C9CA8, northern: 0xFFA3AEC4, blossom: 0xFFB8C8DE);
 
   /// Outlines around cards and panels.
-  static Color get kBorder => _pick(0xFF2D2D2D, 0xFF000000, 0xFF0F0C1C);
+  static Color get kBorder => _pick(0xFF2D2D2D, 0xFF000000, blossom: 0xFF0A1428);
 
   /// The solid offset "sticker" shadow under cards.
-  static Color get kShadow => _pick(0xFF2D2D2D, 0xFF3A3A47, 0xFF0F0C1C);
+  static Color get kShadow => _pick(0xFF2D2D2D, 0xFF3A3A47, northern: 0xFF000000, blossom: 0xFF0A1428);
 
-  /// Main buttons, your own chat bubbles, selected tabs: black in light, lime in the dark looks.
-  static Color get kPrimaryFill => _pick(0xFF1C1C1C, 0xFFDDF57A);
+  /// Main buttons, your own chat bubbles, selected tabs: black in light, lime in Pastel Glow, mint in
+  /// Northern Lights, pink in Aurora Blossom.
+  static Color get kPrimaryFill => _pick(0xFF1C1C1C, 0xFFDDF57A, northern: 0xFF8CF5C9, blossom: 0xFFF9C6DA);
 
   /// Text and icons on [kPrimaryFill].
   static Color get kOnPrimary => _pick(0xFFFAF9F6, 0xFF111111);
@@ -59,16 +79,17 @@ class AppTheme {
   static Color get kInkSoft => _pick(0xFF6B6B6B, 0xFF3D3D46);
 
   // Pastels: soft in light, brighter in the dark looks so they glow against the background.
-  static Color get kLavender => _pick(0xFFE6E6FA, 0xFFC9C2FF);
-  static Color get kPaleYellow => _pick(0xFFFFFACD, 0xFFFFE89A);
-  static Color get kSoftMint => _pick(0xFFE0F8E6, 0xFFA8E6D8);
-  static Color get kPalePeach => _pick(0xFFFFE5B4, 0xFFFFC8A8);
-  static Color get kLightBlue => _pick(0xFFE1F5FE, 0xFFA9D8F2);
+  // Northern Lights leans green, pink and violet like the aurora; Blossom leans pink, orchid and ice blue.
+  static Color get kLavender => _pick(0xFFE6E6FA, 0xFFC9C2FF, northern: 0xFFC3B6FF, blossom: 0xFFE2C8FF);
+  static Color get kPaleYellow => _pick(0xFFFFFACD, 0xFFFFE89A, northern: 0xFFE6FF8F, blossom: 0xFFFFE3B8);
+  static Color get kSoftMint => _pick(0xFFE0F8E6, 0xFFA8E6D8, northern: 0xFF8CF5C9, blossom: 0xFFB8F0E2);
+  static Color get kPalePeach => _pick(0xFFFFE5B4, 0xFFFFC8A8, northern: 0xFFFFC2E6, blossom: 0xFFFFCFC4);
+  static Color get kLightBlue => _pick(0xFFE1F5FE, 0xFFA9D8F2, northern: 0xFF9FE6FF, blossom: 0xFFAEE3F5);
 
   // Stronger accents for the stat tiles and highlights.
-  static Color get kPeriwinkle => _pick(0xFFB9C4FF, 0xFFB7ABFF);
-  static Color get kCoral => _pick(0xFFFF9F80, 0xFFFF9E85);
-  static Color get kSunshine => _pick(0xFFFFD84D, 0xFFFFD24D);
+  static Color get kPeriwinkle => _pick(0xFFB9C4FF, 0xFFB7ABFF, northern: 0xFFB59CFF, blossom: 0xFFE7A6FF);
+  static Color get kCoral => _pick(0xFFFF9F80, 0xFFFF9E85, northern: 0xFFFF8FD6, blossom: 0xFFF7A8C8);
+  static Color get kSunshine => _pick(0xFFFFD84D, 0xFFFFD24D, northern: 0xFFDDFF6E, blossom: 0xFFFFD86B);
 
   /// Colours that come from data (a moment's accent, a person's avatar). They're pastels already, so every
   /// look shows them as they are, with [kInk] text on top.
@@ -118,40 +139,8 @@ class AppTheme {
   }
 
   /// Background of screens that used to take a moment's colour (the moment, its gallery, the reveal):
-  /// that colour in light, the plain background in the dark looks (Aurora adds its glow on top).
-  static Color screenTint(Color accent) => isDark ? kBackground : accent;
-
-  /// Aurora's lavender-to-teal glow, for the top of Home and behind the chat. Null in other looks.
-  static Widget? auroraGlow({double topFraction = 1}) => look == AppLook.aurora
-      ? IgnorePointer(
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: RadialGradient(
-                      center: const Alignment(-1, -1),
-                      radius: 1.3 * topFraction,
-                      colors: const [Color(0xFFB9A8F5), Color(0x00B9A8F5)],
-                    ),
-                  ),
-                ),
-              ),
-              Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: RadialGradient(
-                      center: const Alignment(1.1, -0.2),
-                      radius: 1.1 * topFraction,
-                      colors: const [Color(0xCC7CC9C2), Color(0x007CC9C2)],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        )
-      : null;
+  /// that colour in light, the plain background in the dark looks (the sky in the aurora looks).
+  static Color screenTint(Color accent) => isDark ? kCanvas : accent;
 
   /// Chunky rounded display font for big headings ("Hey, Hassan", "Past Vault").
   static const String displayFont = 'Bagel';
@@ -165,7 +154,25 @@ class AppTheme {
     final dark = isDark;
     return ThemeData(
       brightness: dark ? Brightness.dark : Brightness.light,
-      scaffoldBackgroundColor: kBackground,
+      scaffoldBackgroundColor: kCanvas,
+      // In the aurora looks every page carries the sky (see SkyPageTransitionsBuilder) and is see-through.
+      pageTransitionsTheme: hasSky
+          ? PageTransitionsTheme(
+              builders: {
+                for (final platform in TargetPlatform.values)
+                  platform: SkyPageTransitionsBuilder(
+                    ios: platform == TargetPlatform.iOS || platform == TargetPlatform.macOS,
+                  ),
+              },
+            )
+          : null,
+      appBarTheme: hasSky
+          ? const AppBarTheme(
+              backgroundColor: Colors.transparent,
+              surfaceTintColor: Colors.transparent,
+              scrolledUnderElevation: 0,
+            )
+          : null,
       primaryColor: kTextPrimary,
       fontFamily: 'Bricolage',
       colorScheme: dark
@@ -196,7 +203,8 @@ class AppTheme {
 }
 
 /// The person's choice in Profile → Theme, saved on the phone.
-enum ThemeChoice { light, dark, aurora, system }
+/// `aurora` is Northern Lights (that name is what's saved on the phone).
+enum ThemeChoice { light, dark, aurora, blossom, system }
 
 class ThemeController {
   ThemeController._();
@@ -222,6 +230,7 @@ class ThemeController {
     ThemeChoice.light => AppLook.light,
     ThemeChoice.dark => AppLook.dark,
     ThemeChoice.aurora => AppLook.aurora,
+    ThemeChoice.blossom => AppLook.blossom,
     ThemeChoice.system => platform == Brightness.dark ? AppLook.dark : AppLook.light,
   };
 }

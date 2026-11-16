@@ -32,7 +32,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: AppTheme.kBackground,
+        backgroundColor: AppTheme.kCanvas,
         surfaceTintColor: Colors.transparent,
         title: Text('Blocked people', style: AppTheme.display(22)),
       ),

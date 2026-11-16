@@ -124,11 +124,11 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.add_rounded, color: AppTheme.kBackground),
+              Icon(Icons.add_rounded, color: AppTheme.kOnPrimary),
               SizedBox(width: 8),
               Text(
                 'CREATE MOMENT',
-                style: TextStyle(color: AppTheme.kBackground, fontWeight: FontWeight.w800, letterSpacing: 1.2),
+                style: TextStyle(color: AppTheme.kOnPrimary, fontWeight: FontWeight.w800, letterSpacing: 1.2),
               ),
             ],
           ),

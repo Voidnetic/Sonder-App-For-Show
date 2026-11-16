@@ -12,6 +12,7 @@ import 'package:sonder_app/data/models.dart';
 import 'package:sonder_app/main.dart';
 import 'package:sonder_app/screens/intro_splash.dart';
 import 'package:sonder_app/theme/app_theme.dart';
+import 'package:sonder_app/widgets/aurora_sky.dart';
 
 // ----------------------------------------------------------------- fixtures
 
@@ -505,8 +506,12 @@ void main() {
 
   testWidgets('login: Continue with Google sends the ID token and opens the app', (tester) async {
     final backend = FakeBackend();
-    backend.routes['POST /api/auth/google'] =
-        (_) => {'user': hassan, 'access_token': 'g-tok', 'token_type': 'bearer', 'created': true};
+    backend.routes['POST /api/auth/google'] = (_) => {
+      'user': hassan,
+      'access_token': 'g-tok',
+      'token_type': 'bearer',
+      'created': true,
+    };
     await setUpApi(backend, signedIn: false);
     GoogleAuth.idTokenOverride = () async => 'id-token-from-google';
     addTearDown(() => GoogleAuth.idTokenOverride = null);
@@ -550,8 +555,8 @@ void main() {
 
   test('logout runs the push hook first, once, even when the session already expired', () async {
     final backend = FakeBackend();
-    backend.routes['POST /api/devices/unregister'] =
-        (_) => http.Response(jsonEncode({'detail': 'Invalid or expired token'}), 401);
+    backend.routes['POST /api/devices/unregister'] = (_) =>
+        http.Response(jsonEncode({'detail': 'Invalid or expired token'}), 401);
     final api = await setUpApi(backend);
     var calls = 0;
     api.beforeLogout = () async {
@@ -568,8 +573,9 @@ void main() {
     expect(prefs.getString('access_token'), isNull);
   });
 
-  testWidgets('profile: switching to the dark theme recolours the app, keeps Profile open, and is saved',
-      (tester) async {
+  testWidgets('profile: switching to the dark theme recolours the app, keeps Profile open, and is saved', (
+    tester,
+  ) async {
     final backend = FakeBackend();
     await setUpApi(backend);
     addTearDown(() async {
@@ -585,13 +591,50 @@ void main() {
     await tapAndSettle(tester, find.byKey(const Key('theme-dark')));
 
     expect(AppTheme.isDark, isTrue);
-    expect(tester.widget<Scaffold>(find.byType(Scaffold).first).backgroundColor ??
-        Theme.of(tester.element(find.byType(Scaffold).first)).scaffoldBackgroundColor, AppTheme.kBackground);
+    expect(
+      tester.widget<Scaffold>(find.byType(Scaffold).first).backgroundColor ??
+          Theme.of(tester.element(find.byType(Scaffold).first)).scaffoldBackgroundColor,
+      AppTheme.kBackground,
+    );
     expect(AppTheme.kBackground, const Color(0xFF0E0E11));
     expect(find.text('hassan@sonder.app'), findsOneWidget); // still on Profile after the rebuild
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getString('theme_mode'), 'dark');
   });
+
+  for (final (choice, look, name) in [
+    (ThemeChoice.aurora, AppLook.aurora, 'Northern Lights'),
+    (ThemeChoice.blossom, AppLook.blossom, 'Aurora Blossom'),
+  ]) {
+    testWidgets('profile: picking $name paints its sky behind the screens and is saved', (tester) async {
+      final backend = FakeBackend();
+      await setUpApi(backend);
+      addTearDown(() async {
+        await ThemeController.instance.set(ThemeChoice.light);
+        AppTheme.look = AppLook.light;
+      });
+      await startApp(tester);
+      await tapAndSettle(tester, find.text('Profile'));
+      expect(find.byType(AuroraSky), findsNothing);
+
+      await tester.scrollUntilVisible(find.text('Theme'), 300, scrollable: find.byType(Scrollable).first);
+      await tapAndSettle(tester, find.text('Theme'));
+      expect(find.text(name), findsOneWidget);
+      await tapAndSettle(tester, find.byKey(Key('theme-${choice.name}')));
+
+      expect(AppTheme.look, look);
+      expect(AppTheme.kCanvas, Colors.transparent); // screens are see-through...
+      expect(find.byType(AuroraSky), findsWidgets); // ...over the sky
+      expect(find.text('hassan@sonder.app'), findsOneWidget);
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('theme_mode'), choice.name);
+
+      // Pages opened from here carry the sky too.
+      await tapAndSettle(tester, find.text('Home'));
+      await tapAndSettle(tester, find.text('BIRTHDAY NIGHT'));
+      expect(find.byType(AuroraSky), findsWidgets);
+    });
+  }
 
   testWidgets('intro: plays over the first screen, then opens like a shutter and goes away', (tester) async {
     final backend = FakeBackend();
@@ -653,25 +696,31 @@ void main() {
     final backend = FakeBackend();
     final now = DateTime.now();
     backend.routes['GET /api/moments/active'] = (_) => [
-          {
-            ...momentJson(id: 'm1', title: 'Birthday Night', unlockAt: now.add(const Duration(hours: 2)), memoryCount: 2),
-            'last_captured_at': now.subtract(const Duration(minutes: 10)).toUtc().toIso8601String(),
-            'last_captured_by': ahmed,
-          },
-        ];
+      {
+        ...momentJson(id: 'm1', title: 'Birthday Night', unlockAt: now.add(const Duration(hours: 2)), memoryCount: 2),
+        'last_captured_at': now.subtract(const Duration(minutes: 10)).toUtc().toIso8601String(),
+        'last_captured_by': ahmed,
+      },
+    ];
     await setUpApi(backend);
     await startApp(tester);
 
     expect(find.text('Ahmed added a memory 10 min ago'), findsOneWidget);
   });
 
-  testWidgets('sign-up: enter the emailed code, a wrong one shows an error, the right one opens the app',
-      (tester) async {
+  testWidgets('sign-up: enter the emailed code, a wrong one shows an error, the right one opens the app', (
+    tester,
+  ) async {
     final backend = FakeBackend();
     var verified = false;
     backend.routes.addAll({
-      'POST /api/auth/register': (_) =>
-          {'user': hassan, 'access_token': 'tok', 'token_type': 'bearer', 'created': true, 'verification_required': true},
+      'POST /api/auth/register': (_) => {
+        'user': hassan,
+        'access_token': 'tok',
+        'token_type': 'bearer',
+        'created': true,
+        'verification_required': true,
+      },
       'POST /api/auth/verify-email/send': (_) =>
           http.Response(jsonEncode({'detail': 'Please wait a minute before asking for another code'}), 429),
       'POST /api/auth/verify-email': (req) {
@@ -708,8 +757,12 @@ void main() {
     final backend = FakeBackend();
     backend.routes.addAll({
       'POST /api/auth/forgot-password': (_) => http.Response('', 204),
-      'POST /api/auth/reset-password': (_) =>
-          {'user': hassan, 'access_token': 'new-tok', 'token_type': 'bearer', 'verification_required': false},
+      'POST /api/auth/reset-password': (_) => {
+        'user': hassan,
+        'access_token': 'new-tok',
+        'token_type': 'bearer',
+        'verification_required': false,
+      },
     });
     await setUpApi(backend, signedIn: false);
     await startApp(tester);
@@ -723,8 +776,11 @@ void main() {
     await tester.enterText(find.byKey(const Key('reset-code')), '123456');
     await tester.enterText(find.byKey(const Key('reset-password')), 'brandnew99');
     await tapAndSettle(tester, find.text('SET NEW PASSWORD'));
-    expect(backend.lastBody('POST', '/api/auth/reset-password'),
-        {'email': 'hassan@sonder.app', 'code': '123456', 'new_password': 'brandnew99'});
+    expect(backend.lastBody('POST', '/api/auth/reset-password'), {
+      'email': 'hassan@sonder.app',
+      'code': '123456',
+      'new_password': 'brandnew99',
+    });
     expect(find.text('Hey, Hassan 👋'), findsOneWidget);
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getString('access_token'), 'new-tok');

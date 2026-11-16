@@ -116,9 +116,9 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
   Widget build(BuildContext context) {
     final unlockAt = _unlockAt;
     return Scaffold(
-      backgroundColor: AppTheme.kBackground,
+      backgroundColor: AppTheme.kCanvas,
       appBar: AppBar(
-        backgroundColor: AppTheme.kBackground,
+        backgroundColor: AppTheme.kCanvas,
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.close_rounded, color: AppTheme.kTextPrimary, size: 28),
@@ -269,7 +269,7 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
                         : Text(
                             "CREATE MOMENT",
                             style: TextStyle(
-                              color: AppTheme.kBackground,
+                              color: AppTheme.kOnPrimary,
                               fontSize: 18,
                               fontWeight: FontWeight.w900,
                               letterSpacing: 2,

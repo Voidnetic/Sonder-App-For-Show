@@ -327,7 +327,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   static String _themeLabel(ThemeChoice mode) => switch (mode) {
         ThemeChoice.light => "Light",
         ThemeChoice.dark => "Pastel Glow",
-        ThemeChoice.aurora => "Aurora",
+        ThemeChoice.aurora => "Northern Lights",
+        ThemeChoice.blossom => "Aurora Blossom",
         ThemeChoice.system => "System",
       };
 
@@ -335,6 +336,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final current = ThemeController.instance.mode.value;
     final picked = await showModalBottomSheet<ThemeChoice>(
       context: context,
+      isScrollControlled: true, // five choices: let the sheet be as tall as they need
       backgroundColor: AppTheme.kBackground,
       shape: RoundedRectangleBorder(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
@@ -352,6 +354,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               for (final (mode, icon, hint) in [
                 (ThemeChoice.light, Icons.light_mode_outlined, "Cream and pastels (default)"),
                 (ThemeChoice.dark, Icons.dark_mode_outlined, "Dark, with glowing pastel stickers"),
+                (ThemeChoice.aurora, Icons.auto_awesome_outlined, "A starry night with green and pink lights"),
+                (ThemeChoice.blossom, Icons.filter_vintage_outlined, "Navy and teal sky with a pink glow"),
                 (ThemeChoice.system, Icons.brightness_auto_outlined, "Light or Pastel Glow, like your phone"),
               ])
                 ListTile(

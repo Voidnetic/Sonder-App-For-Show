@@ -160,7 +160,7 @@ class _MainNavigationState extends State<MainNavigation> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
       decoration: BoxDecoration(
-        color: AppTheme.kBackground,
+        color: AppTheme.kBar,
         border: Border(top: BorderSide(color: AppTheme.kBorder, width: 1.5)),
       ),
       child: SafeArea(

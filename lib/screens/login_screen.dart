@@ -165,7 +165,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       : Text(
                           _isSignUp ? 'SIGN UP' : 'LOG IN',
                           style: TextStyle(
-                            color: AppTheme.kBackground,
+                            color: AppTheme.kOnPrimary,
                             fontSize: 18,
                             fontWeight: FontWeight.w900,
                             letterSpacing: 2,

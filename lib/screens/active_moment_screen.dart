@@ -646,7 +646,7 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppTheme.kBackground,
+            color: AppTheme.kBar,
             border: Border(top: BorderSide(color: AppTheme.kBorder, width: 2)),
           ),
           child: SafeArea(

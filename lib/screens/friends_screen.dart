@@ -186,7 +186,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
     final requestCount = _incoming?.length ?? 0;
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: AppTheme.kBackground,
+        backgroundColor: AppTheme.kCanvas,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
