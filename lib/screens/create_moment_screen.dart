@@ -209,18 +209,17 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
                     child: Container(
                       margin: const EdgeInsets.only(right: 8),
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      decoration: BoxDecoration(
-                        color: isSelected ? AppTheme.kPaleYellow : AppTheme.kSurface,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppTheme.kBorder, width: 2),
-                        boxShadow: isSelected ? [BoxShadow(color: AppTheme.kBorder, offset: Offset(2, 2))] : [],
+                      decoration: AppTheme.sticker(
+                        isSelected ? AppTheme.kPaleYellow : AppTheme.kSurface,
+                        radius: 16,
+                        offset: isSelected ? 2 : 0,
                       ),
                       child: Center(
                         child: Text(
                           time,
                           style: TextStyle(
                             fontWeight: isSelected ? FontWeight.w900 : FontWeight.bold,
-                            color: AppTheme.kTextPrimary,
+                            color: isSelected ? AppTheme.kInk : AppTheme.kTextPrimary,
                           ),
                         ),
                       ),
@@ -253,7 +252,7 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 20),
                   decoration: BoxDecoration(
-                    color: AppTheme.kTextPrimary,
+                    color: AppTheme.kPrimaryFill,
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(color: AppTheme.kBorder, width: 2),
                     boxShadow: _isButtonPressed
@@ -294,17 +293,13 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: AppTheme.kPaleYellow,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppTheme.kBorder, width: 2),
-        ),
+        decoration: AppTheme.sticker(AppTheme.kPaleYellow, radius: 20, offset: 0),
         child: const Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.person_add_alt_1_rounded, size: 18),
+            Icon(Icons.person_add_alt_1_rounded, size: 18, color: AppTheme.kInk),
             SizedBox(width: 6),
-            Text('Add friends', style: TextStyle(fontWeight: FontWeight.w900)),
+            Text('Add friends', style: TextStyle(fontWeight: FontWeight.w900, color: AppTheme.kInk)),
           ],
         ),
       ),
@@ -324,7 +319,7 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: isSelected ? AppTheme.kTextPrimary : AppTheme.kSurface,
+            color: isSelected ? AppTheme.kPrimaryFill : AppTheme.kSurface,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: AppTheme.kBorder, width: 2),
             boxShadow: isSelected ? [BoxShadow(color: AppTheme.kPaleYellow, offset: Offset(4, 4))] : [],

@@ -236,7 +236,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: selected ? AppTheme.kTextPrimary : AppTheme.kSurface,
+            color: selected ? AppTheme.kPrimaryFill : AppTheme.kSurface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppTheme.kBorder, width: 2),
             boxShadow: selected ? [BoxShadow(color: AppTheme.kSunshine, offset: Offset(3, 3))] : null,
@@ -259,12 +259,13 @@ class _FriendsScreenState extends State<FriendsScreen> {
                 const SizedBox(width: 6),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
-                  decoration: BoxDecoration(
-                    color: highlight ? AppTheme.kCoral : AppTheme.kPaleYellow,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppTheme.kBorder, width: 1.2),
+                  decoration: AppTheme.sticker(
+                    highlight ? AppTheme.kCoral : AppTheme.kPaleYellow,
+                    radius: 10,
+                    border: 1.2,
+                    offset: 0,
                   ),
-                  child: Text('$count', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900)),
+                  child: Text('$count', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: AppTheme.kInk)),
                 ),
               ],
             ],
@@ -446,11 +447,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
       return [
         Container(
           padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: AppTheme.kPaleYellow,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppTheme.kBorder, width: 2),
-          ),
+          decoration: AppTheme.sticker(AppTheme.kPaleYellow, radius: 20, offset: 0),
           child: const Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -459,7 +456,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
               Expanded(
                 child: Text(
                   "Type a friend's name, or the whole email they signed up with. They'll get a request to accept.",
-                  style: TextStyle(fontWeight: FontWeight.w700),
+                  style: TextStyle(fontWeight: FontWeight.w700, color: AppTheme.kInk),
                 ),
               ),
             ],
@@ -517,12 +514,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.fromLTRB(14, 10, 10, 10),
-      decoration: BoxDecoration(
-        color: color ?? AppTheme.kSurface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.kBorder, width: 2),
-        boxShadow: [BoxShadow(color: AppTheme.kBorder, offset: Offset(3, 3))],
-      ),
+      decoration: AppTheme.sticker(color ?? AppTheme.kSurface, radius: 20, offset: 3),
       child: Row(
         children: [
           _Avatar(user),
@@ -531,7 +523,12 @@ class _FriendsScreenState extends State<FriendsScreen> {
             child: Text(
               user.name,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              // Pastel cards (requests) carry ink; plain panels the theme's text colour.
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: color != null ? AppTheme.kInk : AppTheme.kTextPrimary,
+              ),
             ),
           ),
           const SizedBox(width: 8),
@@ -560,7 +557,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: small ? 16 : 22, vertical: small ? 10 : 14),
         decoration: BoxDecoration(
-          color: AppTheme.kTextPrimary,
+          color: AppTheme.kPrimaryFill,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: AppTheme.kBorder, width: 2),
           boxShadow: [BoxShadow(color: AppTheme.kSunshine, offset: Offset(3, 3))],
@@ -576,12 +573,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
   Widget _statusTag(String label, {Color? color}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: color ?? AppTheme.kLavender,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppTheme.kBorder, width: 1.5),
-      ),
-      child: Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900)),
+      decoration: AppTheme.sticker(color ?? AppTheme.kLavender, radius: 14, border: 1.5, offset: 0),
+      child: Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: AppTheme.kInk)),
     );
   }
 
@@ -594,7 +587,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
           width: 42,
           height: 42,
           decoration: BoxDecoration(
-            color: filled ? AppTheme.kTextPrimary : AppTheme.kSurface,
+            color: filled ? AppTheme.kPrimaryFill : AppTheme.kSurface,
             shape: BoxShape.circle,
             border: Border.all(color: AppTheme.kBorder, width: 2),
           ),
@@ -616,15 +609,11 @@ class _Avatar extends StatelessWidget {
     return Container(
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        color: AppTheme.tint(user.color),
-        shape: BoxShape.circle,
-        border: Border.all(color: AppTheme.kBorder, width: 1.5),
-      ),
+      decoration: AppTheme.sticker(AppTheme.tint(user.color), circle: true, border: 1.5, offset: 0),
       child: Center(
         child: Text(
           user.initial,
-          style: TextStyle(fontWeight: FontWeight.w900, fontSize: size * 0.42),
+          style: TextStyle(fontWeight: FontWeight.w900, fontSize: size * 0.42, color: AppTheme.kInk),
         ),
       ),
     );

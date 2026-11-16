@@ -66,7 +66,7 @@ class _RevealScreenState extends State<RevealScreen> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.kPaleYellow,
+      backgroundColor: AppTheme.screenTint(AppTheme.kPaleYellow),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -137,7 +137,7 @@ class _RevealScreenState extends State<RevealScreen> with SingleTickerProviderSt
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 20),
                       decoration: BoxDecoration(
-                        color: AppTheme.kTextPrimary,
+                        color: AppTheme.kPrimaryFill,
                         borderRadius: BorderRadius.circular(32),
                         border: Border.all(color: AppTheme.kBorder, width: 2),
                         boxShadow: const [BoxShadow(color: Colors.white, offset: Offset(6, 6))],
@@ -167,17 +167,12 @@ class _RevealScreenState extends State<RevealScreen> with SingleTickerProviderSt
                     child: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 20),
-                      decoration: BoxDecoration(
-                        color: AppTheme.kSoftMint,
-                        borderRadius: BorderRadius.circular(32),
-                        border: Border.all(color: AppTheme.kBorder, width: 2),
-                        boxShadow: [BoxShadow(color: AppTheme.kBorder, offset: Offset(4, 4))],
-                      ),
+                      decoration: AppTheme.sticker(AppTheme.kSoftMint, radius: 32),
                       child: Center(
                         child: Text(
                           "EXPLORE MEMORIES ✨",
                           style: TextStyle(
-                            color: AppTheme.kTextPrimary,
+                            color: AppTheme.kInk,
                             fontSize: 18,
                             fontWeight: FontWeight.w900,
                             letterSpacing: 1.5,

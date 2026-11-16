@@ -97,12 +97,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: AppTheme.kPaleYellow,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppTheme.kBorder, width: 1.5),
-              ),
-              child: const Text("Tab 4 / 4", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900)),
+              decoration: AppTheme.sticker(AppTheme.kPaleYellow, radius: 12, border: 1.5, offset: 0),
+              child: const Text("Tab 4 / 4", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: AppTheme.kInk)),
             ),
           ],
         ),
@@ -111,43 +107,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
         // USER INFO CARD
         Container(
           padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: AppTheme.kLavender,
-            borderRadius: BorderRadius.circular(32),
-            border: Border.all(color: AppTheme.kBorder, width: 2),
-            boxShadow: [BoxShadow(color: AppTheme.kBorder, offset: Offset(4, 4))],
-          ),
+          decoration: AppTheme.sticker(AppTheme.kLavender, radius: 32),
           child: Row(
             children: [
               Container(
                 width: 72,
                 height: 72,
-                decoration: BoxDecoration(
-                  color: AppTheme.tint(user.color),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppTheme.kBorder, width: 2),
-                ),
-                child: const Center(child: Icon(Icons.face_6_rounded, size: 40)),
+                decoration: AppTheme.sticker(AppTheme.tint(user.color), circle: true, offset: 0),
+                child: const Center(child: Icon(Icons.face_6_rounded, size: 40, color: AppTheme.kInk)),
               ),
               const SizedBox(width: 20),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(user.name, style: AppTheme.display(26)),
+                    Text(user.name, style: AppTheme.display(26, color: AppTheme.kInk)),
                     const SizedBox(height: 4),
                     Text(
                       user.email,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.kTextSecondary),
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.kInkSoft),
                     ),
                     const SizedBox(height: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: profile.emailVerified ? AppTheme.kSoftMint : AppTheme.kPaleYellow,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: AppTheme.kBorder, width: 1),
+                      decoration: AppTheme.sticker(
+                        profile.emailVerified ? AppTheme.kSoftMint : AppTheme.kPaleYellow,
+                        radius: 8,
+                        border: 1,
+                        offset: 0,
                       ),
                       child: Text(
                         profile.googleLinked
@@ -155,7 +143,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             : profile.emailVerified
                             ? "Verified Account ✓"
                             : "Email & password account",
-                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900),
+                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppTheme.kInk),
                       ),
                     ),
                   ],
@@ -196,7 +184,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 key: const Key('manage-friends'),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppTheme.kTextPrimary,
+                  color: AppTheme.kPrimaryFill,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: AppTheme.kBorder, width: 1.5),
                   boxShadow: [BoxShadow(color: AppTheme.kSunshine, offset: Offset(2, 2))],
@@ -273,7 +261,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 18),
             decoration: BoxDecoration(
-              color: AppTheme.kTextPrimary,
+              color: AppTheme.kPrimaryFill,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: AppTheme.kBorder, width: 2),
               boxShadow: [BoxShadow(color: AppTheme.kPaleYellow, offset: Offset(3, 3))],
@@ -336,15 +324,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  static String _themeLabel(ThemeMode mode) => switch (mode) {
-        ThemeMode.light => "Light",
-        ThemeMode.dark => "Dark",
-        ThemeMode.system => "System",
+  static String _themeLabel(ThemeChoice mode) => switch (mode) {
+        ThemeChoice.light => "Light",
+        ThemeChoice.dark => "Pastel Glow",
+        ThemeChoice.aurora => "Aurora",
+        ThemeChoice.system => "System",
       };
 
   Future<void> _pickTheme() async {
     final current = ThemeController.instance.mode.value;
-    final picked = await showModalBottomSheet<ThemeMode>(
+    final picked = await showModalBottomSheet<ThemeChoice>(
       context: context,
       backgroundColor: AppTheme.kBackground,
       shape: RoundedRectangleBorder(
@@ -361,9 +350,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Text("Theme", style: AppTheme.display(26)),
               const SizedBox(height: 12),
               for (final (mode, icon, hint) in [
-                (ThemeMode.light, Icons.light_mode_outlined, "Cream and pastels (default)"),
-                (ThemeMode.dark, Icons.dark_mode_outlined, "Deep ink with cream outlines"),
-                (ThemeMode.system, Icons.brightness_auto_outlined, "Match your phone's setting"),
+                (ThemeChoice.light, Icons.light_mode_outlined, "Cream and pastels (default)"),
+                (ThemeChoice.dark, Icons.dark_mode_outlined, "Dark, with glowing pastel stickers"),
+                (ThemeChoice.system, Icons.brightness_auto_outlined, "Light or Pastel Glow, like your phone"),
               ])
                 ListTile(
                   key: Key('theme-${mode.name}'),
@@ -436,13 +425,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Container(
                   width: 36,
                   height: 36,
-                  decoration: BoxDecoration(
-                    color: AppTheme.tint(friend.color),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppTheme.kBorder, width: 1.5),
-                  ),
+                  decoration: AppTheme.sticker(AppTheme.tint(friend.color), circle: true, border: 1.5, offset: 0),
                   child: Center(
-                    child: Text(friend.initial, style: const TextStyle(fontWeight: FontWeight.w900)),
+                    child: Text(friend.initial, style: const TextStyle(fontWeight: FontWeight.w900, color: AppTheme.kInk)),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -458,12 +443,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: AppTheme.kSoftMint,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppTheme.kBorder, width: 1),
-            ),
-            child: const Text("Synced", style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900)),
+            decoration: AppTheme.sticker(AppTheme.kSoftMint, radius: 12, border: 1, offset: 0),
+            child: const Text("Synced", style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppTheme.kInk)),
           ),
         ],
       ),
@@ -473,23 +454,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildStatBox(String count, String label, Color bgColor) {
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppTheme.kBorder, width: 2),
-        boxShadow: [BoxShadow(color: AppTheme.kBorder, offset: Offset(3, 3))],
-      ),
+      decoration: AppTheme.sticker(bgColor, offset: 3),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             count,
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: AppTheme.kTextPrimary),
+            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: AppTheme.kInk),
           ),
           const SizedBox(height: 4),
           Text(
             label,
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.kTextSecondary),
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.kInkSoft),
           ),
         ],
       ),

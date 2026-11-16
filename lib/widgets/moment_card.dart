@@ -33,18 +33,7 @@ class _MomentCardState extends State<MomentCard> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         margin: const EdgeInsets.only(bottom: 24),
-        decoration: BoxDecoration(
-          color: AppTheme.tint(moment.accentColor),
-          borderRadius: BorderRadius.circular(32),
-          border: Border.all(color: AppTheme.kBorder, width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.kBorder,
-              offset: Offset(4, 4),
-              blurRadius: 0, // Solid shadow for playful look
-            ),
-          ],
-        ),
+        decoration: AppTheme.sticker(AppTheme.tint(moment.accentColor), radius: 32, border: 1.5),
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
@@ -56,7 +45,7 @@ class _MomentCardState extends State<MomentCard> {
                     child: Text(
                       moment.title.toUpperCase(),
                       style: TextStyle(
-                        color: AppTheme.kTextPrimary,
+                        color: AppTheme.kInk,
                         fontSize: 22,
                         fontWeight: FontWeight.w900,
                         letterSpacing: 1.2,
@@ -64,20 +53,20 @@ class _MomentCardState extends State<MomentCard> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Icon(unlocked ? Icons.star_rounded : Icons.star_border_rounded, size: 32),
+                  Icon(unlocked ? Icons.star_rounded : Icons.star_border_rounded, size: 32, color: AppTheme.kInk),
                 ],
               ),
               const SizedBox(height: 16),
               Row(
                 children: [
-                  Icon(unlocked ? Icons.lock_open_rounded : Icons.lock_outline_rounded, size: 20),
+                  Icon(unlocked ? Icons.lock_open_rounded : Icons.lock_outline_rounded, size: 20, color: AppTheme.kInk),
                   const SizedBox(width: 8),
                   Flexible(
                     child: Text(
                       '${countLabel(moment.memoryCount, 'memory', 'memories')} • ${countLabel(moment.friendCount, 'friend', 'friends')}',
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        color: AppTheme.kTextPrimary,
+                        color: AppTheme.kInk,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -89,14 +78,14 @@ class _MomentCardState extends State<MomentCard> {
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    Icon(Icons.photo_camera_outlined, size: 18, color: AppTheme.kTextSecondary),
+                    Icon(Icons.photo_camera_outlined, size: 18, color: AppTheme.kInkSoft),
                     const SizedBox(width: 8),
                     Flexible(
                       child: Text(
                         lastCaptured,
                         key: const Key('last-captured'),
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: AppTheme.kTextSecondary, fontWeight: FontWeight.w700, fontSize: 13),
+                        style: TextStyle(color: AppTheme.kInkSoft, fontWeight: FontWeight.w700, fontSize: 13),
                       ),
                     ),
                   ],

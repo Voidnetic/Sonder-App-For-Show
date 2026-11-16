@@ -573,8 +573,8 @@ void main() {
     final backend = FakeBackend();
     await setUpApi(backend);
     addTearDown(() async {
-      await ThemeController.instance.set(ThemeMode.light);
-      AppTheme.isDark = false;
+      await ThemeController.instance.set(ThemeChoice.light);
+      AppTheme.look = AppLook.light;
     });
     await startApp(tester);
     await tapAndSettle(tester, find.text('Profile'));
@@ -587,7 +587,7 @@ void main() {
     expect(AppTheme.isDark, isTrue);
     expect(tester.widget<Scaffold>(find.byType(Scaffold).first).backgroundColor ??
         Theme.of(tester.element(find.byType(Scaffold).first)).scaffoldBackgroundColor, AppTheme.kBackground);
-    expect(AppTheme.kBackground, const Color(0xFF14151C));
+    expect(AppTheme.kBackground, const Color(0xFF0E0E11));
     expect(find.text('hassan@sonder.app'), findsOneWidget); // still on Profile after the rebuild
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getString('theme_mode'), 'dark');

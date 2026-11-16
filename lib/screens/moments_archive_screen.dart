@@ -119,17 +119,7 @@ class _MomentsArchiveScreenState extends State<MomentsArchiveScreen> {
       child: Container(
         margin: const EdgeInsets.only(bottom: 20),
         padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: AppTheme.tint(moment.accentColor),
-          borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: AppTheme.kBorder, width: 2),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.kBorder,
-              offset: Offset(4, 4),
-            ),
-          ],
-        ),
+        decoration: AppTheme.sticker(AppTheme.tint(moment.accentColor), radius: 28),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -139,7 +129,7 @@ class _MomentsArchiveScreenState extends State<MomentsArchiveScreen> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.lock_open_rounded, size: 18, color: AppTheme.kTextPrimary),
+                      Icon(Icons.lock_open_rounded, size: 18, color: AppTheme.kInk),
                       const SizedBox(width: 8),
                       Flexible(
                         child: Text(
@@ -150,7 +140,7 @@ class _MomentsArchiveScreenState extends State<MomentsArchiveScreen> {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w900,
-                            color: AppTheme.kTextSecondary,
+                            color: AppTheme.kInkSoft,
                           ),
                         ),
                       ),
@@ -162,7 +152,7 @@ class _MomentsArchiveScreenState extends State<MomentsArchiveScreen> {
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w900,
-                      color: AppTheme.kTextPrimary,
+                      color: AppTheme.kInk,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -171,7 +161,7 @@ class _MomentsArchiveScreenState extends State<MomentsArchiveScreen> {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
-                      color: AppTheme.kTextSecondary,
+                      color: AppTheme.kInkSoft,
                     ),
                   ),
                 ],

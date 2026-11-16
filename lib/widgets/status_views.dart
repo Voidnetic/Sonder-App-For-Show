@@ -35,7 +35,7 @@ class ErrorView extends StatelessWidget {
             color: AppTheme.kSurface,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: AppTheme.kBorder, width: 2),
-            boxShadow: [BoxShadow(color: AppTheme.kBorder, offset: Offset(4, 4))],
+            boxShadow: [BoxShadow(color: AppTheme.kShadow, offset: Offset(4, 4))],
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -53,7 +53,7 @@ class ErrorView extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   decoration: BoxDecoration(
-                    color: AppTheme.kTextPrimary,
+                    color: AppTheme.kPrimaryFill,
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Text(

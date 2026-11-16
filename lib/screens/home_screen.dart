@@ -116,7 +116,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           decoration: BoxDecoration(
-            color: AppTheme.kTextPrimary,
+            color: AppTheme.kPrimaryFill,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: AppTheme.kBorder, width: 1.5),
             boxShadow: [BoxShadow(color: AppTheme.kSunshine, offset: Offset(4, 4))],
@@ -154,7 +154,7 @@ class _HomeScreenState extends State<HomeScreen> {
               color: AppTheme.kSurface,
               shape: BoxShape.circle,
               border: Border.all(color: AppTheme.kBorder, width: 1.5),
-              boxShadow: [BoxShadow(color: AppTheme.kBorder, offset: Offset(2, 2))],
+              boxShadow: [BoxShadow(color: AppTheme.kShadow, offset: Offset(2, 2))],
             ),
             child: const Icon(Icons.group_add_outlined, size: 24, semanticLabel: 'Friends'),
           ),
@@ -162,13 +162,13 @@ class _HomeScreenState extends State<HomeScreen> {
         Container(
           width: 48,
           height: 48,
-          decoration: BoxDecoration(
-            color: user == null ? AppTheme.kPaleYellow : AppTheme.tint(user.color),
-            shape: BoxShape.circle,
-            border: Border.all(color: AppTheme.kBorder, width: 1.5),
-            boxShadow: [BoxShadow(color: AppTheme.kBorder, offset: Offset(2, 2))],
+          decoration: AppTheme.sticker(
+            user == null ? AppTheme.kPaleYellow : AppTheme.tint(user.color),
+            circle: true,
+            border: 1.5,
+            offset: 2,
           ),
-          child: const Center(child: Icon(Icons.face_6_rounded, size: 28)),
+          child: const Center(child: Icon(Icons.face_6_rounded, size: 28, color: AppTheme.kInk)),
         ),
       ],
     );
@@ -191,25 +191,20 @@ class _HomeScreenState extends State<HomeScreen> {
     return Container(
       height: 128,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppTheme.kBorder, width: 2),
-        boxShadow: [BoxShadow(color: AppTheme.kBorder, offset: Offset(4, 4))],
-      ),
+      decoration: AppTheme.sticker(color),
       child: Stack(
         children: [
           Positioned(
             right: 0,
             top: 0,
-            child: Icon(icon, size: 30, color: AppTheme.kTextPrimary.withValues(alpha: 0.35)),
+            child: Icon(icon, size: 30, color: AppTheme.kInk.withValues(alpha: 0.35)),
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(value?.toString() ?? '–', style: AppTheme.display(36)),
-              Text(label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+              Text(value?.toString() ?? '–', style: AppTheme.display(36, color: AppTheme.kInk)),
+              Text(label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppTheme.kInk)),
             ],
           ),
         ],
@@ -223,22 +218,13 @@ class _HomeScreenState extends State<HomeScreen> {
       onTap: () => _open(moment),
       child: Container(
         padding: const EdgeInsets.fromLTRB(18, 16, 16, 16),
-        decoration: BoxDecoration(
-          color: AppTheme.kLightBlue,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: AppTheme.kBorder, width: 2),
-          boxShadow: [BoxShadow(color: AppTheme.kBorder, offset: Offset(4, 4))],
-        ),
+        decoration: AppTheme.sticker(AppTheme.kLightBlue),
         child: Row(
           children: [
             Container(
               width: 58,
               height: 58,
-              decoration: BoxDecoration(
-                color: AppTheme.tint(moment.accentColor),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.kBorder, width: 2),
-              ),
+              decoration: AppTheme.sticker(AppTheme.tint(moment.accentColor), radius: 16, offset: 0),
               child: const Center(child: Text('⏳', style: TextStyle(fontSize: 26))),
             ),
             const SizedBox(width: 14),
@@ -246,13 +232,13 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('NEXT REVEAL', style: AppTheme.display(18)),
+                  Text('NEXT REVEAL', style: AppTheme.display(18, color: AppTheme.kInk)),
                   const SizedBox(height: 4),
                   Text(
                     '${moment.title} · ${revealDescription(moment.unlockAt).replaceFirst('Reveals ', '')}',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontWeight: FontWeight.w600, color: AppTheme.kTextSecondary),
+                    style: TextStyle(fontWeight: FontWeight.w600, color: AppTheme.kInkSoft),
                   ),
                 ],
               ),
@@ -264,9 +250,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: AppTheme.kSurface,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: AppTheme.kBorder, width: 2),
-                boxShadow: [BoxShadow(color: AppTheme.kBorder, offset: Offset(2, 2))],
+                boxShadow: [BoxShadow(color: AppTheme.kShadow, offset: Offset(2, 2))],
               ),
-              child: const Text('Open', style: TextStyle(fontWeight: FontWeight.w800)),
+              child: Text('Open', style: TextStyle(fontWeight: FontWeight.w800, color: AppTheme.kTextPrimary)),
             ),
           ],
         ),
@@ -282,12 +268,8 @@ class _HomeScreenState extends State<HomeScreen> {
         if (count != null)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-            decoration: BoxDecoration(
-              color: AppTheme.kPaleYellow,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppTheme.kBorder, width: 1.5),
-            ),
-            child: Text('$count', style: const TextStyle(fontWeight: FontWeight.w800)),
+            decoration: AppTheme.sticker(AppTheme.kPaleYellow, radius: 12, border: 1.5, offset: 0),
+            child: Text('$count', style: const TextStyle(fontWeight: FontWeight.w800, color: AppTheme.kInk)),
           ),
       ],
     );

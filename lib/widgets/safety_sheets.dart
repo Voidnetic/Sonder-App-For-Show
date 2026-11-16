@@ -125,7 +125,13 @@ class _ReportSheetState extends State<_ReportSheet> {
                 children: [
                   for (final entry in reportReasons.entries)
                     ChoiceChip(
-                      label: Text(entry.value, style: const TextStyle(fontWeight: FontWeight.w700)),
+                      label: Text(
+                        entry.value,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: _reason == entry.key ? AppTheme.kInk : AppTheme.kTextPrimary,
+                        ),
+                      ),
                       selected: _reason == entry.key,
                       onSelected: _sending ? null : (_) => setState(() => _reason = entry.key),
                       selectedColor: AppTheme.kSunshine,

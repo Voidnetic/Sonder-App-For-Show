@@ -164,7 +164,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 20),
                 decoration: BoxDecoration(
-                  color: AppTheme.kTextPrimary,
+                  color: AppTheme.kPrimaryFill,
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(color: AppTheme.kBorder, width: 2),
                   boxShadow: [BoxShadow(color: AppTheme.kSoftMint, offset: const Offset(6, 6))],

@@ -67,7 +67,7 @@ class HereNowStrip extends StatelessWidget {
                         child: Center(
                           child: Text(
                             shown[i].initial,
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppTheme.kTextPrimary),
+                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppTheme.kInk),
                           ),
                         ),
                       ),

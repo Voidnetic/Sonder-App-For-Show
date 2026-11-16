@@ -97,7 +97,7 @@ class _MemoriesGalleryScreenState extends State<MemoriesGalleryScreen> {
     final moment = widget.moment;
     final unlockedOn = moment.revealedAt ?? moment.unlockAt;
     return Scaffold(
-      backgroundColor: AppTheme.tint(moment.accentColor),
+      backgroundColor: AppTheme.screenTint(moment.accentColor),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -177,7 +177,7 @@ class _MemoriesGalleryScreenState extends State<MemoriesGalleryScreen> {
           color: AppTheme.kSurface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: AppTheme.kBorder, width: 2),
-          boxShadow: [BoxShadow(color: AppTheme.kBorder, offset: Offset(3, 3))],
+          boxShadow: [BoxShadow(color: AppTheme.kShadow, offset: Offset(3, 3))],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,

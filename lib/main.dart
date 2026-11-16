@@ -58,14 +58,16 @@ class _SonderAppState extends State<SonderApp> with WidgetsBindingObserver {
   void didChangePlatformBrightness() => _apply(); // the phone switched dark mode on or off
 
   void _apply() {
-    final dark = _theme.isDarkFor(WidgetsBinding.instance.platformDispatcher.platformBrightness);
+    final look = _theme.lookFor(WidgetsBinding.instance.platformDispatcher.platformBrightness);
     // Light status bar icons over the navy intro, then whatever suits the theme.
-    SystemChrome.setSystemUIOverlayStyle(dark || !_introDone ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark);
-    if (dark == AppTheme.isDark) return;
+    SystemChrome.setSystemUIOverlayStyle(
+      look != AppLook.light || !_introDone ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+    );
+    if (look == AppTheme.look) return;
     if (mounted) {
-      setState(() => AppTheme.isDark = dark);
+      setState(() => AppTheme.look = look);
     } else {
-      AppTheme.isDark = dark;
+      AppTheme.look = look;
     }
   }
 
@@ -74,7 +76,7 @@ class _SonderAppState extends State<SonderApp> with WidgetsBindingObserver {
     // The colours are read directly by the screens, so a theme change rebuilds the whole app (the key);
     // MainNavigation remembers which tab was open.
     return MaterialApp(
-      key: ValueKey(AppTheme.isDark),
+      key: ValueKey(AppTheme.look),
       title: 'Sonder',
       debugShowCheckedModeBanner: false,
       scaffoldMessengerKey: rootMessengerKey,
@@ -186,16 +188,16 @@ class _MainNavigationState extends State<MainNavigation> {
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: isSelected ? AppTheme.kTextPrimary : Colors.transparent,
+              color: isSelected ? AppTheme.kPrimaryFill : Colors.transparent,
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Icon(icon, color: isSelected ? AppTheme.kBackground : AppTheme.kTextSecondary, size: 24),
+            child: Icon(icon, color: isSelected ? AppTheme.kOnPrimary : AppTheme.kTextSecondary, size: 24),
           ),
           const SizedBox(height: 2),
           Text(
             label,
             style: TextStyle(
-              color: isSelected ? AppTheme.kTextPrimary : AppTheme.kTextSecondary,
+              color: isSelected ? AppTheme.kPrimaryFill : AppTheme.kTextSecondary,
               fontSize: 11,
               fontWeight: isSelected ? FontWeight.w900 : FontWeight.bold,
             ),
