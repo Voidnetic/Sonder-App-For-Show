@@ -95,6 +95,7 @@ class FakeBackend {
           memoryCount: 12,
         ),
       ],
+      'GET /api/moments/invitations': (_) => [],
       'GET /api/friends': (_) => [ali, ahmed, hajra],
       'GET /api/users/me': (_) => {...hassan, 'memory_count': 91, 'active_moment_count': 2, 'friend_count': 3},
       'GET /api/moments/m1': (_) =>
@@ -201,6 +202,7 @@ Future<void> settle(WidgetTester tester, [int frames = 8]) async {
 
 Future<void> startApp(WidgetTester tester) async {
   usePhoneScreen(tester);
+  MainNavigation.savedTab = 0; // the open tab is remembered across rebuilds (and tests)
   await tester.pumpWidget(const SonderApp());
   await settle(tester);
 }
@@ -376,6 +378,70 @@ void main() {
     await tapAndSettle(tester, find.text('Moments'));
     expect(find.text('Past Vault ✨'), findsOneWidget);
     expect(find.text('Last Night Party'), findsOneWidget);
+  });
+
+  testWidgets('home: an invitation waits for Accept or Decline before you join', (tester) async {
+    final backend = FakeBackend();
+    final now = DateTime.now();
+    final invites = {
+      'eid': momentJson(
+        id: 'eid',
+        title: 'Eid Dinner',
+        unlockAt: now.add(const Duration(days: 2)),
+        myStatus: 'invited',
+        creator: ali,
+        invitedBy: ali,
+      ),
+      'gym': momentJson(
+        id: 'gym',
+        title: 'Gym Week',
+        unlockAt: now.add(const Duration(days: 5)),
+        myStatus: 'invited',
+        creator: ahmed,
+        invitedBy: ahmed,
+      ),
+    };
+    var accepted = false;
+    backend.routes['GET /api/moments/invitations'] = (_) => invites.values.toList();
+    backend.routes['POST /api/moments/eid/accept'] = (_) {
+      accepted = true;
+      return {...invites.remove('eid')!, 'my_status': 'joined'};
+    };
+    backend.routes['POST /api/moments/gym/decline'] = (_) {
+      invites.remove('gym');
+      return http.Response('', 204);
+    };
+    final active = backend.routes['GET /api/moments/active']!;
+    backend.routes['GET /api/moments/active'] = (req) => [
+      ...(active(req) as List),
+      if (accepted) momentJson(id: 'eid', title: 'Eid Dinner', unlockAt: now.add(const Duration(days: 2))),
+    ];
+    await setUpApi(backend);
+    await startApp(tester);
+
+    expect(find.text("You're invited 💌"), findsOneWidget);
+    expect(find.text('Ali invited you to'), findsOneWidget);
+    expect(find.text('Ahmed invited you to'), findsOneWidget);
+    // Not one of your moments until you accept.
+    expect(find.text('EID DINNER'), findsOneWidget); // only the invitation card
+
+    await tapAndSettle(tester, find.byKey(const Key('invite-decline-gym')));
+    expect(backend.called('POST', '/api/moments/gym/decline'), isTrue);
+    expect(find.text('GYM WEEK'), findsNothing);
+    expect(find.text('Invitation to Gym Week declined.'), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('invite-accept-eid')),
+      -200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tapAndSettle(tester, find.byKey(const Key('invite-accept-eid')));
+    expect(backend.called('POST', '/api/moments/eid/accept'), isTrue);
+    expect(find.text("You're invited 💌"), findsNothing);
+    expect(find.text("You're in Eid Dinner 🎉"), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('EID DINNER'), 200, scrollable: find.byType(Scrollable).first);
+    expect(find.text('EID DINNER'), findsOneWidget); // now a moment on Home
+    await tester.pump(const Duration(seconds: 5)); // let the snack bar finish
   });
 
   testWidgets('archive: the Past Vault lists opened capsules and opens their photos', (tester) async {

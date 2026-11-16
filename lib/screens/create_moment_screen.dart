@@ -160,6 +160,11 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
             ),
             const SizedBox(height: 40),
             Text("WHO IS COMING?", style: _sectionTitleStyle),
+            const SizedBox(height: 6),
+            Text(
+              "They'll get an invite to accept before they join.",
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppTheme.kTextSecondary),
+            ),
             const SizedBox(height: 16),
             FutureBuilder<List<AppUser>>(
               future: _friends,

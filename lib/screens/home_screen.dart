@@ -4,8 +4,10 @@ import '../data/api_client.dart';
 import '../data/models.dart';
 import '../theme/app_theme.dart';
 import '../utils/time_format.dart';
+import '../widgets/invitation_card.dart';
 import '../widgets/moment_card.dart';
 import '../widgets/motion.dart';
+import '../widgets/safety_sheets.dart';
 import '../widgets/status_views.dart';
 import 'active_moment_screen.dart';
 import 'create_moment_screen.dart';
@@ -32,10 +34,23 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   late Future<List<Moment>> _moments;
 
+  /// Groups friends invited you to, waiting for Accept or Decline. Shown above everything else.
+  List<Moment> _invitations = const [];
+
   @override
   void initState() {
     super.initState();
     _moments = SonderApi.instance.getActiveMoments();
+    _loadInvitations();
+  }
+
+  Future<void> _loadInvitations() async {
+    try {
+      final invitations = await SonderApi.instance.getInvitations();
+      if (mounted) setState(() => _invitations = invitations);
+    } catch (_) {
+      // Not worth an error on Home; they'll show on the next refresh.
+    }
   }
 
   Future<void> _reload() async {
@@ -43,10 +58,33 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _moments = next;
     });
+    await _loadInvitations();
     try {
       await next;
     } catch (_) {
       // Shown by the FutureBuilder.
+    }
+  }
+
+  Future<void> _accept(Moment invite) async {
+    try {
+      await SonderApi.instance.acceptInvitation(invite.id);
+      if (!mounted) return;
+      showSnack(context, "You're in ${invite.title} 🎉");
+      await _reload();
+    } catch (e) {
+      if (mounted) showSnack(context, e.toString());
+    }
+  }
+
+  Future<void> _decline(Moment invite) async {
+    try {
+      await SonderApi.instance.declineInvitation(invite.id);
+      if (!mounted) return;
+      setState(() => _invitations = [for (final m in _invitations) if (m.id != invite.id) m]);
+      showSnack(context, 'Invitation to ${invite.title} declined.');
+    } catch (e) {
+      if (mounted) showSnack(context, e.toString());
     }
   }
 
@@ -95,6 +133,21 @@ class _HomeScreenState extends State<HomeScreen> {
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppTheme.kTextSecondary),
                     ),
                   ),
+                  if (_invitations.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    PopIn(index: 1, child: _sectionTitle("You're invited 💌", _invitations.length)),
+                    const SizedBox(height: 14),
+                    for (final invite in _invitations)
+                      PopIn(
+                        index: 1,
+                        child: InvitationCard(
+                          key: ValueKey('invite-card-${invite.id}'),
+                          moment: invite,
+                          onAccept: () => _accept(invite),
+                          onDecline: () => _decline(invite),
+                        ),
+                      ),
+                  ],
                   const SizedBox(height: 24),
                   PopIn(index: 1, child: _statTiles(loaded ? moments : null)),
                   if (moments.isNotEmpty) ...[
@@ -269,7 +322,13 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _sectionTitle(String title, int? count) {
     return Row(
       children: [
-        Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+        Flexible(
+          child: Text(
+            title,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+          ),
+        ),
         const SizedBox(width: 10),
         if (count != null)
           Container(
