@@ -19,7 +19,7 @@ from sqlalchemy import delete, select, text
 from app.config import settings
 from app.database import SessionLocal
 from app.models.device import DeviceToken
-from app.models.moment import moment_participants
+from app.models.moment import JOINED, moment_participants
 
 log = logging.getLogger("sonder.push")
 
@@ -119,7 +119,9 @@ def send_unlock_notifications() -> int:
         db.commit()
         for moment_id, title in moments:
             members = db.scalars(
-                select(moment_participants.c.user_id).where(moment_participants.c.moment_id == moment_id)
+                select(moment_participants.c.user_id).where(
+                    moment_participants.c.moment_id == moment_id, moment_participants.c.status == JOINED
+                )
             ).all()
             notify_users(
                 members,

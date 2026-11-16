@@ -133,6 +133,18 @@ class Moment {
   final DateTime? lastCapturedAt;
   final AppUser? lastCapturedBy;
 
+  /// "joined", or "invited" while the signed-in user hasn't accepted the invitation yet.
+  final String myStatus;
+
+  /// The friend who invited the signed-in user (shown on the invitation).
+  final AppUser? invitedBy;
+
+  /// When the signed-in user first opened it after it unlocked. Until then it stays on Home as Ready to Open.
+  final DateTime? openedAt;
+
+  /// Friends who were invited but haven't accepted yet.
+  final int pendingCount;
+
   const Moment({
     required this.id,
     required this.title,
@@ -145,6 +157,10 @@ class Moment {
     required this.friendCount,
     this.lastCapturedAt,
     this.lastCapturedBy,
+    this.myStatus = 'joined',
+    this.invitedBy,
+    this.openedAt,
+    this.pendingCount = 0,
   });
 
   factory Moment.fromJson(Map<String, dynamic> json) => Moment(
@@ -163,10 +179,21 @@ class Moment {
     lastCapturedBy: json['last_captured_by'] == null
         ? null
         : AppUser.fromJson(json['last_captured_by'] as Map<String, dynamic>),
+    myStatus: (json['my_status'] as String?) ?? 'joined',
+    invitedBy: json['invited_by'] == null ? null : AppUser.fromJson(json['invited_by'] as Map<String, dynamic>),
+    openedAt: json['opened_at'] == null ? null : _parseDate(json['opened_at']),
+    pendingCount: (json['pending_count'] as int?) ?? 0,
   );
 
   /// Computed from the clock rather than the server flag, so it flips the moment the countdown ends.
   bool get isUnlocked => !DateTime.now().toUtc().isBefore(unlockAt);
+
+  /// Unlocked but not opened by the signed-in user yet: shown on Home with a "Ready to Open" badge.
+  bool get isReady => isUnlocked && openedAt == null;
+
+  bool get isInvitation => myStatus == 'invited';
+
+  bool createdBy(String? userId) => creator.id == userId;
 }
 
 class Memory {
@@ -178,6 +205,12 @@ class Memory {
   final String? caption;
   final DateTime capturedAt;
 
+  /// Posted by the signed-in user. Their own photos come with [imageUrl] even while locked.
+  final bool mine;
+
+  /// Hidden from the signed-in user's own view (only listed when asked for).
+  final bool hidden;
+
   const Memory({
     required this.id,
     required this.momentId,
@@ -186,13 +219,17 @@ class Memory {
     required this.imageUrl,
     required this.caption,
     required this.capturedAt,
+    this.mine = false,
+    this.hidden = false,
   });
 
   factory Memory.fromJson(Map<String, dynamic> json) => Memory(
     id: json['id'] as String,
     momentId: json['moment_id'] as String,
     author: AppUser.fromJson(json['author'] as Map<String, dynamic>),
-    locked: json['image_url'] == null,
+    locked: (json['locked'] as bool?) ?? json['image_url'] == null,
+    mine: (json['mine'] as bool?) ?? false,
+    hidden: (json['hidden'] as bool?) ?? false,
     imageUrl: json['image_url'] as String?,
     caption: json['caption'] as String?,
     capturedAt: _parseDate(json['captured_at']),
@@ -207,6 +244,10 @@ class ChatMessage {
   final String text;
   final DateTime createdAt;
 
+  /// Set when this is a reaction or comment on one photo (from the slideshow), with its thumbnail.
+  final String? memoryId;
+  final String? memoryImageUrl;
+
   const ChatMessage({
     required this.id,
     required this.momentId,
@@ -214,6 +255,8 @@ class ChatMessage {
     required this.isSystem,
     required this.text,
     required this.createdAt,
+    this.memoryId,
+    this.memoryImageUrl,
   });
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) => ChatMessage(
@@ -223,6 +266,8 @@ class ChatMessage {
     isSystem: json['type'] == 'system',
     text: json['text'] as String,
     createdAt: _parseDate(json['created_at']),
+    memoryId: json['memory_id'] as String?,
+    memoryImageUrl: json['memory_image_url'] as String?,
   );
 }
 

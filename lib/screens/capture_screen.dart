@@ -50,10 +50,14 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
   // Capture state
   _Phase _phase = _Phase.ready;
   bool _capturedAny = false;
-  late final AnimationController _shutterPulse =
-      AnimationController(vsync: this, duration: const Duration(milliseconds: 160));
-  late final AnimationController _securedPop =
-      AnimationController(vsync: this, duration: const Duration(milliseconds: 700));
+  late final AnimationController _shutterPulse = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 160),
+  );
+  late final AnimationController _securedPop = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 700),
+  );
 
   bool get _fixedMoment => widget.moment != null;
 
@@ -440,10 +444,7 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.45),
-        borderRadius: BorderRadius.circular(24),
-      ),
+      decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.45), borderRadius: BorderRadius.circular(24)),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
@@ -543,8 +544,11 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        _roundButton(Icons.photo_library_rounded, 'Choose from gallery',
-            _target != null && _phase == _Phase.ready ? _pickFromGallery : null),
+        _roundButton(
+          Icons.photo_library_rounded,
+          'Choose from gallery',
+          _target != null && _phase == _Phase.ready ? _pickFromGallery : null,
+        ),
         GestureDetector(
           onTap: canShoot ? _shoot : null,
           child: AnimatedBuilder(
@@ -619,7 +623,10 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
             Icon(Icons.group_rounded, size: 18, color: AppTheme.kTextPrimary),
             const SizedBox(width: 8),
             if (target != null)
-              Text('Sending to ', style: TextStyle(fontWeight: FontWeight.w600, color: AppTheme.kTextSecondary)),
+              Text(
+                'Sending to ',
+                style: TextStyle(fontWeight: FontWeight.w600, color: AppTheme.kTextSecondary),
+              ),
             Flexible(
               child: Text(
                 label,

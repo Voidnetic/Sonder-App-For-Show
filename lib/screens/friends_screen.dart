@@ -252,7 +252,10 @@ class _FriendsScreenState extends State<FriendsScreen> {
                 child: Text(
                   label,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontWeight: FontWeight.w900, color: selected ? AppTheme.kOnPrimary : AppTheme.kTextPrimary),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: selected ? AppTheme.kOnPrimary : AppTheme.kTextPrimary,
+                  ),
                 ),
               ),
               if (count != null && (count > 0 || index == 0)) ...[
@@ -265,7 +268,10 @@ class _FriendsScreenState extends State<FriendsScreen> {
                     border: 1.2,
                     offset: 0,
                   ),
-                  child: Text('$count', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: AppTheme.kInk)),
+                  child: Text(
+                    '$count',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: AppTheme.kInk),
+                  ),
                 ),
               ],
             ],
@@ -542,12 +548,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
     padding: const EdgeInsets.only(bottom: 10, top: 4),
     child: Text(
       text,
-      style: TextStyle(
-        fontSize: 12,
-        fontWeight: FontWeight.w900,
-        letterSpacing: 1.5,
-        color: AppTheme.kTextSecondary,
-      ),
+      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 1.5, color: AppTheme.kTextSecondary),
     ),
   );
 
@@ -574,7 +575,10 @@ class _FriendsScreenState extends State<FriendsScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: AppTheme.sticker(color ?? AppTheme.kLavender, radius: 14, border: 1.5, offset: 0),
-      child: Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: AppTheme.kInk)),
+      child: Text(
+        label,
+        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: AppTheme.kInk),
+      ),
     );
   }
 
@@ -624,9 +628,6 @@ class _Spinner extends StatelessWidget {
   const _Spinner();
 
   @override
-  Widget build(BuildContext context) => SizedBox(
-    width: 22,
-    height: 22,
-    child: CircularProgressIndicator(strokeWidth: 2.5, color: AppTheme.kTextPrimary),
-  );
+  Widget build(BuildContext context) =>
+      SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: AppTheme.kTextPrimary));
 }

@@ -94,18 +94,8 @@ class _RevealScreenState extends State<RevealScreen> with SingleTickerProviderSt
                       return ScaleTransition(scale: animation, child: child);
                     },
                     child: _isRevealed
-                        ? Icon(
-                            Icons.lock_open_rounded,
-                            key: ValueKey("open"),
-                            size: 100,
-                            color: AppTheme.kTextPrimary,
-                          )
-                        : Icon(
-                            Icons.lock_rounded,
-                            key: ValueKey("closed"),
-                            size: 100,
-                            color: AppTheme.kTextPrimary,
-                          ),
+                        ? Icon(Icons.lock_open_rounded, key: ValueKey("open"), size: 100, color: AppTheme.kTextPrimary)
+                        : Icon(Icons.lock_rounded, key: ValueKey("closed"), size: 100, color: AppTheme.kTextPrimary),
                   ),
                 ),
                 const SizedBox(height: 32),
@@ -119,11 +109,7 @@ class _RevealScreenState extends State<RevealScreen> with SingleTickerProviderSt
                   ),
                 ),
                 const SizedBox(height: 12),
-                Text(
-                  _moment.title,
-                  style: AppTheme.display(38),
-                  textAlign: TextAlign.center,
-                ),
+                Text(_moment.title, style: AppTheme.display(38), textAlign: TextAlign.center),
                 const SizedBox(height: 8),
                 Text(
                   "${countLabel(_moment.memoryCount, 'memory', 'memories')} • ${countLabel(_moment.friendCount, 'friend', 'friends')}",

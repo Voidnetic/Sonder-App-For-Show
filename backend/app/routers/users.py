@@ -8,7 +8,7 @@ from app.database import get_db
 from app.deps import get_current_user
 from app.models.friendship import Friendship, FriendshipStatus
 from app.models.memory import Memory
-from app.models.moment import Moment, moment_participants
+from app.models.moment import JOINED, Moment, moment_participants
 from app.models.user import User
 from app.relationships import blocked_ids, friend_ids
 from app.schemas.user import UpdateUserRequest, UserProfileResponse, UserResponse, UserSearchResult
@@ -25,7 +25,11 @@ def get_me(current_user: User = Depends(get_current_user), db: Session = Depends
         db.scalar(
             select(func.count(Moment.id))
             .join(moment_participants, moment_participants.c.moment_id == Moment.id)
-            .where(moment_participants.c.user_id == current_user.id, Moment.unlock_at > func.now())
+            .where(
+                moment_participants.c.user_id == current_user.id,
+                moment_participants.c.status == JOINED,
+                Moment.unlock_at > func.now(),
+            )
         )
         or 0
     )

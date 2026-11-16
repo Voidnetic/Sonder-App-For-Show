@@ -194,17 +194,16 @@ class _HomeScreenState extends State<HomeScreen> {
       decoration: AppTheme.sticker(color),
       child: Stack(
         children: [
-          Positioned(
-            right: 0,
-            top: 0,
-            child: Icon(icon, size: 30, color: AppTheme.kInk.withValues(alpha: 0.35)),
-          ),
+          Positioned(right: 0, top: 0, child: Icon(icon, size: 30, color: AppTheme.kInk.withValues(alpha: 0.35))),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(value?.toString() ?? '–', style: AppTheme.display(36, color: AppTheme.kInk)),
-              Text(label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppTheme.kInk)),
+              Text(
+                label,
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppTheme.kInk),
+              ),
             ],
           ),
         ],
@@ -212,30 +211,34 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// A banner for the moment that unlocks next, like a "trending" card.
+  /// A banner for the moment that unlocks next, like a "trending" card. When one is already unlocked and
+  /// waiting to be opened, it says so instead.
   Widget _nextRevealBanner(Moment moment) {
+    final ready = moment.isReady;
     return Pressable(
       onTap: () => _open(moment),
       child: Container(
         padding: const EdgeInsets.fromLTRB(18, 16, 16, 16),
-        decoration: AppTheme.sticker(AppTheme.kLightBlue),
+        decoration: AppTheme.sticker(ready ? AppTheme.kSunshine : AppTheme.kLightBlue),
         child: Row(
           children: [
             Container(
               width: 58,
               height: 58,
               decoration: AppTheme.sticker(AppTheme.tint(moment.accentColor), radius: 16, offset: 0),
-              child: const Center(child: Text('⏳', style: TextStyle(fontSize: 26))),
+              child: Center(child: Text(ready ? '🎁' : '⏳', style: const TextStyle(fontSize: 26))),
             ),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('NEXT REVEAL', style: AppTheme.display(18, color: AppTheme.kInk)),
+                  Text(ready ? 'READY TO OPEN' : 'NEXT REVEAL', style: AppTheme.display(18, color: AppTheme.kInk)),
                   const SizedBox(height: 4),
                   Text(
-                    '${moment.title} · ${revealDescription(moment.unlockAt).replaceFirst('Reveals ', '')}',
+                    ready
+                        ? '${moment.title} · the countdown is over'
+                        : '${moment.title} · ${revealDescription(moment.unlockAt).replaceFirst('Reveals ', '')}',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(fontWeight: FontWeight.w600, color: AppTheme.kInkSoft),
@@ -252,7 +255,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 border: Border.all(color: AppTheme.kBorder, width: 2),
                 boxShadow: [BoxShadow(color: AppTheme.kShadow, offset: Offset(2, 2))],
               ),
-              child: Text('Open', style: TextStyle(fontWeight: FontWeight.w800, color: AppTheme.kTextPrimary)),
+              child: Text(
+                'Open',
+                style: TextStyle(fontWeight: FontWeight.w800, color: AppTheme.kTextPrimary),
+              ),
             ),
           ],
         ),
@@ -269,7 +275,10 @@ class _HomeScreenState extends State<HomeScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
             decoration: AppTheme.sticker(AppTheme.kPaleYellow, radius: 12, border: 1.5, offset: 0),
-            child: Text('$count', style: const TextStyle(fontWeight: FontWeight.w800, color: AppTheme.kInk)),
+            child: Text(
+              '$count',
+              style: const TextStyle(fontWeight: FontWeight.w800, color: AppTheme.kInk),
+            ),
           ),
       ],
     );

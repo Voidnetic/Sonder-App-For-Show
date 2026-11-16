@@ -15,6 +15,9 @@ class MemoryResponse(BaseModel):
     image_url: str
     caption: str | None
     captured_at: datetime
+    mine: bool = False
+    # Hidden from the user's own view (only listed with include_hidden=true).
+    hidden: bool = False
 
 
 class LockedMemoryResponse(BaseModel):
@@ -25,3 +28,6 @@ class LockedMemoryResponse(BaseModel):
     author: UserResponse
     locked: bool = True
     captured_at: datetime
+    mine: bool = False
+    # Only for the user's own photos, so they can check, swap or delete them before the reveal.
+    image_url: str | None = None

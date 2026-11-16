@@ -52,10 +52,7 @@ class ErrorView extends StatelessWidget {
                 onTap: onRetry,
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: AppTheme.kPrimaryFill,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
+                  decoration: BoxDecoration(color: AppTheme.kPrimaryFill, borderRadius: BorderRadius.circular(16)),
                   child: Text(
                     'RETRY',
                     style: TextStyle(color: AppTheme.kOnPrimary, fontWeight: FontWeight.w900, letterSpacing: 1.5),

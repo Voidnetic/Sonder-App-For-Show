@@ -9,6 +9,8 @@ from app.schemas.user import UserResponse
 
 class CreateMessageRequest(BaseModel):
     text: str = Field(min_length=1, max_length=2000)
+    # Reply to one photo of the moment (only once it has unlocked).
+    memory_id: uuid.UUID | None = None
 
 
 class MessageResponse(BaseModel):
@@ -18,3 +20,6 @@ class MessageResponse(BaseModel):
     type: MessageType
     text: str
     created_at: datetime
+    # The photo this message replies to, with a link for its thumbnail.
+    memory_id: uuid.UUID | None = None
+    memory_image_url: str | None = None

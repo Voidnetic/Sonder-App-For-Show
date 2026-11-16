@@ -12,8 +12,10 @@ import 'models.dart';
 
 /// The live Sonder server on Railway. To test against a backend on your computer, build with
 /// `--dart-define=SONDER_API_URL=http://192.168.1.20:8000` (users can't change the server in the app).
-const String defaultServerUrl =
-    String.fromEnvironment('SONDER_API_URL', defaultValue: 'https://sonder-api-production.up.railway.app');
+const String defaultServerUrl = String.fromEnvironment(
+  'SONDER_API_URL',
+  defaultValue: 'https://sonder-api-production.up.railway.app',
+);
 
 class ApiException implements Exception {
   final int? statusCode;
@@ -142,11 +144,11 @@ class SonderApi {
 
   /// Sets a new password with the emailed code and signs in.
   Future<void> resetPassword(String email, String code, String newPassword) async {
-    final json = await _send('POST', '/auth/reset-password', body: {
-      'email': email.trim(),
-      'code': code.trim(),
-      'new_password': newPassword,
-    });
+    final json = await _send(
+      'POST',
+      '/auth/reset-password',
+      body: {'email': email.trim(), 'code': code.trim(), 'new_password': newPassword},
+    );
     await _saveSession(json as Map<String, dynamic>);
   }
 
@@ -222,8 +224,7 @@ class SonderApi {
 
   // Push notifications
 
-  Future<void> registerDevice(String token) =>
-      _send('POST', '/devices', body: {'token': token, 'platform': 'android'});
+  Future<void> registerDevice(String token) => _send('POST', '/devices', body: {'token': token, 'platform': 'android'});
 
   Future<void> unregisterDevice(String token) =>
       _send('POST', '/devices/unregister', body: {'token': token, 'platform': 'android'});
@@ -285,14 +286,49 @@ class SonderApi {
     return Moment.fromJson(json as Map<String, dynamic>);
   }
 
+  /// Opens an unlocked moment. The first time, it moves from Home to the Past Vault.
   Future<Moment> revealMoment(String id) async =>
       Moment.fromJson(await _send('POST', '/moments/$id/reveal') as Map<String, dynamic>);
 
-  Future<List<Memory>> getMemories(String momentId) async =>
-      _list(await _send('GET', '/moments/$momentId/memories'), Memory.fromJson);
+  /// Moments friends invited the signed-in user to, waiting for Accept or Decline.
+  Future<List<Moment>> getInvitations() async => _list(await _send('GET', '/moments/invitations'), Moment.fromJson);
 
-  Future<Memory> uploadMemory(String momentId, Uint8List bytes, String filename, {String? caption}) async {
-    final request = http.MultipartRequest('POST', _uri('/moments/$momentId/memories'))
+  Future<Moment> acceptInvitation(String momentId) async =>
+      Moment.fromJson(await _send('POST', '/moments/$momentId/accept') as Map<String, dynamic>);
+
+  Future<void> declineInvitation(String momentId) => _send('POST', '/moments/$momentId/decline');
+
+  /// Leaves a moment. Your photos stay for the others; if nobody is left it's deleted.
+  Future<void> leaveMoment(String momentId) => _send('POST', '/moments/$momentId/leave');
+
+  /// Deletes a moment for everyone, with its photos and chat (only whoever made it).
+  Future<void> deleteMoment(String momentId) => _send('DELETE', '/moments/$momentId');
+
+  Future<List<Memory>> getMemories(String momentId, {bool includeHidden = false}) async => _list(
+    await _send('GET', '/moments/$momentId/memories${includeHidden ? '?include_hidden=true' : ''}'),
+    Memory.fromJson,
+  );
+
+  Future<Memory> uploadMemory(String momentId, Uint8List bytes, String filename, {String? caption}) =>
+      _uploadPhoto('POST', '/moments/$momentId/memories', bytes, filename, caption: caption);
+
+  /// Swaps your photo for another one (only while the moment is still counting down).
+  Future<Memory> replaceMemory(String momentId, String memoryId, Uint8List bytes, String filename) =>
+      _uploadPhoto('PUT', '/moments/$momentId/memories/$memoryId', bytes, filename);
+
+  /// Deletes your photo (only while the moment is still counting down).
+  Future<void> deleteMemory(String momentId, String memoryId) =>
+      _send('DELETE', '/moments/$momentId/memories/$memoryId');
+
+  /// Hides a photo from your own view of an unlocked moment (everyone else still sees it).
+  Future<void> hideMemory(String momentId, String memoryId) =>
+      _send('POST', '/moments/$momentId/memories/$memoryId/hide');
+
+  Future<void> unhideMemory(String momentId, String memoryId) =>
+      _send('DELETE', '/moments/$momentId/memories/$memoryId/hide');
+
+  Future<Memory> _uploadPhoto(String method, String path, Uint8List bytes, String filename, {String? caption}) async {
+    final request = http.MultipartRequest(method, _uri(path))
       ..headers.addAll(_headers(json: false))
       ..files.add(http.MultipartFile.fromBytes('file', bytes, filename: filename, contentType: _imageType(filename)));
     if (caption != null && caption.trim().isNotEmpty) {
@@ -305,8 +341,9 @@ class SonderApi {
   Future<List<ChatMessage>> getMessages(String momentId) async =>
       _list(await _send('GET', '/moments/$momentId/messages'), ChatMessage.fromJson);
 
-  Future<ChatMessage> sendMessage(String momentId, String text) async {
-    final json = await _send('POST', '/moments/$momentId/messages', body: {'text': text});
+  /// Sends a chat message; with [memoryId] it's a reaction or comment on that photo (shown with its thumbnail).
+  Future<ChatMessage> sendMessage(String momentId, String text, {String? memoryId}) async {
+    final json = await _send('POST', '/moments/$momentId/messages', body: {'text': text, 'memory_id': ?memoryId});
     return ChatMessage.fromJson(json as Map<String, dynamic>);
   }
 

@@ -38,7 +38,10 @@ void main() {
     expect(timeAgo(now.subtract(const Duration(hours: 3)), now: now), '3 h ago');
     expect(timeAgo(now.subtract(const Duration(hours: 30)), now: now), 'yesterday');
     expect(timeAgo(now.subtract(const Duration(days: 4)), now: now), '4 days ago');
-    expect(lastCapturedLabel('Ahmed', now.subtract(const Duration(minutes: 5)), now: now), 'Ahmed added a memory 5 min ago');
+    expect(
+      lastCapturedLabel('Ahmed', now.subtract(const Duration(minutes: 5)), now: now),
+      'Ahmed added a memory 5 min ago',
+    );
     expect(lastCapturedLabel('Hassan', now, myId: 'u1', authorId: 'u1', now: now), 'You added a memory just now');
     expect(lastCapturedLabel(null, now), isNull);
   });

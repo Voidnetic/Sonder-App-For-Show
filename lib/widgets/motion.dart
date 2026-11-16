@@ -17,8 +17,10 @@ class PopIn extends StatefulWidget {
 }
 
 class _PopInState extends State<PopIn> with SingleTickerProviderStateMixin {
-  late final AnimationController _controller =
-      AnimationController(vsync: this, duration: const Duration(milliseconds: 450));
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 450),
+  );
 
   @override
   void initState() {
@@ -69,8 +71,10 @@ class BubblyText extends StatefulWidget {
 }
 
 class _BubblyTextState extends State<BubblyText> with SingleTickerProviderStateMixin {
-  late final AnimationController _controller =
-      AnimationController(vsync: this, duration: const Duration(milliseconds: 700))..forward();
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 700),
+  )..forward();
 
   @override
   void dispose() {
@@ -83,7 +87,11 @@ class _BubblyTextState extends State<BubblyText> with SingleTickerProviderStateM
     final alignment = widget.textAlign == TextAlign.center ? Alignment.center : Alignment.centerLeft;
     return AnimatedBuilder(
       animation: _controller,
-      child: Text(widget.text, textAlign: widget.textAlign, style: AppTheme.display(widget.size, color: widget.color)),
+      child: Text(
+        widget.text,
+        textAlign: widget.textAlign,
+        style: AppTheme.display(widget.size, color: widget.color),
+      ),
       builder: (context, child) {
         final t = _controller.value;
         final spring = Curves.elasticOut.transform(t);

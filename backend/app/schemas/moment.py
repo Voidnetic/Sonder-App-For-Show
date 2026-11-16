@@ -33,3 +33,12 @@ class MomentResponse(BaseModel):
     last_captured_at: datetime | None = None
     last_captured_by: UserResponse | None = None
     friend_count: int
+    # For the person asking:
+    # "joined", or "invited" while they haven't accepted yet (see /moments/invitations).
+    my_status: str = "joined"
+    invited_by: UserResponse | None = None
+    # When they first opened it after it unlocked. Unlocked but not opened yet = "Ready to Open" on Home.
+    opened_at: datetime | None = None
+    is_ready: bool = False
+    # How many friends are invited but haven't accepted yet.
+    pending_count: int = 0

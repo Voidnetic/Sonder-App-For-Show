@@ -33,11 +33,15 @@ Map<String, dynamic> momentJson({
   required String title,
   required DateTime unlockAt,
   DateTime? revealedAt,
+  DateTime? openedAt,
   int memoryCount = 0,
+  String myStatus = 'joined',
+  Map<String, dynamic>? creator,
+  Map<String, dynamic>? invitedBy,
 }) => {
   'id': id,
   'title': title,
-  'creator': hassan,
+  'creator': creator ?? hassan,
   'participants': [hassan, ali, ahmed, hajra],
   'accent_color': '#E6E6FA',
   'unlock_at': unlockAt.toUtc().toIso8601String(),
@@ -45,6 +49,9 @@ Map<String, dynamic> momentJson({
   'is_locked': unlockAt.isAfter(DateTime.now()),
   'memory_count': memoryCount,
   'friend_count': 4,
+  'opened_at': openedAt?.toUtc().toIso8601String(),
+  'my_status': myStatus,
+  'invited_by': invitedBy,
 };
 
 Map<String, dynamic> messageJson(String id, Map<String, dynamic>? author, String text, {String type = 'user'}) => {
@@ -84,9 +91,9 @@ class FakeBackend {
           title: 'University Farewell',
           unlockAt: now.subtract(const Duration(days: 7)),
           revealedAt: now.subtract(const Duration(days: 7)),
+          openedAt: now.subtract(const Duration(days: 7)),
           memoryCount: 12,
         ),
-        momentJson(id: 'party', title: 'Last Night Party', unlockAt: now.subtract(const Duration(hours: 1))),
       ],
       'GET /api/friends': (_) => [ali, ahmed, hajra],
       'GET /api/users/me': (_) => {...hassan, 'memory_count': 91, 'active_moment_count': 2, 'friend_count': 3},
@@ -312,7 +319,66 @@ void main() {
     expect(find.text('Cominggg'), findsOneWidget);
   });
 
-  testWidgets('archive: reveal an unlocked moment, then explore its photos', (tester) async {
+  testWidgets('home: an unlocked capsule stays as Ready to Open until opened, then moves to the Past Vault', (
+    tester,
+  ) async {
+    final backend = FakeBackend();
+    final now = DateTime.now();
+    final party = momentJson(
+      id: 'party',
+      title: 'Last Night Party',
+      unlockAt: now.subtract(const Duration(hours: 1)),
+      memoryCount: 1,
+    );
+    final birthday = momentJson(
+      id: 'm1',
+      title: 'Birthday Night',
+      unlockAt: now.add(const Duration(hours: 2)),
+      memoryCount: 2,
+    );
+    backend.routes['GET /api/moments/active'] = (_) => [
+      if (!backend.called('POST', '/api/moments/party/reveal')) party,
+      birthday,
+    ];
+    backend.routes['GET /api/moments/archive'] = (_) => [
+      if (backend.called('POST', '/api/moments/party/reveal')) {...party, 'opened_at': now.toUtc().toIso8601String()},
+    ];
+    await setUpApi(backend);
+    await startApp(tester);
+
+    // On Home with a big badge, and the banner says it's ready.
+    expect(find.byKey(const Key('ready-badge')), findsOneWidget);
+    expect(find.text('READY TO OPEN'), findsOneWidget);
+    expect(find.text('TAP TO OPEN 🎁'), findsOneWidget);
+    expect(find.text('LAST NIGHT PARTY'), findsOneWidget);
+
+    // Peeking and closing without opening keeps it on Home.
+    await tapAndSettle(tester, find.text('LAST NIGHT PARTY'));
+    expect(find.text('THE MOMENT IS READY'), findsOneWidget);
+    await tapAndSettle(tester, find.byIcon(Icons.close_rounded));
+    expect(find.byKey(const Key('ready-badge')), findsOneWidget);
+    expect(backend.called('POST', '/api/moments/party/reveal'), isFalse);
+
+    // Opening it for real.
+    await tapAndSettle(tester, find.text('LAST NIGHT PARTY'));
+    await tapAndSettle(tester, find.text('REVEAL'), 15);
+    expect(backend.called('POST', '/api/moments/party/reveal'), isTrue);
+    expect(find.text('THE MOMENT IS UNLOCKED!'), findsOneWidget);
+    await tapAndSettle(tester, find.text('EXPLORE MEMORIES ✨'));
+    expect(find.text('LAST NIGHT PARTY'), findsOneWidget);
+    expect(find.text('Ali'), findsOneWidget); // photo card caption
+
+    // Back on Home it's gone; it's in the Past Vault now.
+    Navigator.of(tester.element(find.text('LAST NIGHT PARTY'))).pop();
+    await settle(tester);
+    expect(find.byKey(const Key('ready-badge')), findsNothing);
+    expect(find.text('LAST NIGHT PARTY'), findsNothing);
+    await tapAndSettle(tester, find.text('Moments'));
+    expect(find.text('Past Vault ✨'), findsOneWidget);
+    expect(find.text('Last Night Party'), findsOneWidget);
+  });
+
+  testWidgets('archive: the Past Vault lists opened capsules and opens their photos', (tester) async {
     final backend = FakeBackend();
     await setUpApi(backend);
     await startApp(tester);
@@ -322,18 +388,53 @@ void main() {
     expect(find.text('University Farewell'), findsOneWidget);
     expect(find.text('12 memories captured'), findsOneWidget);
     expect(find.textContaining('Unlocked '), findsOneWidget);
-    expect(find.text('Ready to reveal ✨'), findsOneWidget);
+  });
 
-    await tapAndSettle(tester, find.text('Last Night Party'));
-    expect(find.text('THE MOMENT IS READY'), findsOneWidget);
+  testWidgets('archive: leave a past group, or delete it for everyone when you made it', (tester) async {
+    final backend = FakeBackend();
+    final now = DateTime.now();
+    final gone = <String>{};
+    backend.routes['GET /api/moments/archive'] = (_) => [
+      for (final m in [
+        momentJson(id: 'farewell', title: 'University Farewell', unlockAt: now, openedAt: now, memoryCount: 12),
+        momentJson(id: 'test', title: 'Test Group', unlockAt: now, openedAt: now, creator: ali),
+      ])
+        if (!gone.contains(m['id'])) m,
+    ];
+    backend.routes['DELETE /api/moments/farewell'] = (_) {
+      gone.add('farewell');
+      return http.Response('', 204);
+    };
+    backend.routes['POST /api/moments/test/leave'] = (_) {
+      gone.add('test');
+      return http.Response('', 204);
+    };
+    await setUpApi(backend);
+    await startApp(tester);
+    await tapAndSettle(tester, find.text('Moments'));
 
-    await tapAndSettle(tester, find.text('REVEAL'), 15);
-    expect(backend.called('POST', '/api/moments/party/reveal'), isTrue);
-    expect(find.text('THE MOMENT IS UNLOCKED!'), findsOneWidget);
+    // Someone else's group: you can only leave it.
+    await tapAndSettle(tester, find.byKey(const Key('vault-options-test')));
+    expect(find.byKey(const Key('vault-leave')), findsOneWidget);
+    expect(find.byKey(const Key('vault-delete')), findsNothing);
+    await tapAndSettle(tester, find.byKey(const Key('vault-leave')));
+    expect(find.text('Leave Test Group?'), findsOneWidget);
+    await tapAndSettle(tester, find.text('Leave'));
+    expect(backend.called('POST', '/api/moments/test/leave'), isTrue);
+    expect(find.text('Test Group'), findsNothing);
 
-    await tapAndSettle(tester, find.text('EXPLORE MEMORIES ✨'));
-    expect(find.text('LAST NIGHT PARTY'), findsOneWidget);
-    expect(find.text('Ali'), findsOneWidget); // photo card caption
+    // Your own group: delete it for everyone (after confirming).
+    await tapAndSettle(tester, find.byKey(const Key('vault-options-farewell')));
+    await tapAndSettle(tester, find.byKey(const Key('vault-delete')));
+    expect(find.text('Delete University Farewell for everyone?'), findsOneWidget);
+    await tapAndSettle(tester, find.text('Cancel'));
+    expect(backend.called('DELETE', '/api/moments/farewell'), isFalse);
+    await tapAndSettle(tester, find.byKey(const Key('vault-options-farewell')));
+    await tapAndSettle(tester, find.byKey(const Key('vault-delete')));
+    await tapAndSettle(tester, find.text('Delete'));
+    expect(backend.called('DELETE', '/api/moments/farewell'), isTrue);
+    expect(find.text('University Farewell'), findsNothing);
+    expect(find.text('Nothing unlocked yet'), findsOneWidget);
   });
 
   testWidgets('profile shows real stats and friends; log out returns to login', (tester) async {

@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, WebSocket, WebSocketDisconnect, status
 from sqlalchemy import select
@@ -6,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.database import SessionLocal, get_db
 from app.deps import get_current_user
+from app.models.memory import Memory
 from app.models.message import Message, MessageType
 from app.models.moment import Moment
 from app.models.user import User
@@ -14,6 +16,8 @@ from app.schemas.user import UserResponse
 from app.push import notify_in_background, notify_users
 from app.relationships import blocked_ids
 from app.security import decode_access_token
+from app.storage import photo_url
+from app.utils import to_utc
 from app.ws_manager import manager
 
 router = APIRouter(tags=["Hangout"])
@@ -21,6 +25,7 @@ router = APIRouter(tags=["Hangout"])
 
 def _to_response(message: Message, db: Session) -> MessageResponse:
     author = db.get(User, message.author_id) if message.author_id else None
+    photo = db.get(Memory, message.memory_id) if message.memory_id else None
     return MessageResponse(
         id=message.id,
         moment_id=message.moment_id,
@@ -28,7 +33,19 @@ def _to_response(message: Message, db: Session) -> MessageResponse:
         type=message.type,
         text=message.text,
         created_at=message.created_at,
+        memory_id=photo.id if photo else None,
+        memory_image_url=photo_url(photo.image_url) if photo else None,
     )
+
+
+def _reply_photo(moment: Moment, memory_id: uuid.UUID | None, db: Session) -> uuid.UUID | None:
+    """Checks a photo being replied to is in this moment and has been revealed."""
+    if memory_id is None:
+        return None
+    memory = db.get(Memory, memory_id)
+    if memory is None or memory.moment_id != moment.id or to_utc(moment.unlock_at) > datetime.now(timezone.utc):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "You can only reply to photos once the moment unlocks")
+    return memory.id
 
 
 def _assert_participant(moment_id: uuid.UUID, user_id: uuid.UUID, db: Session) -> Moment:
@@ -51,8 +68,10 @@ def _chat_notification(moment: Moment, author_name: str, text: str) -> tuple[str
     return moment.title, f"{author_name}: {preview}", {"type": "chat", "moment_id": str(moment.id)}
 
 
-def _persist_message(moment_id: uuid.UUID, author_id: uuid.UUID, text: str, db: Session) -> Message:
-    message = Message(moment_id=moment_id, author_id=author_id, type=MessageType.USER, text=text)
+def _persist_message(
+    moment_id: uuid.UUID, author_id: uuid.UUID, text: str, db: Session, memory_id: uuid.UUID | None = None
+) -> Message:
+    message = Message(moment_id=moment_id, author_id=author_id, type=MessageType.USER, text=text, memory_id=memory_id)
     db.add(message)
     db.commit()
     db.refresh(message)
@@ -92,7 +111,8 @@ async def send_message(
     db: Session = Depends(get_db),
 ) -> MessageResponse:
     moment = _assert_participant(moment_id, current_user.id, db)
-    message = _persist_message(moment_id, current_user.id, body.text, db)
+    memory_id = _reply_photo(moment, body.memory_id, db)
+    message = _persist_message(moment_id, current_user.id, body.text, db, memory_id)
     response = _to_response(message, db)
     background.add_task(
         notify_users,
@@ -148,7 +168,13 @@ async def hangout_websocket(websocket: WebSocket, moment_id: uuid.UUID, token: s
 
             session = SessionLocal()
             try:
-                message = _persist_message(moment_id, user_id, text, session)
+                room = session.get(Moment, moment_id)
+                try:
+                    raw_photo = payload.get("memory_id")
+                    memory_id = _reply_photo(room, uuid.UUID(raw_photo), session) if raw_photo and room else None
+                except (HTTPException, ValueError, TypeError):
+                    continue  # not a photo in this moment (yet): drop the frame
+                message = _persist_message(moment_id, user_id, text, session, memory_id)
                 response = _to_response(message, session)
                 room = session.get(Moment, moment_id)
                 recipients = _chat_recipients(room, user_id, session) if room else []

@@ -26,4 +26,6 @@ class Message(Base):
         nullable=False,
     )
     text: Mapped[str] = mapped_column(String(2000), nullable=False)
+    # Set when the message is a reply to one photo (a reaction or comment from the slideshow).
+    memory_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("memories.id"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

@@ -30,7 +30,6 @@ def delete_user_account(user: User, db: Session) -> None:
         others = [p for p in moment.participants if p.id != user.id]
         if others:
             moment.creator_id = others[0].id
-            moment.participants = others
         else:
             for memory in db.scalars(select(Memory).where(Memory.moment_id == moment.id)).all():
                 delete_memory(memory, db)

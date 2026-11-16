@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/api_client.dart';
 import '../data/models.dart';
 import '../theme/app_theme.dart';
+import '../widgets/group_actions.dart';
 import '../widgets/motion.dart';
 import '../utils/time_format.dart';
 import '../widgets/status_views.dart';
@@ -42,7 +43,7 @@ class _MomentsArchiveScreenState extends State<MomentsArchiveScreen> {
       context,
       MaterialPageRoute(
         builder: (context) =>
-            moment.revealedAt == null ? RevealScreen(moment: moment) : MemoriesGalleryScreen(moment: moment),
+            moment.openedAt == null ? RevealScreen(moment: moment) : MemoriesGalleryScreen(moment: moment),
       ),
     );
     if (mounted) await _reload();
@@ -74,11 +75,7 @@ class _MomentsArchiveScreenState extends State<MomentsArchiveScreen> {
               const SizedBox(height: 8),
               Text(
                 "Explore all your unlocked time capsules and memories.",
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.kTextSecondary,
-                ),
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.kTextSecondary),
               ),
               const SizedBox(height: 32),
 
@@ -113,7 +110,7 @@ class _MomentsArchiveScreenState extends State<MomentsArchiveScreen> {
   }
 
   Widget _buildArchiveCard(Moment moment) {
-    final notRevealed = moment.revealedAt == null;
+    final notRevealed = moment.openedAt == null;
     return Pressable(
       onTap: () => _open(moment),
       child: Container(
@@ -137,11 +134,7 @@ class _MomentsArchiveScreenState extends State<MomentsArchiveScreen> {
                               ? "Ready to reveal ✨"
                               : "Unlocked ${formatMonthDay(moment.revealedAt ?? moment.unlockAt)}",
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w900,
-                            color: AppTheme.kInkSoft,
-                          ),
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: AppTheme.kInkSoft),
                         ),
                       ),
                     ],
@@ -149,32 +142,37 @@ class _MomentsArchiveScreenState extends State<MomentsArchiveScreen> {
                   const SizedBox(height: 8),
                   Text(
                     moment.title,
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w900,
-                      color: AppTheme.kInk,
-                    ),
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.kInk),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     "${countLabel(moment.memoryCount, 'memory', 'memories')} captured",
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.kInkSoft,
-                    ),
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.kInkSoft),
                   ),
                 ],
               ),
             ),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppTheme.kSurface,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.kBorder, width: 1.5),
-              ),
-              child: Icon(Icons.arrow_forward_rounded, color: AppTheme.kTextPrimary),
+            Column(
+              children: [
+                // Options: leave the group, or delete it for everyone if you made it.
+                IconButton(
+                  key: Key('vault-options-${moment.id}'),
+                  tooltip: 'Options',
+                  icon: const Icon(Icons.more_horiz_rounded, color: AppTheme.kInk),
+                  onPressed: () async {
+                    if (await showVaultOptions(context, moment) && mounted) await _reload();
+                  },
+                ),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.kSurface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppTheme.kBorder, width: 1.5),
+                  ),
+                  child: Icon(Icons.arrow_forward_rounded, color: AppTheme.kTextPrimary),
+                ),
+              ],
             ),
           ],
         ),

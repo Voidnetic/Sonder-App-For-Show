@@ -63,6 +63,7 @@ MIGRATIONS = [
     DB_DIR / "03_accounts_and_safety.sql",
     DB_DIR / "04_push_notifications.sql",
     DB_DIR / "05_email_codes.sql",
+    DB_DIR / "06_groups_and_photos.sql",
 ]
 
 

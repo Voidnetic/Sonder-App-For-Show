@@ -266,12 +266,7 @@ class _LoginScreenState extends State<LoginScreen> {
     padding: const EdgeInsets.only(bottom: 12),
     child: Text(
       text,
-      style: TextStyle(
-        color: AppTheme.kTextSecondary,
-        fontSize: 12,
-        fontWeight: FontWeight.w900,
-        letterSpacing: 1.5,
-      ),
+      style: TextStyle(color: AppTheme.kTextSecondary, fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 1.5),
     ),
   );
 

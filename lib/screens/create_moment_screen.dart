@@ -255,9 +255,7 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
                     color: AppTheme.kPrimaryFill,
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(color: AppTheme.kBorder, width: 2),
-                    boxShadow: _isButtonPressed
-                        ? []
-                        : [BoxShadow(color: AppTheme.kSoftMint, offset: Offset(6, 6))],
+                    boxShadow: _isButtonPressed ? [] : [BoxShadow(color: AppTheme.kSoftMint, offset: Offset(6, 6))],
                   ),
                   child: Center(
                     child: _creating
@@ -299,7 +297,10 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
           children: [
             Icon(Icons.person_add_alt_1_rounded, size: 18, color: AppTheme.kInk),
             SizedBox(width: 6),
-            Text('Add friends', style: TextStyle(fontWeight: FontWeight.w900, color: AppTheme.kInk)),
+            Text(
+              'Add friends',
+              style: TextStyle(fontWeight: FontWeight.w900, color: AppTheme.kInk),
+            ),
           ],
         ),
       ),
@@ -348,10 +349,6 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
     );
   }
 
-  static TextStyle get _sectionTitleStyle => TextStyle(
-    color: AppTheme.kTextSecondary,
-    fontSize: 12,
-    fontWeight: FontWeight.w900,
-    letterSpacing: 1.5,
-  );
+  static TextStyle get _sectionTitleStyle =>
+      TextStyle(color: AppTheme.kTextSecondary, fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 1.5);
 }

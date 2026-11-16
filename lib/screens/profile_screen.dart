@@ -98,7 +98,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: AppTheme.sticker(AppTheme.kPaleYellow, radius: 12, border: 1.5, offset: 0),
-              child: const Text("Tab 4 / 4", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: AppTheme.kInk)),
+              child: const Text(
+                "Tab 4 / 4",
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: AppTheme.kInk),
+              ),
             ),
           ],
         ),
@@ -269,7 +272,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Center(
               child: Text(
                 "LOG OUT",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 2, color: AppTheme.kOnPrimary),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 2,
+                  color: AppTheme.kOnPrimary,
+                ),
               ),
             ),
           ),
@@ -325,12 +333,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   static String _themeLabel(ThemeChoice mode) => switch (mode) {
-        ThemeChoice.light => "Light",
-        ThemeChoice.dark => "Pastel Glow",
-        ThemeChoice.aurora => "Northern Lights",
-        ThemeChoice.blossom => "Aurora Blossom",
-        ThemeChoice.system => "System",
-      };
+    ThemeChoice.light => "Light",
+    ThemeChoice.dark => "Pastel Glow",
+    ThemeChoice.aurora => "Northern Lights",
+    ThemeChoice.blossom => "Aurora Blossom",
+    ThemeChoice.system => "System",
+  };
 
   Future<void> _pickTheme() async {
     final current = ThemeController.instance.mode.value;
@@ -431,7 +439,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   height: 36,
                   decoration: AppTheme.sticker(AppTheme.tint(friend.color), circle: true, border: 1.5, offset: 0),
                   child: Center(
-                    child: Text(friend.initial, style: const TextStyle(fontWeight: FontWeight.w900, color: AppTheme.kInk)),
+                    child: Text(
+                      friend.initial,
+                      style: const TextStyle(fontWeight: FontWeight.w900, color: AppTheme.kInk),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -448,7 +459,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: AppTheme.sticker(AppTheme.kSoftMint, radius: 12, border: 1, offset: 0),
-            child: const Text("Synced", style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppTheme.kInk)),
+            child: const Text(
+              "Synced",
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppTheme.kInk),
+            ),
           ),
         ],
       ),
