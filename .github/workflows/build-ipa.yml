@@ -49,7 +49,7 @@ jobs:
           /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" "$PLIST"
           /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string $REVERSED" "$PLIST"
 
-      - name: Build the app (unsigned: Sideloadly signs it with your Apple ID)
+      - name: Build the app, unsigned (Sideloadly signs it with your Apple ID)
         env:
           SONDER_API_URL: ${{ vars.SONDER_API_URL }}
           GOOGLE_SERVER_CLIENT_ID: ${{ vars.GOOGLE_SERVER_CLIENT_ID }}
