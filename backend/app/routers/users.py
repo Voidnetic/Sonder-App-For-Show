@@ -12,6 +12,7 @@ from app.models.moment import JOINED, Moment, moment_participants
 from app.models.user import User
 from app.relationships import blocked_ids, friend_ids
 from app.schemas.user import UpdateUserRequest, UserProfileResponse, UserResponse, UserSearchResult
+from app.usernames import check_new_username, normalize
 from app.verification import verification_required
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -44,6 +45,7 @@ def get_me(current_user: User = Depends(get_current_user), db: Session = Depends
         has_password=current_user.has_password,
         is_admin=current_user.email.lower() in settings.admin_email_list,
         verification_required=verification_required(current_user),
+        pending_email=current_user.pending_email,
     )
 
 
@@ -55,6 +57,8 @@ def update_me(
 ) -> UserResponse:
     if body.name is not None:
         current_user.name = body.name.strip()
+    if body.username is not None:
+        current_user.username = check_new_username(body.username, db, except_user=current_user.id)
     if body.avatar_color is not None:
         current_user.avatar_color = body.avatar_color
     db.commit()
@@ -78,7 +82,7 @@ def delete_me(current_user: User = Depends(get_current_user), db: Session = Depe
 @router.get(
     "/search",
     response_model=list[UserSearchResult],
-    summary="Find people to add as friends, by name or exact email",
+    summary="Find people to add as friends, by name, username or exact email",
 )
 def search_users(
     q: str = Query(min_length=2, max_length=80),
@@ -87,10 +91,18 @@ def search_users(
 ) -> list[UserSearchResult]:
     term = q.strip()
     hidden = blocked_ids(current_user.id, db) | {current_user.id}
-    # Names match partially, emails only exactly, so nobody can fish for other people's addresses.
+    # Names match partially, usernames from the start, emails only exactly (so nobody can fish for addresses).
+    handle = normalize(term)
     users = db.scalars(
         select(User)
-        .where(User.id.not_in(hidden), or_(User.name.ilike(f"%{term}%"), User.email == term.lower()))
+        .where(
+            User.id.not_in(hidden),
+            or_(
+                User.name.ilike(f"%{term}%"),
+                User.username.startswith(handle, autoescape=True),
+                User.email == term.lower(),
+            ),
+        )
         .order_by(User.name)
         .limit(20)
     ).all()

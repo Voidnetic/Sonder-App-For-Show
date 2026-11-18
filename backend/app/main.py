@@ -10,10 +10,11 @@ from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 
 from app.config import settings
-from app.database import engine
+from app.database import SessionLocal, engine
 from app.push import enabled as push_enabled
 from app.push import unlock_notifier_loop
 from app.storage import check_storage
+from app.usernames import backfill_usernames
 from app.routers import auth, devices, friends, hangout, legal, memories, moments, safety, users
 
 Path(settings.upload_dir).mkdir(parents=True, exist_ok=True)
@@ -64,6 +65,7 @@ MIGRATIONS = [
     DB_DIR / "04_push_notifications.sql",
     DB_DIR / "05_email_codes.sql",
     DB_DIR / "06_groups_and_photos.sql",
+    DB_DIR / "07_usernames.sql",
 ]
 
 
@@ -107,6 +109,12 @@ def prepare_database() -> None:
 
     for path in MIGRATIONS:
         _run_sql_file(path)
+
+    # Accounts from before usernames get one made from their name (they can change it in the app).
+    with SessionLocal() as db:
+        made = backfill_usernames(db)
+    if made:
+        logging.getLogger("uvicorn.error").info("Gave %d existing accounts a username", made)
 
 
 log = logging.getLogger("uvicorn.error")

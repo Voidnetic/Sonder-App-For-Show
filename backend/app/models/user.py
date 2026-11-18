@@ -16,6 +16,10 @@ class User(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(String(80), nullable=False)
     email: Mapped[str] = mapped_column(String(255), nullable=False, unique=True, index=True)
+    # Unique, lowercase handle (see app.usernames). Log in with it instead of the email, find friends by it.
+    username: Mapped[str | None] = mapped_column(String(20), nullable=True, unique=True)
+    # A new email address waiting for its emailed code (when the server sends email).
+    pending_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
     # None for accounts created with Google sign-in.
     password_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
     # Google's stable account id ("sub" claim), set once the account is linked to Google.

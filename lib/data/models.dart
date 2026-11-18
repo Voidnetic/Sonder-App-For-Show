@@ -15,16 +15,29 @@ class AppUser {
   final String email;
   final String avatarColor;
 
-  const AppUser({required this.id, required this.name, required this.email, required this.avatarColor});
+  /// Unique handle like "hassan.k" (shown as @hassan.k). Can log in with it.
+  final String? username;
+
+  const AppUser({required this.id, required this.name, required this.email, required this.avatarColor, this.username});
 
   factory AppUser.fromJson(Map<String, dynamic> json) => AppUser(
     id: json['id'] as String,
     name: json['name'] as String,
     email: json['email'] as String,
     avatarColor: (json['avatar_color'] as String?) ?? '#E6E6FA',
+    username: json['username'] as String?,
   );
 
-  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'email': email, 'avatar_color': avatarColor};
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'email': email,
+    'avatar_color': avatarColor,
+    'username': username,
+  };
+
+  /// "@hassan.k", or null for an account that hasn't got one yet.
+  String? get handle => username == null ? null : '@$username';
 
   Color get color => colorFromHex(avatarColor);
   String get initial => name.isEmpty ? '?' : name.characters.first.toUpperCase();
@@ -42,6 +55,9 @@ class UserProfile {
   final bool hasPassword;
   final bool isAdmin;
 
+  /// A new email address waiting for the code sent to it.
+  final String? pendingEmail;
+
   const UserProfile({
     required this.user,
     required this.memoryCount,
@@ -51,6 +67,7 @@ class UserProfile {
     this.googleLinked = false,
     this.hasPassword = true,
     this.isAdmin = false,
+    this.pendingEmail,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) => UserProfile(
@@ -62,6 +79,7 @@ class UserProfile {
     googleLinked: (json['google_linked'] as bool?) ?? false,
     hasPassword: (json['has_password'] as bool?) ?? true,
     isAdmin: (json['is_admin'] as bool?) ?? false,
+    pendingEmail: json['pending_email'] as String?,
   );
 }
 

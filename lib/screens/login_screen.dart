@@ -8,6 +8,7 @@ import '../data/google_auth.dart';
 import '../theme/app_theme.dart';
 import '../widgets/motion.dart';
 import '../widgets/password_field.dart';
+import '../widgets/username_field.dart';
 import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -19,6 +20,8 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _nameController = TextEditingController();
+  final _usernameController = TextEditingController();
+  UsernameStatus _usernameStatus = UsernameStatus.empty;
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
@@ -31,6 +34,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void dispose() {
     _nameController.dispose();
+    _usernameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmController.dispose();
@@ -42,8 +46,15 @@ class _LoginScreenState extends State<LoginScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
-    if (email.isEmpty || password.isEmpty || (_isSignUp && (name.isEmpty || _confirmController.text.isEmpty))) {
+    final username = _usernameController.text.trim();
+    if (email.isEmpty ||
+        password.isEmpty ||
+        (_isSignUp && (name.isEmpty || username.isEmpty || _confirmController.text.isEmpty))) {
       setState(() => _error = 'Please fill in every field.');
+      return;
+    }
+    if (_isSignUp && _usernameStatus == UsernameStatus.unavailable) {
+      setState(() => _error = 'Pick a different username.');
       return;
     }
     if (_isSignUp && password.length < 8) {
@@ -61,7 +72,7 @@ class _LoginScreenState extends State<LoginScreen> {
     });
     try {
       if (_isSignUp) {
-        await _api.register(name, email, password);
+        await _api.register(name, email, password, username: username);
       } else {
         await _api.login(email, password);
       }
@@ -119,12 +130,19 @@ class _LoginScreenState extends State<LoginScreen> {
                 capitalize: true,
               ),
               const SizedBox(height: 24),
+              _label('USERNAME'),
+              UsernameField(
+                controller: _usernameController,
+                fieldKey: const Key('username-field'),
+                onStatus: (status) => _usernameStatus = status,
+              ),
+              const SizedBox(height: 24),
             ],
-            _label('EMAIL'),
+            _label(_isSignUp ? 'EMAIL' : 'EMAIL OR USERNAME'),
             _field(
               _emailController,
-              hint: 'you@example.com',
-              keyboardType: TextInputType.emailAddress,
+              hint: _isSignUp ? 'you@example.com' : 'you@example.com or @username',
+              keyboardType: _isSignUp ? TextInputType.emailAddress : TextInputType.text,
               key: const Key('email-field'),
             ),
             const SizedBox(height: 24),
@@ -155,7 +173,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       : () => Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => ForgotPasswordScreen(initialEmail: _emailController.text.trim()),
+                            builder: (context) => ForgotPasswordScreen(
+                              // Only pre-fill it if they typed an email rather than a username.
+                              initialEmail: RegExp(r'^[^@]+@').hasMatch(_emailController.text.trim())
+                                  ? _emailController.text.trim()
+                                  : '',
+                            ),
                           ),
                         ),
                   child: Text(

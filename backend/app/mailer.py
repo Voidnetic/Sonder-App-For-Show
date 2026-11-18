@@ -54,7 +54,11 @@ def send_email(to: str, subject: str, text: str, html: str) -> None:
 
 def code_email(code: str, purpose: str) -> tuple[str, str, str]:
     """Subject, plain text and HTML for a 6-digit code."""
-    action = "verify your email" if purpose == "verify" else "reset your password"
+    action = {
+        "verify": "verify your email",
+        "reset": "reset your password",
+        "email": "confirm your new email address",
+    }.get(purpose, "continue")
     subject = f"{code} is your Sonder code"
     text = (
         f"Your Sonder code is {code}\n\nEnter it in the app to {action}. It expires in 15 minutes.\n\n"

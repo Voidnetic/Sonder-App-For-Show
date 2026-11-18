@@ -11,6 +11,7 @@ class UserResponse(BaseModel):
     name: str
     email: EmailStr
     avatar_color: str
+    username: str | None = None
 
 
 class UserProfileResponse(UserResponse):
@@ -22,10 +23,13 @@ class UserProfileResponse(UserResponse):
     has_password: bool = True
     is_admin: bool = False
     verification_required: bool = False
+    # A new email address waiting for the code sent to it.
+    pending_email: str | None = None
 
 
 class UpdateUserRequest(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=80)
+    username: str | None = Field(default=None, min_length=1, max_length=40)
     avatar_color: str | None = Field(default=None, pattern=r"^#([0-9A-Fa-f]{6})$")
 
 

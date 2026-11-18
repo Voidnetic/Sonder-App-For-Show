@@ -27,6 +27,15 @@ class ApiException implements Exception {
   String toString() => message;
 }
 
+/// The answer to "can I use this username?".
+class UsernameCheck {
+  final String username;
+  final bool available;
+  final String? reason;
+
+  const UsernameCheck(this.username, this.available, this.reason);
+}
+
 class SonderApi {
   SonderApi({http.Client? client}) : _client = client ?? http.Client();
 
@@ -98,11 +107,11 @@ class SonderApi {
     await _saveSession(json as Map<String, dynamic>);
   }
 
-  Future<void> register(String name, String email, String password) async {
+  Future<void> register(String name, String email, String password, {String? username}) async {
     final json = await _send(
       'POST',
       '/auth/register',
-      body: {'name': name.trim(), 'email': email.trim(), 'password': password},
+      body: {'name': name.trim(), 'email': email.trim(), 'password': password, 'username': ?username?.trim()},
     );
     await _saveSession(json as Map<String, dynamic>);
   }
@@ -185,6 +194,45 @@ class SonderApi {
     await prefs.remove(_kMomentsCache); // the next person on this phone shouldn't see these groups
     verificationRequired.value = false;
     currentUser.value = null;
+  }
+
+  /// Whether a username can be used, and why not ("That username is taken"). Works signed out (sign-up).
+  Future<UsernameCheck> checkUsername(String username) async {
+    final json = await _send('GET', '/auth/username-available?username=${Uri.encodeQueryComponent(username.trim())}');
+    final map = json as Map<String, dynamic>;
+    return UsernameCheck(map['username'] as String, map['available'] as bool, map['reason'] as String?);
+  }
+
+  /// Changes your name and/or username, and updates the signed-in user everywhere in the app.
+  Future<AppUser> updateAccount({String? name, String? username}) async {
+    final json = await _send('PATCH', '/users/me', body: {'name': ?name?.trim(), 'username': ?username?.trim()});
+    final user = AppUser.fromJson(json as Map<String, dynamic>);
+    await _setUser(user);
+    return user;
+  }
+
+  /// Changes your email. Returns true when it's changed straight away, false when a code was emailed to
+  /// the new address (finish with [confirmEmailChange]).
+  Future<bool> changeEmail(String newEmail, {String? password}) async {
+    final json = await _send(
+      'POST',
+      '/auth/change-email',
+      body: {'new_email': newEmail.trim(), 'password': ?password},
+    ) as Map<String, dynamic>;
+    await _setUser(AppUser.fromJson(json['user'] as Map<String, dynamic>));
+    return json['status'] == 'changed';
+  }
+
+  Future<void> confirmEmailChange(String code) async {
+    final json = await _send('POST', '/auth/change-email/confirm', body: {'code': code.trim()});
+    await _setUser(AppUser.fromJson(json as Map<String, dynamic>));
+  }
+
+  Future<void> cancelEmailChange() => _send('DELETE', '/auth/change-email');
+
+  Future<void> _setUser(AppUser user) async {
+    await (await SharedPreferences.getInstance()).setString(_kUser, jsonEncode(user.toJson()));
+    currentUser.value = user;
   }
 
   Future<void> _saveSession(Map<String, dynamic> json) async {

@@ -7,10 +7,13 @@ class RegisterRequest(BaseModel):
     name: str = Field(min_length=1, max_length=80, examples=["Hassan"])
     email: EmailStr = Field(examples=["hassan.sonder@app.com"])
     password: str = Field(min_length=8, max_length=128, examples=["sonderpass123"])
+    # Optional for older app versions: one is made from the name when it's missing.
+    username: str | None = Field(default=None, max_length=40, examples=["hassan.k"])
 
 
 class LoginRequest(BaseModel):
-    email: EmailStr
+    # Your email address or your username (the field keeps its old name so older apps still work).
+    email: str = Field(min_length=1, max_length=255, description="Email address or username")
     password: str = Field(min_length=1, max_length=128)
 
 
@@ -46,3 +49,26 @@ class ChangePasswordRequest(BaseModel):
     # Needed when the account already has a password; Google-only accounts are setting their first one.
     current_password: str | None = Field(default=None, max_length=128)
     new_password: str = Field(min_length=8, max_length=128)
+
+
+class UsernameAvailability(BaseModel):
+    username: str
+    available: bool
+    # Why not (bad format or taken), shown under the field.
+    reason: str | None = None
+
+
+class ChangeEmailRequest(BaseModel):
+    new_email: EmailStr
+    # Needed when the account has a password.
+    password: str | None = Field(default=None, max_length=128)
+
+
+class ChangeEmailResult(BaseModel):
+    # "changed" (done straight away) or "code_sent" (confirm with the code emailed to the new address).
+    status: str
+    user: UserResponse
+
+
+class ConfirmEmailRequest(BaseModel):
+    code: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")

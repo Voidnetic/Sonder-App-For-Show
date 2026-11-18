@@ -100,6 +100,11 @@ class FakeBackend {
         ),
       ],
       'GET /api/moments/invitations': (_) => [],
+      'GET /api/auth/username-available': (req) {
+        final name = req.url.queryParameters['username']!.toLowerCase();
+        final taken = ['hassan', 'ali'].contains(name);
+        return {'username': name, 'available': !taken, 'reason': taken ? 'That username is taken' : null};
+      },
       'GET /api/friends': (_) => [ali, ahmed, hajra],
       'GET /api/users/me': (_) => {...hassan, 'memory_count': 91, 'active_moment_count': 2, 'friend_count': 3},
       'GET /api/moments/m1': (_) =>
@@ -1085,6 +1090,12 @@ void main() {
 
     await tapAndSettle(tester, find.text('New here? Create an account'));
     await tester.enterText(find.byKey(const Key('name-field')), 'Hassan');
+    await tester.enterText(find.byKey(const Key('username-field')), 'Hassan');
+    await settle(tester, 6); // checked as you type
+    expect(find.text('That username is taken'), findsOneWidget);
+    await tester.enterText(find.byKey(const Key('username-field')), 'Hassan.K');
+    await settle(tester, 6);
+    expect(find.text('@hassan.k is free'), findsOneWidget); // lowercased as typed
     await tester.enterText(find.byKey(const Key('email-field')), 'hassan@sonder.app');
     await tester.enterText(find.byKey(const Key('password-field')), 'sonderpass123');
     expect(find.text('What your friends call you'), findsOneWidget);
@@ -1172,8 +1183,9 @@ void main() {
     await setUpApi(backend);
     await startApp(tester);
     await tapAndSettle(tester, find.text('Profile'));
-    await tester.scrollUntilVisible(find.text('Change password'), 300, scrollable: find.byType(Scrollable).first);
-    await tapAndSettle(tester, find.text('Change password'));
+    await tester.scrollUntilVisible(find.text('Account'), 300, scrollable: find.byType(Scrollable).first);
+    await tapAndSettle(tester, find.text('Account'));
+    await tapAndSettle(tester, find.byKey(const Key('account-password')));
     expect(find.text('Change password 🔑'), findsOneWidget);
     expect(find.byKey(const Key('change-forgot')), findsOneWidget);
 
@@ -1270,5 +1282,128 @@ void main() {
     expect(find.text('Your new photo'), findsOneWidget);
     expect(find.text("Saved. It'll upload when you're back online"), findsOneWidget);
     queue.stop();
+  });
+
+  testWidgets('sign-up sends the username; login takes an email or a username', (tester) async {
+    final backend = FakeBackend();
+    backend.routes['POST /api/auth/register'] = (_) => {
+      'user': {...hassan, 'username': 'hassan.k'},
+      'access_token': 'tok',
+      'token_type': 'bearer',
+      'created': true,
+    };
+    await setUpApi(backend, signedIn: false);
+    await startApp(tester);
+    expect(find.text('EMAIL OR USERNAME'), findsOneWidget);
+
+    await tester.enterText(find.byKey(const Key('email-field')), '@hassan.k');
+    await tester.enterText(find.byKey(const Key('password-field')), 'sonderpass123');
+    await tapAndSettle(tester, find.text('LOG IN'));
+    expect(backend.lastBody('POST', '/api/auth/login'), {'email': '@hassan.k', 'password': 'sonderpass123'});
+    expect(find.text('Hey, Hassan 👋'), findsOneWidget);
+  });
+
+  testWidgets('account: change name, username and email', (tester) async {
+    final backend = FakeBackend();
+    var me = {...hassan, 'username': 'hassan'};
+    backend.routes['GET /api/users/me'] = (_) => {
+      ...me,
+      'memory_count': 1,
+      'active_moment_count': 2,
+      'friend_count': 3,
+      'has_password': true,
+    };
+    backend.routes['PATCH /api/users/me'] = (req) {
+      final body = jsonDecode(req.body) as Map<String, dynamic>;
+      if (body['username'] == 'ali') return http.Response(jsonEncode({'detail': 'That username is taken'}), 409);
+      me = {...me, ...body};
+      return me;
+    };
+    backend.routes['POST /api/auth/change-email'] = (req) {
+      final body = jsonDecode(req.body) as Map<String, dynamic>;
+      me = {...me, 'email': body['new_email']};
+      return {'status': 'changed', 'user': me};
+    };
+    final api = await setUpApi(backend);
+    await startApp(tester);
+    await tapAndSettle(tester, find.text('Profile'));
+    expect(find.byKey(const Key('profile-handle')), findsOneWidget);
+    expect(find.text('@hassan'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Account'), 300, scrollable: find.byType(Scrollable).first);
+    await tapAndSettle(tester, find.text('Account'));
+    expect(find.text('Account 🪪'), findsOneWidget);
+
+    // Name
+    await tapAndSettle(tester, find.byKey(const Key('account-name')));
+    await tester.enterText(find.byKey(const Key('edit-name')), 'Hassan Khan');
+    await tapAndSettle(tester, find.text('SAVE'));
+    expect(backend.lastBody('PATCH', '/api/users/me'), {'name': 'Hassan Khan'});
+    expect(api.currentUser.value!.name, 'Hassan Khan'); // updated everywhere
+
+    // Username: a taken one is refused, a free one saves.
+    await tapAndSettle(tester, find.byKey(const Key('account-username')));
+    expect(find.text("That's your username now"), findsOneWidget);
+    await tester.enterText(find.byKey(const Key('edit-username')), 'ali');
+    await settle(tester, 6);
+    await tapAndSettle(tester, find.text('SAVE'));
+    expect(find.text('Pick a different username.'), findsOneWidget);
+    await tester.enterText(find.byKey(const Key('edit-username')), 'hassan.k');
+    await settle(tester, 6);
+    await tapAndSettle(tester, find.text('SAVE'));
+    expect(backend.lastBody('PATCH', '/api/users/me'), {'username': 'hassan.k'});
+    expect(find.text('@hassan.k'), findsOneWidget); // back on Account
+
+    // Email, confirmed with the password.
+    await tapAndSettle(tester, find.byKey(const Key('account-email')));
+    await tester.enterText(find.byKey(const Key('new-email')), 'new@sonder.app');
+    await tapAndSettle(tester, find.text('CHANGE EMAIL'));
+    expect(find.text('Enter your password to confirm.'), findsOneWidget);
+    await tester.enterText(find.byKey(const Key('email-password')), 'sonderpass123');
+    await tapAndSettle(tester, find.text('CHANGE EMAIL'));
+    expect(backend.lastBody('POST', '/api/auth/change-email'), {
+      'new_email': 'new@sonder.app',
+      'password': 'sonderpass123',
+    });
+    expect(api.currentUser.value!.email, 'new@sonder.app');
+    expect(find.text('new@sonder.app'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 5));
+  });
+
+  testWidgets('account: when the server emails a code, the new email is confirmed with it', (tester) async {
+    final backend = FakeBackend();
+    String? pending;
+    backend.routes['GET /api/users/me'] = (_) => {
+      ...hassan,
+      'memory_count': 1,
+      'active_moment_count': 2,
+      'friend_count': 3,
+      'has_password': false,
+      'google_linked': true,
+      'pending_email': pending,
+    };
+    backend.routes['POST /api/auth/change-email'] = (req) {
+      pending = (jsonDecode(req.body) as Map<String, dynamic>)['new_email'] as String;
+      return {'status': 'code_sent', 'user': hassan};
+    };
+    backend.routes['POST /api/auth/change-email/confirm'] = (_) => {...hassan, 'email': pending};
+    final api = await setUpApi(backend);
+    await startApp(tester);
+    await tapAndSettle(tester, find.text('Profile'));
+    await tester.scrollUntilVisible(find.text('Account'), 300, scrollable: find.byType(Scrollable).first);
+    await tapAndSettle(tester, find.text('Account'));
+    expect(find.text('Set a password'), findsOneWidget); // Google account
+
+    await tapAndSettle(tester, find.byKey(const Key('account-email')));
+    expect(find.byKey(const Key('email-password')), findsNothing); // no password to ask for
+    await tester.enterText(find.byKey(const Key('new-email')), 'new@sonder.app');
+    await tapAndSettle(tester, find.text('CHANGE EMAIL'));
+    expect(backend.lastBody('POST', '/api/auth/change-email'), {'new_email': 'new@sonder.app'});
+    expect(find.text('Check your email ✉️'), findsOneWidget);
+
+    await tester.enterText(find.byKey(const Key('email-code')), '123456');
+    await tapAndSettle(tester, find.text('CONFIRM NEW EMAIL'));
+    expect(backend.lastBody('POST', '/api/auth/change-email/confirm'), {'code': '123456'});
+    expect(api.currentUser.value!.email, 'new@sonder.app');
+    await tester.pump(const Duration(seconds: 5));
   });
 }

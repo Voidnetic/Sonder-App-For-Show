@@ -8,7 +8,7 @@ import '../widgets/motion.dart';
 import '../widgets/safety_sheets.dart';
 import '../widgets/status_views.dart';
 import 'blocked_users_screen.dart';
-import 'change_password_screen.dart';
+import 'account_screen.dart';
 import 'friends_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -126,6 +126,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(user.name, style: AppTheme.display(26, color: AppTheme.kInk)),
+                    if (user.handle != null)
+                      Text(
+                        user.handle!,
+                        key: const Key('profile-handle'),
+                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppTheme.kInk),
+                      ),
                     const SizedBox(height: 4),
                     Text(
                       user.email,
@@ -255,12 +261,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Divider(height: 1, color: AppTheme.kBorder, thickness: 1.5),
               _buildSettingTile(Icons.block_rounded, "Blocked people", "", onTap: _openBlocked),
               Divider(height: 1, color: AppTheme.kBorder, thickness: 1.5),
-              _buildSettingTile(
-                Icons.lock_reset_rounded,
-                data.profile.hasPassword ? "Change password" : "Set a password",
-                "",
-                onTap: () => _openChangePassword(data.profile),
-              ),
+              _buildSettingTile(Icons.manage_accounts_outlined, "Account", "", onTap: _openAccount),
             ],
           ),
         ),
@@ -400,13 +401,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (mounted) await _reload();
   }
 
-  Future<void> _openChangePassword(UserProfile profile) async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ChangePasswordScreen(hasPassword: profile.hasPassword, email: profile.user.email),
-      ),
-    );
+  /// Name, username, email and password.
+  Future<void> _openAccount() async {
+    await Navigator.push(context, MaterialPageRoute(builder: (context) => const AccountScreen()));
     if (mounted) await _reload();
   }
 

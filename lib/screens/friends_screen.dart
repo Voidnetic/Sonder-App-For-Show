@@ -436,7 +436,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                         _onSearchChanged('');
                       },
                     ),
-              hintText: 'Name or exact email',
+              hintText: 'Name, @username or exact email',
               border: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(vertical: 18),
             ),
@@ -526,15 +526,30 @@ class _FriendsScreenState extends State<FriendsScreen> {
           _Avatar(user),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              user.name,
-              overflow: TextOverflow.ellipsis,
-              // Pastel cards (requests) carry ink; plain panels the theme's text colour.
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                color: color != null ? AppTheme.kInk : AppTheme.kTextPrimary,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  user.name,
+                  overflow: TextOverflow.ellipsis,
+                  // Pastel cards (requests) carry ink; plain panels the theme's text colour.
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: color != null ? AppTheme.kInk : AppTheme.kTextPrimary,
+                  ),
+                ),
+                if (user.handle != null)
+                  Text(
+                    user.handle!,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: color != null ? AppTheme.kInkSoft : AppTheme.kTextSecondary,
+                    ),
+                  ),
+              ],
             ),
           ),
           const SizedBox(width: 8),
