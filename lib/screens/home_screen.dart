@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../data/api_client.dart';
 import '../data/models.dart';
+import '../data/upload_queue.dart';
 import '../theme/app_theme.dart';
 import '../utils/time_format.dart';
 import '../widgets/invitation_card.dart';
@@ -9,6 +12,7 @@ import '../widgets/moment_card.dart';
 import '../widgets/motion.dart';
 import '../widgets/safety_sheets.dart';
 import '../widgets/status_views.dart';
+import '../widgets/upload_status.dart';
 import 'active_moment_screen.dart';
 import 'create_moment_screen.dart';
 import 'friends_screen.dart';
@@ -42,6 +46,18 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _moments = SonderApi.instance.getActiveMoments();
     _loadInvitations();
+    // A queued photo reached the server: refresh the counts.
+    _uploads = UploadQueue.instance.uploaded.listen((_) {
+      if (mounted) _reload();
+    });
+  }
+
+  StreamSubscription<String>? _uploads;
+
+  @override
+  void dispose() {
+    _uploads?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadInvitations() async {
@@ -138,6 +154,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppTheme.kTextSecondary),
                     ),
                   ),
+                  const UploadQueueBanner(),
                   if (_invitations.isNotEmpty) ...[
                     const SizedBox(height: 24),
                     PopIn(index: 1, child: _sectionTitle("You're invited 💌", _invitations.length)),

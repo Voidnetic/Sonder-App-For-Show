@@ -182,6 +182,7 @@ class SonderApi {
     await prefs.remove(_kToken);
     await prefs.remove(_kUser);
     await prefs.remove(_kVerify);
+    await prefs.remove(_kMomentsCache); // the next person on this phone shouldn't see these groups
     verificationRequired.value = false;
     currentUser.value = null;
   }
@@ -264,7 +265,25 @@ class SonderApi {
   String get termsUrl => '$_serverUrl/terms';
   String get deleteAccountUrl => '$_serverUrl/delete-account';
 
-  Future<List<Moment>> getActiveMoments() async => _list(await _send('GET', '/moments/active'), Moment.fromJson);
+  static const _kMomentsCache = 'active_moments_cache';
+
+  /// Home's moments. A copy is kept on the phone so the camera still knows your groups with no internet.
+  Future<List<Moment>> getActiveMoments() async {
+    final json = await _send('GET', '/moments/active');
+    unawaited(SharedPreferences.getInstance().then((p) => p.setString(_kMomentsCache, jsonEncode(json))));
+    return _list(json, Moment.fromJson);
+  }
+
+  /// The moments from the last time [getActiveMoments] worked (empty if never).
+  Future<List<Moment>> cachedActiveMoments() async {
+    final saved = (await SharedPreferences.getInstance()).getString(_kMomentsCache);
+    if (saved == null) return const [];
+    try {
+      return _list(jsonDecode(saved), Moment.fromJson);
+    } catch (_) {
+      return const [];
+    }
+  }
 
   Future<List<Moment>> getArchivedMoments() async => _list(await _send('GET', '/moments/archive'), Moment.fromJson);
 
@@ -313,8 +332,24 @@ class SonderApi {
     Memory.fromJson,
   );
 
-  Future<Memory> uploadMemory(String momentId, Uint8List bytes, String filename, {String? caption}) =>
-      _uploadPhoto('POST', '/moments/$momentId/memories', bytes, filename, caption: caption);
+  /// Uploads a photo. [takenAt] keeps the real time when it was uploaded later (from the upload queue);
+  /// [background] allows minutes rather than seconds, for slow connections.
+  Future<Memory> uploadMemory(
+    String momentId,
+    Uint8List bytes,
+    String filename, {
+    String? caption,
+    DateTime? takenAt,
+    bool background = false,
+  }) => _uploadPhoto(
+    'POST',
+    '/moments/$momentId/memories',
+    bytes,
+    filename,
+    caption: caption,
+    fields: {if (takenAt != null) 'taken_at': takenAt.toUtc().toIso8601String()},
+    timeout: background ? const Duration(minutes: 5) : _timeout,
+  );
 
   /// Swaps your photo for another one (only while the moment is still counting down).
   Future<Memory> replaceMemory(String momentId, String memoryId, Uint8List bytes, String filename) =>
@@ -331,14 +366,23 @@ class SonderApi {
   Future<void> unhideMemory(String momentId, String memoryId) =>
       _send('DELETE', '/moments/$momentId/memories/$memoryId/hide');
 
-  Future<Memory> _uploadPhoto(String method, String path, Uint8List bytes, String filename, {String? caption}) async {
+  Future<Memory> _uploadPhoto(
+    String method,
+    String path,
+    Uint8List bytes,
+    String filename, {
+    String? caption,
+    Map<String, String> fields = const {},
+    Duration timeout = _timeout,
+  }) async {
     final request = http.MultipartRequest(method, _uri(path))
       ..headers.addAll(_headers(json: false))
       ..files.add(http.MultipartFile.fromBytes('file', bytes, filename: filename, contentType: _imageType(filename)));
     if (caption != null && caption.trim().isNotEmpty) {
       request.fields['caption'] = caption.trim();
     }
-    final json = await _handle(() async => http.Response.fromStream(await _client.send(request)));
+    request.fields.addAll(fields);
+    final json = await _handle(() async => http.Response.fromStream(await _client.send(request)), timeout: timeout);
     return Memory.fromJson(json as Map<String, dynamic>);
   }
 
@@ -426,10 +470,10 @@ class SonderApi {
     });
   }
 
-  Future<dynamic> _handle(Future<http.Response> Function() request) async {
+  Future<dynamic> _handle(Future<http.Response> Function() request, {Duration timeout = _timeout}) async {
     final http.Response response;
     try {
-      response = await request().timeout(_timeout);
+      response = await request().timeout(timeout);
     } on ApiException {
       rethrow;
     } catch (_) {

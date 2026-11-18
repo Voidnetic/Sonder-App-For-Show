@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import 'data/api_client.dart';
 import 'data/push_service.dart';
+import 'data/upload_queue.dart';
 import 'screens/global_camera_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/intro_splash.dart';
@@ -18,6 +19,8 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Future.wait([SonderApi.instance.restoreSession(), ThemeController.instance.load()]);
   runApp(const SonderApp(showIntro: true));
+  // Sends any photos that were taken without internet (kept privately on the phone until then).
+  unawaited(UploadQueue.instance.start());
   // Picks up a verification requirement that started after this phone signed in.
   unawaited(SonderApi.instance.refreshVerification());
   // After the first frame, so a slow Firebase start never delays the app opening.

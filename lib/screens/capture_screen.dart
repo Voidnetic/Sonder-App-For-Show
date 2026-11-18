@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../data/api_client.dart';
+import '../data/upload_queue.dart';
 import '../data/models.dart';
 import '../theme/app_theme.dart';
 import '../utils/photo_picker.dart';
@@ -203,18 +204,29 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
       _moments = null;
       _momentsError = null;
     });
+    List<Moment> moments;
     try {
-      final moments = await SonderApi.instance.getActiveMoments();
-      if (!mounted) return;
-      setState(() {
-        _moments = moments;
-        if (_target == null || !moments.any((m) => m.id == _target!.id)) {
-          _target = moments.isEmpty ? null : moments.first;
-        }
-      });
+      moments = await SonderApi.instance.getActiveMoments();
     } catch (e) {
-      if (mounted) setState(() => _momentsError = e);
+      // No internet: use the groups saved from last time, so photos can still be taken and queued.
+      moments = await SonderApi.instance.cachedActiveMoments();
+      if (moments.isEmpty) {
+        if (mounted) setState(() => _momentsError = e);
+        return;
+      }
     }
+    // Only capsules still counting down take photos (Home also lists ones ready to open).
+    moments = [
+      for (final m in moments)
+        if (!m.isUnlocked) m,
+    ];
+    if (!mounted) return;
+    setState(() {
+      _moments = moments;
+      if (_target == null || !moments.any((m) => m.id == _target!.id)) {
+        _target = moments.isEmpty ? null : moments.first;
+      }
+    });
   }
 
   Future<void> _chooseMoment() async {
@@ -294,6 +306,7 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
       final bytes = await file.readAsBytes();
       final name = file.name.contains('.') ? file.name : '${file.name}.jpg';
       await _upload(bytes, name);
+      unawaited(UploadQueue.instance.discardTemp(file.path)); // the queue has its own private copy
     } catch (e) {
       if (mounted) showErrorSnack(context, e is ApiException ? e : 'Could not take the photo. Please try again.');
     }
@@ -310,11 +323,13 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
     }
   }
 
+  /// Saves the photo to the upload queue: it's kept privately on the phone and sent in the background,
+  /// so taking photos never waits for the internet, and works with none at all.
   Future<void> _upload(Uint8List bytes, String filename) async {
     final target = _target!;
     setState(() => _phase = _Phase.uploading);
     try {
-      await SonderApi.instance.uploadMemory(target.id, bytes, filename);
+      await UploadQueue.instance.add(target, bytes, filename);
     } catch (e) {
       if (mounted) {
         setState(() => _phase = _Phase.ready);
@@ -326,7 +341,7 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
     _capturedAny = true;
     setState(() => _phase = _Phase.secured);
     _securedPop.forward(from: 0);
-    await Future<void>.delayed(const Duration(milliseconds: 1500));
+    await Future<void>.delayed(const Duration(milliseconds: 1200));
     if (!mounted) return;
     if (_fixedMoment) {
       Navigator.pop(context, true);
@@ -486,6 +501,32 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
             'LOCKED UNTIL REVEAL 🔒',
             style: TextStyle(color: _yellow, fontWeight: FontWeight.w800, fontSize: 14, letterSpacing: 0.5),
           ),
+        ),
+        // Photos still on their way up (only a count: they stay hidden, even from you).
+        ValueListenableBuilder<List<PendingUpload>>(
+          valueListenable: UploadQueue.instance.items,
+          builder: (context, _, _) {
+            final waiting = UploadQueue.instance.mine.where((u) => u.state != UploadState.failed).toList();
+            if (waiting.isEmpty) return const SizedBox.shrink();
+            final offline = waiting.any((u) => u.state == UploadState.offline);
+            return Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Container(
+                key: const Key('camera-queue'),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Text(
+                  offline
+                      ? '📴 ${countLabel(waiting.length, 'photo', 'photos')} waiting for internet'
+                      : '📤 Uploading ${countLabel(waiting.length, 'photo', 'photos')}…',
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13),
+                ),
+              ),
+            );
+          },
         ),
         const SizedBox(height: 8),
         Text(
@@ -663,6 +704,12 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
                     'Locked until reveal time',
                     style: TextStyle(color: Colors.white70, fontSize: 15, fontWeight: FontWeight.w600),
                   ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Uploads by itself, even if your internet is slow or off',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.white54, fontSize: 13, fontWeight: FontWeight.w600),
+                  ),
                 ],
               ),
             )
@@ -672,7 +719,7 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
                 CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
                 SizedBox(height: 16),
                 Text(
-                  'SECURING MEMORY…',
+                  'SAVING…',
                   style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800, letterSpacing: 1.5),
                 ),
               ],

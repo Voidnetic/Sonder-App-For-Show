@@ -110,7 +110,8 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                     style: TextStyle(color: AppTheme.kTextPrimary, fontWeight: FontWeight.w900),
                   ),
                   const TextSpan(
-                    text: ". Enter it to start adding friends and making moments. Can't see it? Check your spam folder.",
+                    text:
+                        ". Enter it to start adding friends and making moments. Can't see it? Check your spam folder.",
                   ),
                 ],
               ),

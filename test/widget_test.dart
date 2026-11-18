@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,6 +10,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sonder_app/data/api_client.dart';
 import 'package:sonder_app/data/google_auth.dart';
 import 'package:sonder_app/data/models.dart';
+import 'package:sonder_app/data/photo_store.dart';
+import 'package:sonder_app/data/upload_queue.dart';
 import 'package:sonder_app/main.dart';
 import 'package:sonder_app/screens/intro_splash.dart';
 import 'package:sonder_app/screens/story_viewer_screen.dart';
@@ -182,6 +185,8 @@ Future<TestApi> setUpApi(FakeBackend backend, {bool signedIn = true}) async {
   });
   final api = TestApi(backend.client);
   SonderApi.instance = api;
+  UploadQueue.instance.stop();
+  UploadQueue.instance = UploadQueue(store: MemoryPhotoStore(), retryDelays: const [Duration(milliseconds: 300)]);
   await api.restoreSession();
   return api;
 }
@@ -1192,5 +1197,78 @@ void main() {
     expect(find.text('Change password 🔑'), findsNothing); // closed
     expect(find.text('Password changed 🔒'), findsOneWidget);
     await tester.pump(const Duration(seconds: 5));
+  });
+
+  testWidgets('upload queue: photos taken offline wait on the phone, then upload by themselves', (tester) async {
+    final backend = FakeBackend();
+    var uploads = 0;
+    backend.routes['POST /api/moments/m1/memories'] = (req) {
+      uploads++;
+      expect(req.body, contains('taken_at')); // keeps when it was really taken
+      return {
+        'id': 'up$uploads',
+        'moment_id': 'm1',
+        'author': hassan,
+        'locked': true,
+        'mine': true,
+        'image_url': '/uploads/x.jpg',
+        'captured_at': '2026-10-01T10:00:00Z',
+      };
+    };
+    backend.routes['POST /api/moments/gone/memories'] = (_) =>
+        http.Response(jsonEncode({'detail': 'Moment not found'}), 404);
+    await setUpApi(backend);
+    await startApp(tester);
+    final queue = UploadQueue.instance;
+    final birthday = Moment.fromJson(
+      momentJson(id: 'm1', title: 'Birthday Night', unlockAt: DateTime.now().add(const Duration(hours: 2))),
+    );
+
+    // No internet: the photo is saved and waits, and Home says so.
+    backend.offline = true;
+    await tester.runAsync(() => queue.add(birthday, Uint8List.fromList([1, 2, 3]), 'a.jpg'));
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 100)));
+    await settle(tester, 3);
+    expect(queue.mine.single.state, UploadState.offline);
+    expect(find.text('1 photo waiting for internet'), findsOneWidget);
+    final saved = (await SharedPreferences.getInstance()).getString('upload_queue');
+    expect(saved, contains('Birthday Night')); // survives the app closing
+
+    // Internet is back: it goes up by itself on the next retry.
+    backend.offline = false;
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 600)));
+    await settle(tester, 3);
+    expect(uploads, 1);
+    expect(queue.mine, isEmpty);
+    expect(find.byKey(const Key('upload-banner')), findsNothing);
+
+    // A moment that no longer exists: shown as failed until dismissed, not retried forever.
+    final gone = Moment.fromJson(momentJson(id: 'gone', title: 'Old Trip', unlockAt: DateTime.now()));
+    await tester.runAsync(() => queue.add(gone, Uint8List.fromList([4]), 'b.jpg'));
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 100)));
+    await settle(tester, 3);
+    expect(queue.mine.single.state, UploadState.failed);
+    expect(find.textContaining("A photo for Old Trip couldn't upload"), findsOneWidget);
+    await tapAndSettle(tester, find.byTooltip('Dismiss'));
+    expect(queue.mine, isEmpty);
+  });
+
+  testWidgets('upload queue: a moment shows your photo as waiting until it uploads', (tester) async {
+    final backend = FakeBackend()..offline = false;
+    await setUpApi(backend);
+    await startApp(tester);
+    final queue = UploadQueue.instance;
+    await tapAndSettle(tester, find.text('BIRTHDAY NIGHT'));
+
+    backend.offline = true;
+    final birthday = Moment.fromJson(
+      momentJson(id: 'm1', title: 'Birthday Night', unlockAt: DateTime.now().add(const Duration(hours: 2))),
+    );
+    await tester.runAsync(() => queue.add(birthday, Uint8List.fromList([1]), 'a.jpg'));
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 100)));
+    await settle(tester, 3);
+    expect(find.text('Your new photo'), findsOneWidget);
+    expect(find.text("Saved. It'll upload when you're back online"), findsOneWidget);
+    queue.stop();
   });
 }

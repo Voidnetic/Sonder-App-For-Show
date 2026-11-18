@@ -88,12 +88,18 @@ async def capture_memory(
     moment_id: uuid.UUID,
     file: UploadFile = File(...),
     caption: str | None = Form(default=None),
+    taken_at: datetime | None = Form(
+        default=None, description="When the photo was taken, if it's uploaded later (the app's offline queue)"
+    ),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> MemoryResponse:
-    _get_moment_for_participant(moment_id, current_user, db)
+    moment = _get_moment_for_participant(moment_id, current_user, db)
     image_ref = await _save_upload(file)
     memory = Memory(moment_id=moment_id, author_id=current_user.id, image_url=image_ref, caption=caption)
+    if taken_at is not None:
+        # Never in the future, and never before the moment existed.
+        memory.captured_at = max(min(to_utc(taken_at), datetime.now(timezone.utc)), to_utc(moment.created_at))
     db.add(memory)
     db.commit()
     db.refresh(memory)

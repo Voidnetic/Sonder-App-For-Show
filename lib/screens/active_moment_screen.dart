@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../data/api_client.dart';
 import '../data/models.dart';
+import '../data/upload_queue.dart';
 import '../theme/app_theme.dart';
 import '../utils/photo_picker.dart';
 import '../utils/time_format.dart';
@@ -75,6 +76,16 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
     _loadMessages();
     _connectLive();
     _loadBlocked();
+    UploadQueue.instance.items.addListener(_onQueueChanged);
+    _uploads = UploadQueue.instance.uploaded.where((id) => id == _moment.id).listen((_) {
+      if (mounted) Future.wait([_loadMemories(), _refreshMoment()]);
+    });
+  }
+
+  StreamSubscription<String>? _uploads;
+
+  void _onQueueChanged() {
+    if (mounted) setState(() {});
   }
 
   Future<void> _loadBlocked() async {
@@ -113,6 +124,8 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
     }
     if (_iAmTyping) _api.sendTyping(_moment.id, false);
     _live?.cancel();
+    _uploads?.cancel();
+    UploadQueue.instance.items.removeListener(_onQueueChanged);
     _pulseController.dispose();
     _chatController.dispose();
     _chatScroll.dispose();
@@ -577,13 +590,68 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
   }
 
   List<Widget> _buildMemoryList() {
+    final pending = UploadQueue.instance.pendingFor(_moment.id);
     final memories = _memories;
     if (memories == null) {
       if (_memoriesError != null) {
-        return [ErrorView(message: _memoriesError.toString(), onRetry: _loadMemories)];
+        return [
+          for (final upload in pending) _buildPendingCard(upload),
+          ErrorView(message: _memoriesError.toString(), onRetry: _loadMemories),
+        ];
       }
       return [const LoadingView()];
     }
+    if (pending.isNotEmpty) {
+      return [
+        for (final upload in pending) _buildPendingCard(upload),
+        if (memories.isNotEmpty) ..._memoryCards(memories),
+      ];
+    }
+    return _memoryCards(memories);
+  }
+
+  /// One of your photos still on its way up. Only a placeholder: it stays hidden like every other photo.
+  Widget _buildPendingCard(PendingUpload upload) {
+    final offline = upload.state == UploadState.offline;
+    return Container(
+      key: Key('pending-${upload.id}'),
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: AppTheme.sticker(AppTheme.kSurface, radius: 20, offset: 3),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: AppTheme.sticker(offline ? AppTheme.kPalePeach : AppTheme.kLightBlue, radius: 12, offset: 0),
+            child: Icon(offline ? Icons.cloud_off_rounded : Icons.cloud_upload_rounded, color: AppTheme.kInk, size: 24),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Your new photo', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4),
+                Text(
+                  offline ? "Saved. It'll upload when you're back online" : 'Uploading…',
+                  style: TextStyle(color: AppTheme.kTextSecondary, fontSize: 13, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+          ),
+          if (!offline)
+            SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2.5, color: AppTheme.kTextSecondary),
+            ),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _memoryCards(List<Memory> memories) {
     if (memories.isEmpty) {
       return [
         const EmptyView(
