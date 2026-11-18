@@ -96,7 +96,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             Text(
               _codeSent
                   ? "If there's a Sonder account for ${_email.text.trim()}, we sent it a 6-digit code. "
-                        'Enter it with your new password.'
+                        "Enter it with your new password. Can't see it? Check your spam folder."
                   : "Enter the email you signed up with and we'll send you a code to set a new password.",
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppTheme.kTextSecondary),
             ),
