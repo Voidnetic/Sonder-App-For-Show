@@ -40,3 +40,9 @@ class ResetPasswordRequest(BaseModel):
     email: EmailStr
     code: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")
     new_password: str = Field(min_length=8, max_length=128)
+
+
+class ChangePasswordRequest(BaseModel):
+    # Needed when the account already has a password; Google-only accounts are setting their first one.
+    current_password: str | None = Field(default=None, max_length=128)
+    new_password: str = Field(min_length=8, max_length=128)

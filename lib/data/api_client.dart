@@ -154,6 +154,10 @@ class SonderApi {
 
   /// Permanently deletes the account on the server, then signs out (unless [signOut] is false, for callers
   /// that need to tidy up their UI first and then call [logout] themselves).
+  /// Changes the password (or sets one on an account made with Google, with [currentPassword] null).
+  Future<void> changePassword({String? currentPassword, required String newPassword}) =>
+      _send('POST', '/auth/change-password', body: {'current_password': ?currentPassword, 'new_password': newPassword});
+
   Future<void> deleteAccount({bool signOut = true}) async {
     await _send('DELETE', '/users/me');
     if (signOut) await logout();

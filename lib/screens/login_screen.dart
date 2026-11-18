@@ -7,6 +7,7 @@ import '../data/api_client.dart';
 import '../data/google_auth.dart';
 import '../theme/app_theme.dart';
 import '../widgets/motion.dart';
+import '../widgets/password_field.dart';
 import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -20,6 +21,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmController = TextEditingController();
   bool _isSignUp = false;
   bool _busy = false;
   String? _error;
@@ -31,6 +33,7 @@ class _LoginScreenState extends State<LoginScreen> {
     _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmController.dispose();
     super.dispose();
   }
 
@@ -39,12 +42,16 @@ class _LoginScreenState extends State<LoginScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
-    if (email.isEmpty || password.isEmpty || (_isSignUp && name.isEmpty)) {
+    if (email.isEmpty || password.isEmpty || (_isSignUp && (name.isEmpty || _confirmController.text.isEmpty))) {
       setState(() => _error = 'Please fill in every field.');
       return;
     }
     if (_isSignUp && password.length < 8) {
       setState(() => _error = 'Password must be at least 8 characters.');
+      return;
+    }
+    if (_isSignUp && password != _confirmController.text) {
+      setState(() => _error = "The passwords don't match.");
       return;
     }
 
@@ -104,8 +111,13 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 40),
             if (_isSignUp) ...[
-              _label('NAME'),
-              _field(_nameController, hint: 'e.g. Hassan', key: const Key('name-field')),
+              _label('YOUR NAME'),
+              _field(
+                _nameController,
+                hint: 'What your friends call you',
+                key: const Key('name-field'),
+                capitalize: true,
+              ),
               const SizedBox(height: 24),
             ],
             _label('EMAIL'),
@@ -117,7 +129,22 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 24),
             _label('PASSWORD'),
-            _field(_passwordController, hint: '••••••••', obscure: true, key: const Key('password-field')),
+            PasswordField(
+              controller: _passwordController,
+              hint: _isSignUp ? 'At least 8 characters' : '••••••••',
+              fieldKey: const Key('password-field'),
+              autofillHints: [_isSignUp ? AutofillHints.newPassword : AutofillHints.password],
+            ),
+            if (_isSignUp) ...[
+              const SizedBox(height: 24),
+              _label('CONFIRM PASSWORD'),
+              PasswordField(
+                controller: _confirmController,
+                hint: 'Type it again',
+                fieldKey: const Key('confirm-password-field'),
+                autofillHints: const [AutofillHints.newPassword],
+              ),
+            ],
             if (!_isSignUp)
               Align(
                 alignment: Alignment.centerRight,
@@ -226,6 +253,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     : () => setState(() {
                         _isSignUp = !_isSignUp;
                         _error = null;
+                        _confirmController.clear();
                       }),
                 child: Text(
                   _isSignUp ? 'Already have an account? Log in' : 'New here? Create an account',
@@ -274,6 +302,7 @@ class _LoginScreenState extends State<LoginScreen> {
     TextEditingController controller, {
     required String hint,
     bool obscure = false,
+    bool capitalize = false,
     TextInputType? keyboardType,
     Key? key,
   }) {
@@ -289,6 +318,7 @@ class _LoginScreenState extends State<LoginScreen> {
         controller: controller,
         obscureText: obscure,
         keyboardType: keyboardType,
+        textCapitalization: capitalize ? TextCapitalization.words : TextCapitalization.none,
         autocorrect: false,
         style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         decoration: InputDecoration(

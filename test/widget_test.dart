@@ -548,8 +548,7 @@ void main() {
     'captured_at': '2026-10-01T10:00:00Z',
   };
 
-  testWidgets('past vault: story slideshow with tap navigation, auto-advance, and replies to the chat',
-      (tester) async {
+  testWidgets('past vault: story slideshow with tap navigation, auto-advance, and replies to the chat', (tester) async {
     final backend = FakeBackend();
     backend.routes['GET /api/moments/farewell/memories'] = (_) => [photoJson('p1', ali), photoJson('p2', ahmed)];
     backend.routes['POST /api/moments/farewell/messages'] = (req) {
@@ -583,10 +582,7 @@ void main() {
     // So does a typed comment.
     await tester.enterText(find.byKey(const Key('story-reply-field')), 'best night ever');
     await tapAndSettle(tester, find.byKey(const Key('story-send')), 3);
-    expect(
-      backend.lastBody('POST', '/api/moments/farewell/messages'),
-      {'text': 'best night ever', 'memory_id': 'p1'},
-    );
+    expect(backend.lastBody('POST', '/api/moments/farewell/messages'), {'text': 'best night ever', 'memory_id': 'p1'});
     expect(find.text('Sent to the chat 💬'), findsOneWidget);
 
     // Plays on by itself, and closes after the last photo.
@@ -1086,6 +1082,22 @@ void main() {
     await tester.enterText(find.byKey(const Key('name-field')), 'Hassan');
     await tester.enterText(find.byKey(const Key('email-field')), 'hassan@sonder.app');
     await tester.enterText(find.byKey(const Key('password-field')), 'sonderpass123');
+    expect(find.text('What your friends call you'), findsOneWidget);
+    expect(find.textContaining('e.g.'), findsNothing);
+
+    // The two passwords must match.
+    await tester.enterText(find.byKey(const Key('confirm-password-field')), 'sonderpass12');
+    await tapAndSettle(tester, find.text('SIGN UP'));
+    expect(find.text("The passwords don't match."), findsOneWidget);
+    expect(backend.called('POST', '/api/auth/register'), isFalse);
+
+    // The eye shows what was typed.
+    TextField confirmBox() => tester.widget<TextField>(find.byKey(const Key('confirm-password-field')));
+    expect(confirmBox().obscureText, isTrue);
+    await tapAndSettle(tester, find.byKey(const Key('confirm-password-field-eye')), 1);
+    expect(confirmBox().obscureText, isFalse);
+
+    await tester.enterText(find.byKey(const Key('confirm-password-field')), 'sonderpass123');
     await tapAndSettle(tester, find.text('SIGN UP'));
 
     expect(find.text('Check your email ✉️'), findsOneWidget);
@@ -1124,6 +1136,7 @@ void main() {
 
     await tester.enterText(find.byKey(const Key('reset-code')), '123456');
     await tester.enterText(find.byKey(const Key('reset-password')), 'brandnew99');
+    await tester.enterText(find.byKey(const Key('reset-confirm')), 'brandnew99');
     await tapAndSettle(tester, find.text('SET NEW PASSWORD'));
     expect(backend.lastBody('POST', '/api/auth/reset-password'), {
       'email': 'hassan@sonder.app',
@@ -1133,5 +1146,51 @@ void main() {
     expect(find.text('Hey, Hassan 👋'), findsOneWidget);
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getString('access_token'), 'new-tok');
+  });
+
+  testWidgets('profile: change password checks the new one twice and sends the current one', (tester) async {
+    final backend = FakeBackend();
+    backend.routes['GET /api/users/me'] = (_) => {
+      ...hassan,
+      'memory_count': 1,
+      'active_moment_count': 2,
+      'friend_count': 3,
+      'has_password': true,
+    };
+    backend.routes['POST /api/auth/change-password'] = (req) {
+      final body = jsonDecode(req.body) as Map<String, dynamic>;
+      if (body['current_password'] != 'sonderpass123') {
+        return http.Response(jsonEncode({'detail': "Your current password isn't right"}), 400);
+      }
+      return http.Response('', 204);
+    };
+    await setUpApi(backend);
+    await startApp(tester);
+    await tapAndSettle(tester, find.text('Profile'));
+    await tester.scrollUntilVisible(find.text('Change password'), 300, scrollable: find.byType(Scrollable).first);
+    await tapAndSettle(tester, find.text('Change password'));
+    expect(find.text('Change password 🔑'), findsOneWidget);
+    expect(find.byKey(const Key('change-forgot')), findsOneWidget);
+
+    await tester.enterText(find.byKey(const Key('current-password')), 'wrongpass');
+    await tester.enterText(find.byKey(const Key('new-password')), 'brandnew99');
+    await tester.enterText(find.byKey(const Key('confirm-new-password')), 'brandnew98');
+    await tapAndSettle(tester, find.text('CHANGE PASSWORD'));
+    expect(find.text("The new passwords don't match."), findsOneWidget);
+    expect(backend.called('POST', '/api/auth/change-password'), isFalse);
+
+    await tester.enterText(find.byKey(const Key('confirm-new-password')), 'brandnew99');
+    await tapAndSettle(tester, find.text('CHANGE PASSWORD'));
+    expect(find.text("Your current password isn't right"), findsOneWidget);
+
+    await tester.enterText(find.byKey(const Key('current-password')), 'sonderpass123');
+    await tapAndSettle(tester, find.text('CHANGE PASSWORD'));
+    expect(backend.lastBody('POST', '/api/auth/change-password'), {
+      'current_password': 'sonderpass123',
+      'new_password': 'brandnew99',
+    });
+    expect(find.text('Change password 🔑'), findsNothing); // closed
+    expect(find.text('Password changed 🔒'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 5));
   });
 }

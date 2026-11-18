@@ -13,6 +13,7 @@ from app.mailer import EmailError, code_email, send_email
 from app.models.user import AVATAR_COLORS, User
 from app.schemas.auth import (
     AuthResponse,
+    ChangePasswordRequest,
     ForgotPasswordRequest,
     GoogleLoginRequest,
     LoginRequest,
@@ -196,3 +197,20 @@ def reset_password(body: ResetPasswordRequest, db: Session = Depends(get_db)) ->
     db.commit()
     db.refresh(user)
     return _auth_response(user)
+
+
+@router.post(
+    "/change-password",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Change your password (or set one, for an account made with Google)",
+)
+def change_password(
+    body: ChangePasswordRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)
+) -> None:
+    if current_user.has_password:
+        if not body.current_password or not verify_password(body.current_password, current_user.password_hash):
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "Your current password isn't right")
+        if verify_password(body.new_password, current_user.password_hash):
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "That's your current password. Pick a new one.")
+    current_user.password_hash = hash_password(body.new_password)
+    db.commit()

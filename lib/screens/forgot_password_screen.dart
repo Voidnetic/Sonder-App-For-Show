@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../data/api_client.dart';
 import '../theme/app_theme.dart';
 import '../widgets/motion.dart';
+import '../widgets/password_field.dart';
 
 /// "Forgot password?": email a code, then set a new password with it (which also signs you in).
 class ForgotPasswordScreen extends StatefulWidget {
@@ -19,6 +20,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   late final _email = TextEditingController(text: widget.initialEmail);
   final _code = TextEditingController();
   final _password = TextEditingController();
+  final _confirm = TextEditingController();
   bool _codeSent = false;
   bool _busy = false;
   String? _error;
@@ -30,6 +32,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     _email.dispose();
     _code.dispose();
     _password.dispose();
+    _confirm.dispose();
     super.dispose();
   }
 
@@ -66,6 +69,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     }
     if (_password.text.length < 8) {
       setState(() => _error = 'Your new password needs at least 8 characters.');
+      return;
+    }
+    if (_password.text != _confirm.text) {
+      setState(() => _error = "The passwords don't match.");
       return;
     }
     await _run(() async {
@@ -108,7 +115,20 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               ),
               const SizedBox(height: 22),
               _label('NEW PASSWORD'),
-              _field(_password, hint: 'At least 8 characters', key: const Key('reset-password'), obscure: true),
+              PasswordField(
+                controller: _password,
+                hint: 'At least 8 characters',
+                fieldKey: const Key('reset-password'),
+                autofillHints: const [AutofillHints.newPassword],
+              ),
+              const SizedBox(height: 22),
+              _label('CONFIRM NEW PASSWORD'),
+              PasswordField(
+                controller: _confirm,
+                hint: 'Type it again',
+                fieldKey: const Key('reset-confirm'),
+                autofillHints: const [AutofillHints.newPassword],
+              ),
             ],
             if (_error != null) ...[
               const SizedBox(height: 16),

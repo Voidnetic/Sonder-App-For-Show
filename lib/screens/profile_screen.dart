@@ -8,6 +8,7 @@ import '../widgets/motion.dart';
 import '../widgets/safety_sheets.dart';
 import '../widgets/status_views.dart';
 import 'blocked_users_screen.dart';
+import 'change_password_screen.dart';
 import 'friends_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -253,6 +254,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _buildSettingTile(Icons.group_outlined, "Friends & requests", "", onTap: () => _openFriends(0)),
               Divider(height: 1, color: AppTheme.kBorder, thickness: 1.5),
               _buildSettingTile(Icons.block_rounded, "Blocked people", "", onTap: _openBlocked),
+              Divider(height: 1, color: AppTheme.kBorder, thickness: 1.5),
+              _buildSettingTile(
+                Icons.lock_reset_rounded,
+                data.profile.hasPassword ? "Change password" : "Set a password",
+                "",
+                onTap: () => _openChangePassword(data.profile),
+              ),
             ],
           ),
         ),
@@ -389,6 +397,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _openFriends(int tab) async {
     await Navigator.push(context, MaterialPageRoute(builder: (context) => FriendsScreen(initialTab: tab)));
+    if (mounted) await _reload();
+  }
+
+  Future<void> _openChangePassword(UserProfile profile) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ChangePasswordScreen(hasPassword: profile.hasPassword, email: profile.user.email),
+      ),
+    );
     if (mounted) await _reload();
   }
 
