@@ -9,6 +9,10 @@ const String googleServerClientId = String.fromEnvironment(
   defaultValue: '1075648757478-k4uk872vklp21cjf8oe9m27015pqhnoj.apps.googleusercontent.com',
 );
 
+/// The *iOS* OAuth client ID from Google Cloud, needed on iPhone only (set as a GitHub variable, see IOS.md).
+/// Empty in builds without it, and then the Google button explains that it isn't set up on iPhone yet.
+const String googleIosClientId = String.fromEnvironment('GOOGLE_IOS_CLIENT_ID');
+
 class GoogleAuthException implements Exception {
   final String message;
   const GoogleAuthException(this.message);
@@ -29,10 +33,13 @@ class GoogleAuth {
   static bool get isAvailable =>
       googleServerClientId.isNotEmpty &&
       !kIsWeb &&
-      (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS);
+      (defaultTargetPlatform == TargetPlatform.android ||
+          (defaultTargetPlatform == TargetPlatform.iOS && googleIosClientId.isNotEmpty));
 
-  static Future<void> _ensureInitialized() =>
-      _initializing ??= GoogleSignIn.instance.initialize(serverClientId: googleServerClientId);
+  static Future<void> _ensureInitialized() => _initializing ??= GoogleSignIn.instance.initialize(
+    clientId: defaultTargetPlatform == TargetPlatform.iOS ? googleIosClientId : null,
+    serverClientId: googleServerClientId,
+  );
 
   /// Shows Google's account picker. Returns null if the person closed it.
   static Future<String?> getIdToken() async {
