@@ -78,21 +78,32 @@ says it isn't available yet. Once it's set up, new email sign-ups confirm their 
 Pick **one** sender and add its variables to Railway → sonder-api → **Variables**, then **Deploy**. The deploy
 log then says `Email codes: on`.
 
-**Option A: Gmail (free, quickest).** Use the app's own Gmail (e.g. your support Gmail), not your personal one.
-1. In that Google account: **Security → 2-Step Verification** → turn it on.
-2. **Security → App passwords** (search "App passwords" in the account settings) → create one called
-   `Sonder`. Copy the 16-letter password.
-3. Railway variables:
+**Option A: Gmail through the Gmail API (free; works on Railway Hobby).** Railway's Hobby plan blocks
+outgoing SMTP (it's Pro-only), so on Hobby Gmail has to be used through its HTTPS API:
+1. Google Cloud console, project `sonder-bb41b` → **APIs & Services → Library** → search **Gmail API** →
+   **Enable**.
+2. **APIs & Services → Credentials → Create credentials → OAuth client ID** → type **Web application**, name
+   `Sonder mail`, **Authorized redirect URIs** → add `https://developers.google.com/oauthplayground` → Create.
+   Copy the **Client ID** and **Client secret**.
+3. Open <https://developers.google.com/oauthplayground> → gear icon (top right) → tick **Use your own OAuth
+   credentials** → paste the Client ID and secret → close.
+4. On the left, in **Input your own scopes**, type `https://www.googleapis.com/auth/gmail.send` →
+   **Authorize APIs** → sign in with the Gmail the codes should come from. On "Google hasn't verified this
+   app": **Advanced → Go to … (unsafe)** → **Continue** (it's your own app).
+5. **Exchange authorization code for tokens** → copy the **Refresh token**.
+6. Railway variables (and delete any `SMTP_*` ones, they can't connect on Hobby):
 
    | Name | Value |
    |---|---|
-   | `SMTP_HOST` | `smtp.gmail.com` |
-   | `SMTP_PORT` | `587` |
-   | `SMTP_USERNAME` | the Gmail address |
-   | `SMTP_PASSWORD` | the 16-letter app password (no spaces) |
-   | `EMAIL_FROM` | the same Gmail address |
+   | `GMAIL_CLIENT_ID` | the Client ID |
+   | `GMAIL_CLIENT_SECRET` | the Client secret |
+   | `GMAIL_REFRESH_TOKEN` | the refresh token |
+   | `EMAIL_FROM` | the Gmail address you signed in with in step 4 |
 
-   Gmail allows about 500 emails a day. Codes may land in spam more often than with Resend.
+   Gmail allows about 500 emails a day. The log says `Email codes: on (Gmail API)`.
+
+   (On Railway **Pro**, plain SMTP with a Gmail app password also works: `SMTP_HOST=smtp.gmail.com`,
+   `SMTP_PORT=587`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `EMAIL_FROM`.)
 
 **Option B: Resend (best delivery, needs your own domain).**
 1. Sign up at <https://resend.com>, **Domains → Add domain** (e.g. `sonderapp.com`) and add the DNS records it

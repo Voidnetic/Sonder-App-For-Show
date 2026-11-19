@@ -40,10 +40,16 @@ class Settings(BaseSettings):
 
     # Sending emails (verification and password-reset codes). Set ONE of:
     #   RESEND_API_KEY                     Resend (resend.com), sent over HTTPS
-    #   SMTP_HOST/PORT/USERNAME/PASSWORD   any SMTP server, e.g. Gmail with an app password
+    #   GMAIL_CLIENT_ID/CLIENT_SECRET/REFRESH_TOKEN
+    #                                      a Gmail account through the Gmail API, over HTTPS (see DEPLOY.md).
+    #                                      Use this on Railway's Hobby plan, which blocks SMTP.
+    #   SMTP_HOST/PORT/USERNAME/PASSWORD   any SMTP server, e.g. Gmail with an app password (Railway Pro only)
     # plus EMAIL_FROM (the address the codes come from). With neither, verification is switched off and
     # email/password accounts work exactly as before.
     resend_api_key: str = ""
+    gmail_client_id: str = ""
+    gmail_client_secret: str = ""
+    gmail_refresh_token: str = ""
     smtp_host: str = ""
     smtp_port: int = 587
     smtp_username: str = ""
@@ -56,7 +62,19 @@ class Settings(BaseSettings):
 
     @property
     def email_enabled(self) -> bool:
-        return bool(self.email_from and (self.resend_api_key or (self.smtp_host and self.smtp_password)))
+        return bool(
+            self.email_from and (self.resend_api_key or self.gmail_enabled or (self.smtp_host and self.smtp_password))
+        )
+
+    @property
+    def gmail_enabled(self) -> bool:
+        return bool(self.gmail_client_id and self.gmail_client_secret and self.gmail_refresh_token)
+
+    @property
+    def email_provider(self) -> str:
+        if self.resend_api_key:
+            return "Resend"
+        return "Gmail API" if self.gmail_enabled else "SMTP"
 
     @property
     def r2_enabled(self) -> bool:

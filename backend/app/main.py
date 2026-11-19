@@ -126,7 +126,7 @@ async def start_background_jobs() -> None:
     log.info("Push notifications: %s", "on" if push_enabled() else "off (set FIREBASE_SERVICE_ACCOUNT)")
     log.info(
         "Email codes: %s",
-        ("on (Resend)" if settings.resend_api_key else "on (SMTP)") if settings.email_enabled
+        f"on ({settings.email_provider})" if settings.email_enabled
         else "off (set RESEND_API_KEY or SMTP_*, and EMAIL_FROM)",
     )
     # Keep a reference so the task isn't garbage collected.

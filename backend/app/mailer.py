@@ -1,6 +1,9 @@
-"""Sends emails through Resend (HTTPS) or SMTP, whichever is configured. See config.py."""
+"""Sends emails through Resend, the Gmail API (both HTTPS) or SMTP, whichever is configured. See config.py."""
 
+import base64
 import logging
+import threading
+import time
 import smtplib
 import ssl
 from email.message import EmailMessage
@@ -15,6 +18,51 @@ log = logging.getLogger("sonder.mail")
 
 class EmailError(Exception):
     pass
+
+
+_gmail_lock = threading.Lock()
+_gmail_token: tuple[str, float] | None = None  # (access token, when it expires)
+
+
+def _gmail_access_token() -> str:
+    """Swaps the long-lived refresh token for a short-lived access token (cached until just before expiry)."""
+    global _gmail_token
+    with _gmail_lock:
+        if _gmail_token and _gmail_token[1] > time.time() + 60:
+            return _gmail_token[0]
+        try:
+            response = requests.post(
+                "https://oauth2.googleapis.com/token",
+                data={
+                    "grant_type": "refresh_token",
+                    "client_id": settings.gmail_client_id,
+                    "client_secret": settings.gmail_client_secret,
+                    "refresh_token": settings.gmail_refresh_token,
+                },
+                timeout=15,
+            )
+        except requests.RequestException as exc:
+            raise EmailError(f"Gmail sign-in failed: {exc}") from exc
+        if response.status_code >= 300:
+            raise EmailError(f"Gmail sign-in was refused ({response.status_code}): {response.text[:300]}")
+        body = response.json()
+        _gmail_token = (body["access_token"], time.time() + float(body.get("expires_in", 3600)))
+        return _gmail_token[0]
+
+
+def _send_with_gmail(message: EmailMessage) -> None:
+    raw = base64.urlsafe_b64encode(message.as_bytes()).decode("ascii")
+    try:
+        response = requests.post(
+            "https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
+            headers={"Authorization": f"Bearer {_gmail_access_token()}"},
+            json={"raw": raw},
+            timeout=20,
+        )
+    except requests.RequestException as exc:
+        raise EmailError(f"Gmail request failed: {exc}") from exc
+    if response.status_code >= 300:
+        raise EmailError(f"Gmail rejected the email ({response.status_code}): {response.text[:300]}")
 
 
 def send_email(to: str, subject: str, text: str, html: str) -> None:
@@ -38,6 +86,9 @@ def send_email(to: str, subject: str, text: str, html: str) -> None:
     message["From"], message["To"], message["Subject"] = sender, to, subject
     message.set_content(text)
     message.add_alternative(html, subtype="html")
+    if settings.gmail_enabled:
+        _send_with_gmail(message)
+        return
     try:
         if settings.smtp_port == 465:
             with smtplib.SMTP_SSL(settings.smtp_host, 465, context=ssl.create_default_context(), timeout=15) as s:
