@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../data/api_client.dart';
 import '../data/models.dart';
 import '../theme/app_theme.dart';
+import '../utils/photo_saver.dart';
 import '../utils/time_format.dart';
 
 /// Full-screen, story-style slideshow of an unlocked moment's photos.
@@ -130,6 +131,25 @@ class _StoryViewerScreenState extends State<StoryViewerScreen> with SingleTicker
     _toastTimer = Timer(const Duration(milliseconds: 1800), () {
       if (mounted) setState(() => _toast = null);
     });
+  }
+
+  /// Saves the photo on screen to the phone's gallery (Sonder album). Pauses while it downloads.
+  Future<void> _saveToGallery() async {
+    if (_busy) return;
+    final memory = _current;
+    setState(() => _busy = true);
+    _syncPlayback();
+    try {
+      await PhotoSaver.saveMemory(memory);
+      _showToast('Saved to your gallery ✓');
+    } catch (e) {
+      _showToast(e.toString());
+    } finally {
+      if (mounted) {
+        _busy = false;
+        _syncPlayback();
+      }
+    }
   }
 
   Future<void> _openOptions() async {
@@ -292,6 +312,12 @@ class _StoryViewerScreenState extends State<StoryViewerScreen> with SingleTicker
               Text(
                 '${_index + 1}/${widget.memories.length}',
                 style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w800, fontSize: 12),
+              ),
+              IconButton(
+                key: const Key('story-save'),
+                tooltip: 'Save to gallery',
+                icon: const Icon(Icons.download_rounded, color: Colors.white),
+                onPressed: _busy ? null : _saveToGallery,
               ),
               if (widget.onOptions != null)
                 IconButton(

@@ -29,7 +29,9 @@
 	<key>NSCameraUsageDescription</key>
 	<string>Sonder uses the camera so you can capture photos for your moments. They stay hidden until the reveal.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Sonder lets you pick a photo from your library to add to a moment.</string>
+	<string>Sonder lets you pick a photo from your library for a moment, and save revealed photos to a Sonder album.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Sonder saves revealed photos you choose to download into your library.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Sonder doesn't record sound. iOS asks because the camera can.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>

@@ -16,6 +16,7 @@ import 'package:sonder_app/main.dart';
 import 'package:sonder_app/screens/intro_splash.dart';
 import 'package:sonder_app/screens/story_viewer_screen.dart';
 import 'package:sonder_app/theme/app_theme.dart';
+import 'package:sonder_app/utils/photo_saver.dart';
 import 'package:sonder_app/widgets/aurora_sky.dart';
 
 // ----------------------------------------------------------------- fixtures
@@ -1405,5 +1406,52 @@ void main() {
     expect(backend.lastBody('POST', '/api/auth/change-email/confirm'), {'code': '123456'});
     expect(api.currentUser.value!.email, 'new@sonder.app');
     await tester.pump(const Duration(seconds: 5));
+  });
+
+  testWidgets('past vault: save one photo, save all (not hidden ones), and save from the slideshow', (tester) async {
+    final backend = FakeBackend();
+    backend.routes['GET /api/moments/farewell/memories'] = (_) => [
+      photoJson('p1', ali),
+      photoJson('p2', ahmed),
+      {...photoJson('p3', hajra), 'hidden': true},
+    ];
+    for (final id in ['p1', 'p2', 'p3']) {
+      backend.routes['GET /uploads/$id.jpg'] = (_) => http.Response.bytes([1, 2, 3], 200);
+    }
+    final saved = <String>[];
+    PhotoSaver.saveOverride = (bytes, name) async => saved.add(name);
+    addTearDown(() => PhotoSaver.saveOverride = null);
+    await setUpApi(backend);
+    await startApp(tester);
+    await tapAndSettle(tester, find.text('Moments'));
+    await tapAndSettle(tester, find.text('University Farewell'));
+
+    // One photo, from its menu.
+    await tapAndSettle(tester, find.byKey(const Key('photo-options-p1')));
+    await tapAndSettle(tester, find.byKey(const Key('photo-save')));
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
+    await settle(tester, 3);
+    expect(saved, ['sonder_p1']);
+    expect(find.text('Saved to your gallery ✓'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 5));
+
+    // Save all: every photo you can see, not the one you hid.
+    saved.clear();
+    await tapAndSettle(tester, find.byKey(const Key('vault-save-all')));
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 100)));
+    await settle(tester, 4);
+    expect(saved, ['sonder_p1', 'sonder_p2']);
+    expect(find.text('Saved 2 photos to the Sonder album ✓'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 5));
+
+    // From the slideshow.
+    saved.clear();
+    await tapAndSettle(tester, find.byKey(const Key('photo-p2')));
+    await tapAndSettle(tester, find.byKey(const Key('story-save')), 2);
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
+    await settle(tester, 2);
+    expect(saved, ['sonder_p2']);
+    expect(find.text('Saved to your gallery ✓'), findsOneWidget);
+    await tapAndSettle(tester, find.byKey(const Key('story-close')));
   });
 }

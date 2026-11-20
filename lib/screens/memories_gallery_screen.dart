@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/api_client.dart';
 import '../data/models.dart';
 import '../theme/app_theme.dart';
+import '../utils/photo_saver.dart';
 import '../utils/time_format.dart';
 import '../widgets/safety_sheets.dart';
 import '../widgets/status_views.dart';
@@ -24,6 +25,9 @@ class _MemoriesGalleryScreenState extends State<MemoriesGalleryScreen> {
 
   /// Also show the photos you hid from your own view (dimmed, so you can bring them back).
   bool _showHidden = false;
+
+  /// "Save all" progress: (saved so far, total), or null when not saving.
+  (int, int)? _saving;
 
   @override
   void initState() {
@@ -58,6 +62,13 @@ class _MemoriesGalleryScreenState extends State<MemoriesGalleryScreen> {
           children: [
             const SizedBox(height: 8),
             ListTile(
+              key: const Key('photo-save'),
+              leading: Icon(Icons.download_rounded, color: AppTheme.kTextPrimary),
+              title: const Text('Save to gallery', style: TextStyle(fontWeight: FontWeight.w800)),
+              subtitle: Text('Into the Sonder album on your phone', style: TextStyle(color: AppTheme.kTextSecondary)),
+              onTap: () => Navigator.pop(context, 'save'),
+            ),
+            ListTile(
               key: const Key('photo-hide'),
               leading: Icon(
                 memory.hidden ? Icons.visibility_outlined : Icons.visibility_off_outlined,
@@ -84,6 +95,15 @@ class _MemoriesGalleryScreenState extends State<MemoriesGalleryScreen> {
       ),
     );
     if (choice == null || !mounted) return;
+    if (choice == 'save') {
+      try {
+        await PhotoSaver.saveMemory(memory);
+        if (mounted) showSnack(context, 'Saved to your gallery ✓');
+      } catch (e) {
+        if (mounted) showSnack(context, e.toString());
+      }
+      return;
+    }
     if (choice == 'report') {
       final blocked = await showContentActions(
         context,
@@ -123,6 +143,45 @@ class _MemoriesGalleryScreenState extends State<MemoriesGalleryScreen> {
           },
         ),
       ),
+    );
+  }
+
+  /// Saves every photo you can see (not the ones you hid) to the Sonder album, one at a time.
+  Future<void> _saveAll() async {
+    if (_saving != null) return;
+    final List<Memory> photos;
+    try {
+      photos = [
+        for (final m in await _memories)
+          if (!m.hidden && !m.locked && m.imageUrl != null) m,
+      ];
+    } catch (_) {
+      return;
+    }
+    if (photos.isEmpty || !mounted) return;
+    setState(() => _saving = (0, photos.length));
+    var saved = 0;
+    String? problem;
+    for (final photo in photos) {
+      try {
+        await PhotoSaver.saveMemory(photo);
+        saved++;
+      } on PhotoSaveException catch (e) {
+        problem = e.message;
+        if (e.message.contains('settings')) break; // no permission: the rest would fail too
+      } catch (e) {
+        problem = e.toString();
+      }
+      if (!mounted) return;
+      setState(() => _saving = (saved, photos.length));
+    }
+    if (!mounted) return;
+    setState(() => _saving = null);
+    showSnack(
+      context,
+      saved == photos.length
+          ? 'Saved ${countLabel(saved, 'photo', 'photos')} to the Sonder album ✓'
+          : 'Saved $saved of ${photos.length}. ${problem ?? ''}'.trim(),
     );
   }
 
@@ -167,6 +226,12 @@ class _MemoriesGalleryScreenState extends State<MemoriesGalleryScreen> {
         ),
         centerTitle: true,
         actions: [
+          IconButton(
+            key: const Key('vault-save-all'),
+            tooltip: 'Save all to gallery',
+            icon: Icon(Icons.download_rounded, color: AppTheme.kTextPrimary),
+            onPressed: _saving == null ? _saveAll : null,
+          ),
           IconButton(
             key: const Key('vault-chat'),
             tooltip: 'Chat',
@@ -241,6 +306,31 @@ class _MemoriesGalleryScreenState extends State<MemoriesGalleryScreen> {
           );
         },
       ),
+      // "Saving 3 of 12…" while Save all runs.
+      bottomNavigationBar: _saving == null
+          ? null
+          : SafeArea(
+              child: Container(
+                key: const Key('save-progress'),
+                margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                decoration: AppTheme.sticker(AppTheme.kLightBlue, radius: 20),
+                child: Row(
+                  children: [
+                    const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2.5, color: AppTheme.kInk),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Saving ${_saving!.$1 + 1 > _saving!.$2 ? _saving!.$2 : _saving!.$1 + 1} of ${_saving!.$2}…',
+                      style: const TextStyle(fontWeight: FontWeight.w900, color: AppTheme.kInk),
+                    ),
+                  ],
+                ),
+              ),
+            ),
     );
   }
 

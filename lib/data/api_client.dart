@@ -490,6 +490,21 @@ class SonderApi {
   /// Uploaded photos are stored as `/uploads/<file>` paths on the server.
   String imageUrl(String path) => path.startsWith('http') ? path : '$_serverUrl$path';
 
+  /// Downloads a photo (to save it to the gallery). Allows a minute, for slow connections.
+  Future<Uint8List> downloadImage(String path) async {
+    try {
+      final response = await _client.get(Uri.parse(imageUrl(path))).timeout(const Duration(minutes: 1));
+      if (response.statusCode >= 200 && response.statusCode < 300 && response.bodyBytes.isNotEmpty) {
+        return response.bodyBytes;
+      }
+      throw ApiException("Couldn't download the photo (${response.statusCode}).", statusCode: response.statusCode);
+    } on ApiException {
+      rethrow;
+    } catch (_) {
+      throw const ApiException("Couldn't download the photo. Check your internet connection and try again.");
+    }
+  }
+
   // ---------------------------------------------------------------- plumbing
 
   Uri _uri(String path) => Uri.parse('$_serverUrl/api$path');

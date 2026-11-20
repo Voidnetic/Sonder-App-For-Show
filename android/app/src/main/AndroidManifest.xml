@@ -1,7 +1,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Saving photos to the gallery on Android 10 and older (newer versions need no permission). -->
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="29" />
     <!-- usesCleartextTraffic: the dev backend is plain http:// on the local network. -->
     <application
+        android:requestLegacyExternalStorage="true"
         android:label="Sonder"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
