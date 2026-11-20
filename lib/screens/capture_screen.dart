@@ -114,7 +114,7 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
 
   Future<void> _openCamera(CameraDescription description) async {
     final old = _controller;
-    final controller = CameraController(description, ResolutionPreset.veryHigh, enableAudio: false);
+    final controller = CameraController(description, ResolutionPreset.max, enableAudio: false);
     setState(() {
       _controller = null;
       _cameraFailed = false;
@@ -303,8 +303,10 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
     _shutterPulse.forward(from: 0);
     try {
       final file = await controller.takePicture();
-      final bytes = await file.readAsBytes();
-      final name = file.name.contains('.') ? file.name : '${file.name}.jpg';
+      // Taken at the camera's full resolution, then shrunk to ~5 MP (see shrinkPhoto).
+      final bytes = await shrinkPhoto(await file.readAsBytes());
+      final base = file.name.contains('.') ? file.name.substring(0, file.name.lastIndexOf('.')) : file.name;
+      final name = '$base.jpg';
       await _upload(bytes, name);
       unawaited(UploadQueue.instance.discardTemp(file.path)); // the queue has its own private copy
     } catch (e) {
