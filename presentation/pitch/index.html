@@ -66,8 +66,8 @@ aside.notes{display:none}
 #flash{position:absolute;inset:0;background:#fff;opacity:0;z-index:51;pointer-events:none}#flash.go{animation:flash .4s ease-out}
 @keyframes flash{0%{opacity:.9}100%{opacity:0}}
 
-/* Chrome: speaker chip, progress, notes, hints */
-#chip{position:absolute;left:34px;top:28px;z-index:40;font:800 16px var(--body);padding:8px 14px;border-radius:999px;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.22);color:#fff;transition:background .4s,color .4s}
+/* Chrome: progress, notes, hints */
+#chip{display:none;position:absolute;left:34px;top:28px;z-index:40;font:800 16px var(--body);padding:8px 14px;border-radius:999px;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.22);color:#fff;transition:background .4s,color .4s}
 #chip.s1{background:var(--sun);color:var(--ink);border-color:var(--sun)}#chip.s2{background:var(--peri);color:var(--ink);border-color:var(--peri)}
 #count{position:absolute;right:34px;top:30px;z-index:40;font:700 15px var(--body);color:rgba(255,255,255,.6);font-variant-numeric:tabular-nums}
 #bar{position:absolute;left:0;bottom:0;height:6px;background:var(--sun);z-index:40;transition:width .8s cubic-bezier(.4,0,.2,1)}
@@ -84,6 +84,39 @@ html,body{touch-action:manipulation;-webkit-tap-highlight-color:transparent;-web
 #nav{position:fixed;right:16px;bottom:14px;z-index:100;display:flex;gap:8px}
 #nav button{font:800 15px var(--body);background:rgba(14,17,40,.85);color:#fff;border:1.5px solid #3B4070;border-radius:12px;padding:9px 14px}
 
+
+/* shared explanatory text */
+.expl{font:600 24px/1.45 var(--body);color:#DEDBF2}
+.light .expl{color:var(--ink-soft)}
+/* 2b The idea */
+#sIdea .pad h2{font-size:78px}
+#sIdea .expl{max-width:700px}
+#sIdea .why{margin-top:26px;max-width:720px}
+#sIdea .why h4{font:800 22px var(--body);color:var(--sun);margin-bottom:10px}
+#sIdea .why div{display:flex;flex-wrap:wrap;gap:10px}
+#sIdea .why span{font:800 19px var(--body);padding:10px 14px;background:var(--paper)}
+#sIdea .so{display:inline-block;margin-top:22px;font:800 24px var(--body);padding:12px 20px;background:var(--sun)}
+#cal{position:absolute;left:880px;top:140px;width:610px;padding:24px;background:#0B0E24;border:2px solid #3B4070;border-radius:28px}
+#cal .hd{display:flex;justify-content:space-between;font:800 20px var(--body);color:#fff;margin-bottom:14px}
+#cal .hd span{color:var(--muted);font-weight:600}
+#cal .g{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+#cal i{position:relative;height:78px;border-radius:14px;background:#1A2050;display:grid;place-items:center;font-style:normal;font:800 15px var(--body);color:#8C90C0;overflow:hidden}
+#cal i em{font-style:normal;position:absolute;left:8px;top:5px;font-size:12px;opacity:.8}
+#cal i:after{content:"";position:absolute;inset:0;opacity:0;transition:opacity .8s;background:var(--bg)}
+#sIdea[data-step="2"] #cal i:after{opacity:1}
+#cal .ft{margin-top:14px;font:700 19px var(--body);color:var(--muted);text-align:center;transition:color .4s}
+#sIdea[data-step="2"] #cal .ft{color:var(--sun)}
+/* plan vs built */
+#sPlan .pad h2{font-size:70px}
+#sPlan .tbl{position:absolute;left:110px;right:110px;top:262px;display:grid;grid-template-columns:270px 1fr 1fr;gap:14px 16px;align-items:stretch;background:rgba(15,19,48,.55);padding:18px;border-radius:26px;margin:0 -18px}
+#sPlan .tbl .h{font:800 17px var(--body);letter-spacing:3px;text-transform:uppercase;color:var(--sun);padding:0 4px}
+#sPlan .tbl .a{font:800 23px var(--body);color:#fff;display:flex;align-items:center}
+#sPlan .tbl .pl{display:flex;align-items:center;padding:14px 20px;border-radius:18px;background:rgba(255,255,255,.07);border:2px solid rgba(255,255,255,.16);font:600 21px/1.35 var(--body);color:#DEDBF2}
+#sPlan .tbl .bt{padding:14px 20px;font:700 21px/1.35 var(--body);color:var(--ink);border:3px solid #11163A;border-radius:18px;box-shadow:5px 5px 0 #11163A}
+#s7 .what{margin-top:22px;padding:18px 20px;background:rgba(255,255,255,.07);border:2px solid rgba(255,255,255,.16);border-radius:20px;font:600 21px/1.45 var(--body);color:#fff;min-height:120px}
+#s7 .what b{display:block;color:var(--sun);font:800 16px var(--body);letter-spacing:3px;text-transform:uppercase;margin-bottom:4px}
+#s9 .desc{font:600 23px/1.45 var(--body);margin-top:26px;max-width:640px;opacity:.85;min-height:100px}
+
 /* 1 Cold open */
 #s1 .line{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
 #s1 .line p{font:400 74px/1.1 var(--serif);color:#fff;max-width:1100px;transition:opacity .8s,transform .8s}
@@ -94,7 +127,9 @@ html,body{touch-action:manipulation;-webkit-tap-highlight-color:transparent;-web
 #s1 .logo p{font:800 34px var(--body);color:var(--sun);opacity:0;transition:opacity .6s .6s}
 #s1[data-step="1"] .logo img,#s1[data-step="2"] .logo img{transform:none;opacity:1}
 #s1[data-step="1"] .logo h1,#s1[data-step="2"] .logo h1,#s1[data-step="1"] .logo p,#s1[data-step="2"] .logo p{opacity:1;transform:none}
-#s1 .names{position:absolute;bottom:70px;width:100%;text-align:center;font:600 22px var(--body);color:var(--muted)}
+#s1 .names{position:absolute;bottom:118px;width:100%;text-align:center;font:600 22px/1.5 var(--body);color:var(--muted);opacity:0;transition:opacity .6s .9s}
+#s1 .names b{color:#fff;font-weight:800}
+#s1[data-step="1"] .names{opacity:1}
 
 /* 2 The word + windows */
 #s2 .def{position:absolute;left:110px;top:120px;width:640px}
@@ -114,8 +149,8 @@ html,body{touch-action:manipulation;-webkit-tap-highlight-color:transparent;-web
 #roll .track{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;animation:scrollroll 18s linear infinite}
 #roll .track i{height:128px;border-radius:10px;display:block}
 @keyframes scrollroll{from{transform:translateY(0)}to{transform:translateY(-50%)}}
-#s3 .facts{display:flex;flex-direction:column;gap:18px;margin-top:30px;max-width:740px}
-#s3 .facts div{padding:20px 26px;font:800 28px var(--body)}
+#s3 .facts{display:flex;flex-direction:column;gap:14px;margin-top:22px;max-width:740px}
+#s3 .facts div{padding:16px 24px;font:800 26px var(--body)}
 #s3 .facts small{display:block;font:600 20px var(--body);color:var(--ink-soft);margin-top:4px}
 #s3 .stamp{position:absolute;right:140px;top:420px;z-index:3;font:800 30px var(--body);background:var(--coral);padding:14px 22px;transform:rotate(-8deg)}
 
@@ -133,20 +168,21 @@ html,body{touch-action:manipulation;-webkit-tap-highlight-color:transparent;-web
 /* 5 Meet Sonder */
 #s5 .phone{left:50%;margin-left:-200px;top:110px;width:400px;height:860px;transform:translateY(380px) rotate(6deg);transition:transform 1.2s cubic-bezier(.2,1.1,.3,1) .2s}
 #s5.active .phone{transform:translateY(0) rotate(-3deg)}
-#s5 .side{position:absolute;top:220px;width:420px}
+#s5 .side{position:absolute;top:200px;width:430px}
 #s5 .l{left:110px}#s5 .r{right:110px;text-align:right}
 #s5 .side h2{font-size:120px;margin:0}
 #s5 .side p{font:800 30px var(--body);color:var(--sun);margin-top:10px}
+#s5 .side p.expl{font:600 22px/1.45 var(--body);color:#DEDBF2;margin-top:16px}
 #s5 .tagpill{display:inline-block;margin-top:22px;padding:12px 20px;font:800 22px var(--body);background:var(--paper)}
 #s5 .badge{position:absolute;font:800 22px var(--body);padding:12px 18px;transform:scale(0) rotate(-8deg);transition:transform .6s cubic-bezier(.2,1.6,.4,1)}
 #s5.active .badge{transform:scale(1) rotate(-8deg)}
-#s5 .b1{left:1020px;top:170px;background:var(--sun);transition-delay:1.1s!important}#s5 .b2{left:380px;top:640px;background:var(--mintl);transform-origin:center;transition-delay:1.3s!important}#s5.active .b2{transform:scale(1) rotate(6deg)}
+#s5 .b1{left:1010px;top:120px;background:var(--sun);transition-delay:1.1s!important}#s5 .b2{left:380px;top:640px;background:var(--mintl);transform-origin:center;transition-delay:1.3s!important}#s5.active .b2{transform:scale(1) rotate(6deg)}
 
 /* 6 How it works */
-#s6 .steps{position:absolute;left:110px;top:320px;width:720px;display:flex;flex-direction:column;gap:16px}
-#s6 .st{display:flex;gap:22px;align-items:center;padding:18px 24px;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.14);border-radius:24px;color:#DEDBF2;transition:all .5s cubic-bezier(.2,1.2,.4,1)}
+#s6 .steps{position:absolute;left:110px;top:268px;width:740px;display:flex;flex-direction:column;gap:14px}
+#s6 .st{display:flex;gap:22px;align-items:center;padding:14px 24px;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.14);border-radius:24px;color:#DEDBF2;transition:all .5s cubic-bezier(.2,1.2,.4,1)}
 #s6 .st b{font:400 46px var(--display);width:60px;color:rgba(255,255,255,.4)}
-#s6 .st h3{font:800 30px var(--body)}#s6 .st p{font:600 19px var(--body);opacity:.8}
+#s6 .st h3{font:800 28px var(--body)}#s6 .st p{font:600 18px/1.4 var(--body);opacity:.85}
 #s6 .st.cur{background:var(--sun);border-color:#11163A;color:var(--ink);box-shadow:8px 8px 0 #11163A;transform:translateX(18px)}
 #s6 .st.cur b{color:var(--ink)}
 #s6 .st.done{background:var(--paper);color:var(--ink);border-color:#11163A}#s6 .st.done b{color:var(--ink)}
@@ -160,9 +196,9 @@ html,body{touch-action:manipulation;-webkit-tap-highlight-color:transparent;-web
 #s7 .hot:hover{background:rgba(255,216,77,.28)}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,216,77,.0);background:rgba(255,216,77,.08)}50%{box-shadow:0 0 0 6px rgba(255,216,77,.55);background:rgba(255,216,77,.22)}}
 #s7 .screen img{transition:opacity .35s}
-#s7 .left{position:absolute;left:110px;top:150px;width:440px}
+#s7 .left{position:absolute;left:110px;top:120px;width:460px}
 #s7 .left h2{font-size:84px}
-#s7 .left p{font:600 24px/1.4 var(--body);color:#DEDBF2}
+#s7 .left p{font:600 22px/1.4 var(--body);color:#DEDBF2}
 #s7 .jump{position:absolute;right:90px;top:150px;width:330px;display:flex;flex-direction:column;gap:10px}
 #s7 .jump button{text-align:left;font:800 20px var(--body);padding:12px 16px;border-radius:16px;border:2px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:#fff}
 #s7 .jump button.cur{background:var(--sun);color:var(--ink);border-color:#11163A;box-shadow:5px 5px 0 #11163A}
@@ -225,8 +261,8 @@ html,body{touch-action:manipulation;-webkit-tap-highlight-color:transparent;-web
 #s13 .live{position:absolute;left:110px;bottom:90px;font:600 24px var(--body);color:#DEDBF2}
 
 /* 14 Next */
-#s14 .road{position:absolute;left:110px;right:110px;top:330px;display:grid;grid-template-columns:repeat(3,1fr);gap:26px}
-#s14 .ph{padding:28px 30px;min-height:330px}
+#s14 .road{position:absolute;left:110px;right:110px;top:320px;display:grid;grid-template-columns:repeat(3,1fr);gap:26px}
+#s14 .ph{padding:26px 30px;min-height:300px}
 #s14 .ph h3{font:400 50px var(--display)}#s14 .ph em{font:800 18px var(--body);letter-spacing:3px;text-transform:uppercase;font-style:normal;color:var(--ink-soft)}
 #s14 .ph ul{margin:14px 0 0 22px;font:600 22px/1.5 var(--body)}
 
@@ -259,7 +295,7 @@ html,body{touch-action:manipulation;-webkit-tap-highlight-color:transparent;-web
   <section class="slide" id="s1" data-speaker="Both" data-steps="1" data-trans="iris">
     <div class="line"><p>Every friend sees the same night <i>differently.</i></p></div>
     <div class="logo"><img src="img/icon.png" alt="Sonder app icon"><h1>Sonder</h1><p>Capture now. Reveal later.</p></div>
-    <p class="names">[Speaker 1] &amp; [Speaker 2] · [Module] · [University]</p>
+    <p class="names"><b>Syed Hassan Abbas &amp; Syeda Manaal Nafees</b><br>CSC291 Software Engineering · COMSATS University Islamabad</p>
     <aside class="notes"><b>Both.</b> Start in silence on the black screen. Speaker 1, slowly: "Think about the last night out with your friends. Six people, six phones, six completely different versions of the same night." Press → for the logo. Speaker 2: "We built a way to see all of them at once. This is Sonder."</aside>
   </section>
 
@@ -267,15 +303,27 @@ html,body{touch-action:manipulation;-webkit-tap-highlight-color:transparent;-web
   <section class="slide" id="s2" data-speaker="Speaker 1">
     <div class="def"><div class="kicker">Where the name comes from</div><div class="word">sonder</div><div class="pos">noun</div>
       <p class="meaning">The realisation that every passer-by has a life as vivid and complex as your own.</p>
-      <p class="src">From <i>The Dictionary of Obscure Sorrows</i> by John Koenig</p></div>
+      <p class="src">From <i>The Dictionary of Obscure Sorrows</i> by John Koenig</p>
+      <p class="expl" style="margin-top:30px">Friends at the same event each live their own version of it. Our app is named after that feeling: it gathers every version of a shared moment in one place.</p></div>
     <p class="hint">Hover a window →</p>
     <div id="city"></div>
     <aside class="notes"><b>Speaker 1.</b> "Sonder is a word for that feeling when you realise everyone around you has a whole life going on. Every lit window is a story." Hover two or three windows to show their stories. "Your friends are like that too: they saw things on that trip you never did. Sonder is about seeing the night through their eyes."</aside>
   </section>
 
+  <!-- 2b THE IDEA -->
+  <section class="slide" id="sIdea" data-speaker="Speaker 1" data-steps="2">
+    <div class="pad"><div class="kicker">Where the idea came from</div><h2>A month of<br>unopened snaps</h2>
+      <p class="expl">It started with my cousins and our Snapchat group. For a whole month we all sent snaps, but nobody opened them. At the end of the month we opened everything together and saw the same month through everyone's eyes: the funny moments, the random photos, and the things we'd missed.</p>
+      <div class="why" data-show="1"><h4>But Snapchat was never built for this</h4><div><span class="sticker">We relied on willpower not to peek</span><span class="sticker">Snaps could expire or get lost</span><span class="sticker">No single place to look back</span></div></div>
+      <span class="so sticker" data-show="2">Sonder turns that habit into a real app</span></div>
+    <div id="cal"><div class="hd">Our group, one month <span>30 days · 0 opened</span></div><div class="g"></div><p class="ft">Waiting for day 30…</p></div>
+    <aside class="notes"><b>Speaker 1.</b> Tell the real story: the Snapchat month with your cousins. Everyone sent snaps, nobody opened them, then you opened them all together at the end. Press → for what went wrong: you relied on willpower not to peek, snaps could expire or get lost, and there was no one place to look back. Press → again: the month opens up. "Sonder turns that habit into a proper, reliable app."</aside>
+  </section>
+
   <!-- 3 PROBLEM -->
   <section class="slide" id="s3" data-speaker="Speaker 1" data-steps="3">
-    <div class="pad"><div class="kicker">The problem</div><h2 style="font-size:80px">We capture everything.<br>We relive almost nothing.</h2>
+    <div class="pad"><div class="kicker">The problem</div><h2 style="font-size:76px;margin-bottom:12px">We capture everything.<br>We relive almost nothing.</h2>
+      <p class="expl" style="max-width:740px">After an event, everyone dumps their photos into a group chat or a shared album, and the surprise is gone within minutes.</p>
       <div class="facts">
         <div class="sticker" style="background:var(--peach)" data-show="1">Posted the second it's taken<small>We perform moments for an audience instead of living them.</small></div>
         <div class="sticker" style="background:var(--lav)" data-show="2">Scattered across everyone's phones<small>The best shots of the trip sit in someone else's camera roll, forever.</small></div>
@@ -297,8 +345,8 @@ html,body{touch-action:manipulation;-webkit-tap-highlight-color:transparent;-web
 
   <!-- 5 MEET SONDER -->
   <section class="slide" id="s5" data-speaker="Speaker 1" data-trans="iris">
-    <div class="side l"><h2>Meet</h2><p>A shared photo time capsule</p></div>
-    <div class="side r"><h2>Sonder</h2><p>for you and your friends</p><span class="tagpill sticker">Android · iPhone</span></div>
+    <div class="side l"><h2>Meet</h2><p>A shared photo time capsule</p><p class="expl">Friends join a capsule (we call it a Moment) for one event: a trip, a birthday, a night out.</p></div>
+    <div class="side r"><h2>Sonder</h2><p>for you and your friends</p><p class="expl">Every photo stays locked until the timer ends. Then the whole group reveals them together.</p><span class="tagpill sticker">Android · iPhone</span></div>
     <div class="phone"><div class="screen"><img src="img/r-home.jpg" alt="Sonder Home screen"></div></div>
     <div class="badge sticker b1">Capture now 📸</div><div class="badge sticker b2">Reveal later ✨</div>
     <aside class="notes"><b>Speaker 1.</b> Let the phone rise. "Meet Sonder: a shared time capsule for your friends. Everyone adds photos during the trip or the night out, nobody can see them, and when the countdown ends you reveal them all together." Keep it short, the next slide shows how.</aside>
@@ -306,12 +354,12 @@ html,body{touch-action:manipulation;-webkit-tap-highlight-color:transparent;-web
 
   <!-- 6 HOW IT WORKS -->
   <section class="slide" id="s6" data-speaker="Speaker 1" data-steps="3">
-    <div class="pad"><div class="kicker">How it works</div><h2 style="font-size:66px;max-width:820px">Four taps from a night out<br>to a shared reveal</h2></div>
+    <div class="pad"><div class="kicker">How it works</div><h2 style="font-size:58px;max-width:820px">Four steps from a night out<br>to a shared reveal</h2></div>
     <div class="steps">
-      <div class="st"><b>1</b><div><h3>Create a capsule</h3><p>Name it, invite friends, pick when it unlocks.</p></div></div>
-      <div class="st"><b>2</b><div><h3>Capture together</h3><p>Everyone adds photos. Nobody can see them, not even you.</p></div></div>
-      <div class="st"><b>3</b><div><h3>Count down</h3><p>Chat, see who's here, watch the timer run out.</p></div></div>
-      <div class="st"><b>4</b><div><h3>Reveal</h3><p>"Ready to Open". Everyone's photos appear at once.</p></div></div>
+      <div class="st"><b>1</b><div><h3>Create a capsule</h3><p>Name it, invite friends (they accept or decline), and choose when it unlocks.</p></div></div>
+      <div class="st"><b>2</b><div><h3>Capture together</h3><p>Everyone adds photos with the in-app camera. Others only see a locked card and a count.</p></div></div>
+      <div class="st"><b>3</b><div><h3>Count down</h3><p>Chat in the Hangout, see who's here and who's typing while the timer runs.</p></div></div>
+      <div class="st"><b>4</b><div><h3>Reveal</h3><p>The capsule says Ready to Open. Tap it and everyone's photos appear at once.</p></div></div>
     </div>
     <div class="phone"><div class="screen" id="s6screen"><img src="img/r-home.jpg" alt="Sonder app screen"></div></div>
     <aside class="notes"><b>Speaker 1.</b> Press → to move through the steps; the phone follows. 1) Create a capsule and invite friends, who accept the invite. 2) Capture: photos are locked on the server, even your own friends can't peek. 3) Count down with the live chat. 4) When the time's up it says Ready to Open, and you open it together.</aside>
@@ -319,16 +367,16 @@ html,body{touch-action:manipulation;-webkit-tap-highlight-color:transparent;-web
 
   <!-- 7 DEMO -->
   <section class="slide hints" id="s7" data-speaker="Speaker 1">
-    <div class="left"><div class="kicker">Try it</div><h2>The real app</h2><p>These are real screens from Sonder. Tap anything that glows, just like on a phone.</p></div>
+    <div class="left"><div class="kicker">Try it</div><h2>The real app</h2><p>Real screens from the working app. Tap anything that glows, just like on a phone.</p><div class="what" id="demoWhat"></div></div>
     <div class="phone"><div class="screen" id="demoScreen"><img id="demoImg" src="img/login.jpg" alt="Sonder app screen"></div></div>
     <div class="toast" id="demoToast"></div>
     <div class="jump" id="demoJump"></div>
-    <aside class="notes"><b>Speaker 1.</b> Click through live: Log in → Home (the invite, Ready to Open) → tap Ready to Open → the slideshow → back → Moments tab → Road Trip → the gallery → the chat icon (photo replies with reactions) → Profile → Account. The buttons on the right jump straight to a screen if you get lost. Finish with: "Over to [Speaker 2] to show what makes it special."</aside>
+    <aside class="notes"><b>Speaker 1.</b> Click through live: Log in → Home (the invite, Ready to Open) → tap Ready to Open → the slideshow → back → Moments tab → Road Trip → the gallery → the chat icon (photo replies with reactions) → Profile → Account. The buttons on the right jump straight to a screen if you get lost. Read the box on the left as you go: it explains each screen. Finish with: "Over to my partner to show what makes it special."</aside>
   </section>
 
   <!-- 8 FEATURES -->
   <section class="slide" id="s8" data-speaker="Speaker 2" data-steps="5" data-trans="iris">
-    <div class="side"><div class="kicker">Why people will love it</div><h2>Built for real friend groups</h2><p class="count" id="fcount">1 / 6</p></div>
+    <div class="side"><div class="kicker">Why people will love it</div><h2>Built for real friend groups</h2><p class="expl" style="font-size:22px">Six things a shared album or a group chat can't do.</p><p class="count" id="fcount">1 / 6</p></div>
     <div class="deck" id="fdeck"></div>
     <aside class="notes"><b>Speaker 2.</b> Flick through with →. 1) Hidden until the reveal, enforced by the server. 2) Works with no signal: photos save on the phone and upload later. 3) Live together: "here now", typing, chat. 4) The reveal as a story: swipe, react, comment, all linked in the chat. 5) Keep forever: save to your gallery in one tap. 6) Safe by design: invites you accept, report and block, delete your account any time.</aside>
   </section>
@@ -339,14 +387,14 @@ html,body{touch-action:manipulation;-webkit-tap-highlight-color:transparent;-web
       <div class="tbtns" id="tbtns">
         <button data-th="0" style="background:#FAF9F6">☀️ Light</button><button data-th="1" style="background:#DDF57A">🌙 Pastel Glow</button>
         <button data-th="2" style="background:#8CF5C9">🌌 Northern Lights</button><button data-th="3" style="background:#F9C6DA">🌸 Aurora Blossom</button>
-      </div></div>
+      </div><p class="desc" id="themeDesc"></p></div>
     <div class="phone"><div class="screen"><img id="themeImg" src="img/theme-light.jpg" alt="Sonder in the Light theme"></div></div>
     <aside class="notes"><b>Speaker 2.</b> Tap each theme or press →. "Sonder isn't one-size-fits-all: four hand-made themes, from the light cream original to Pastel Glow for dark mode, and two aurora skies that cover every screen."</aside>
   </section>
 
   <!-- 10 TECH -->
   <section class="slide" id="s10" data-speaker="Speaker 2">
-    <div class="pad"><div class="kicker">Under the hood</div><h2 style="font-size:84px">Built like a real product</h2></div>
+    <div class="pad"><div class="kicker">Under the hood</div><h2 style="font-size:84px;margin-bottom:10px">Built like a real product</h2><p class="expl" style="max-width:600px;font-size:22px">The app, our own server, and cloud services for photos, notifications and email. Click any part.</p></div>
     <svg viewBox="0 0 1600 900" aria-label="How the app, server, database, photo storage, notifications and email connect">
       <g stroke="#4A5196" stroke-width="3" fill="none" stroke-dasharray="8 8">
         <path id="p-app-api" d="M370 375 L700 375"/><path id="p-api-db" d="M950 375 L1240 245"/><path id="p-api-r2" d="M950 375 L1240 425"/>
@@ -366,6 +414,20 @@ html,body{touch-action:manipulation;-webkit-tap-highlight-color:transparent;-web
     <aside class="notes"><b>Speaker 2.</b> "This isn't a mock-up, it's a live system." Click Trace a photo: it travels from the app to our server, which stores it in a private photo vault, and nobody gets a link to it until the capsule unlocks. Click nodes to explain: notifications for invites and unlocks, email codes for verification and password reset, and every change we make builds the Android and iPhone apps automatically.</aside>
   </section>
 
+  <!-- 10b PLAN VS BUILD -->
+  <section class="slide" id="sPlan" data-speaker="Speaker 2">
+    <div class="pad"><div class="kicker">From design document to working app</div><h2>What we planned, what we built</h2></div>
+    <div class="tbl">
+      <div class="h"></div><div class="h">Planned</div><div class="h">Built</div>
+      <div class="a">⚙️ Backend</div><div class="pl">Firebase: Firestore, Storage, Cloud Functions</div><div class="bt" style="background:var(--peach)">Our own server (FastAPI) with PostgreSQL and a private Cloudflare R2 photo vault</div>
+      <div class="a">🔒 The lock (FR7)</div><div class="pl">Firebase Security Rules</div><div class="bt" style="background:var(--sun)">The server never hands out a photo link before unlock, and links expire after 1 hour</div>
+      <div class="a">📶 No signal (5.5)</div><div class="pl">Firestore offline persistence</div><div class="bt" style="background:var(--mintl)">An offline upload queue: photos wait privately on the phone and upload later</div>
+      <div class="a">🤖 AI &amp; early unlock</div><div class="pl">ML Kit tagging, AI captions, emergency unlock vote</div><div class="bt" style="background:var(--lav)">Moved to the roadmap so we could finish and test the core loop first</div>
+      <div class="a">✨ Extras</div><div class="pl">Not in the original plan</div><div class="bt" style="background:var(--pink)">Usernames, invite accept/decline, story replies, 4 themes, save to gallery, Past Vault</div>
+    </div>
+    <aside class="notes"><b>Speaker 2.</b> "Our design document planned Firebase. While building, we moved to our own server so we fully control the lock: the server simply never gives out a photo link before the unlock time." Walk the rows: the lock requirement (FR7) is met on the server; offline reliability became an upload queue; AI features and the early-unlock vote moved to the roadmap so the core loop could be finished and tested; and we added features users asked for while testing.</aside>
+  </section>
+
   <!-- 11 TRUST -->
   <section class="slide" id="s11" data-speaker="Speaker 2" data-steps="1">
     <div class="pad"><div class="kicker">Trust</div><h2 style="font-size:88px">Locked means<br>locked.</h2>
@@ -378,20 +440,21 @@ html,body{touch-action:manipulation;-webkit-tap-highlight-color:transparent;-web
 
   <!-- 12 MARKET + MODEL -->
   <section class="slide" id="s12" data-speaker="Speaker 2">
-    <div class="pad"><div class="kicker">Who it's for</div><h2 style="font-size:84px">Every moment<br>worth waiting for</h2>
-      <div class="who"><span class="sticker" style="background:var(--peach)">🎓 Graduations</span><span class="sticker" style="background:var(--lav)">🚐 Road trips</span><span class="sticker" style="background:var(--mintl)">🎂 Birthdays</span><span class="sticker" style="background:var(--pink)">💍 Weddings</span><span class="sticker" style="background:#E1F5FE">✈️ Holidays</span><span class="sticker" style="background:var(--sun)">🎉 Nights out</span></div>
-      <p class="note">Proposed pricing, for discussion. [Fill in any research numbers you have.]</p></div>
+    <div class="pad"><div class="kicker">Who it's for</div><h2 style="font-size:80px">Every moment<br>worth waiting for</h2>
+      <p class="expl" style="max-width:720px;margin-bottom:22px">Young, smartphone-first people who go to events together and want every perspective in one place.</p>
+      <div class="who"><span class="sticker" style="background:var(--peach)">👯 Friend groups &amp; cousins</span><span class="sticker" style="background:var(--lav)">🎓 University fests &amp; trips</span><span class="sticker" style="background:var(--mintl)">🎂 Birthdays</span><span class="sticker" style="background:var(--pink)">💍 Weddings</span><span class="sticker" style="background:#E1F5FE">🎵 Concerts</span><span class="sticker" style="background:var(--sun)">🎉 Nights out</span></div>
+      <p class="note">Prices are proposals for discussion.</p></div>
     <div class="tiers">
       <div class="tier sticker" style="background:var(--paper)"><h3>Sonder <small>Free</small></h3><ul><li>Unlimited capsules with friends</li><li>Photos, chat, reveal, save to gallery</li></ul></div>
-      <div class="tier sticker" style="background:var(--sun)"><h3>Sonder+ <small>[£__ / month]</small></h3><ul><li>Bigger groups and longer capsules</li><li>Full-resolution originals</li><li>Exclusive themes</li></ul></div>
-      <div class="tier sticker" style="background:var(--coral)"><h3>Print the reveal <small>[£__]</small></h3><ul><li>Turn a capsule into a printed photo book</li><li>Event capsules for weddings and parties</li></ul></div>
+      <div class="tier sticker" style="background:var(--sun)"><h3>Sonder+ <small>Rs 299 / month</small></h3><ul><li>Bigger groups and longer capsules</li><li>Full-resolution originals</li><li>Exclusive themes</li></ul></div>
+      <div class="tier sticker" style="background:var(--coral)"><h3>Print the reveal <small>from Rs 2,499</small></h3><ul><li>Turn a capsule into a printed photo book</li><li>Event capsules for weddings and parties</li></ul></div>
     </div>
-    <aside class="notes"><b>Speaker 2.</b> "Anyone with friends is a user, but our first audience is students: trips, nights out, graduation." Then the model: free for everyone, so groups grow by invite; Sonder+ for power users; and the big one, printed photo books of a reveal, and paid event capsules for weddings. Fill the bracketed prices before presenting.</aside>
+    <aside class="notes"><b>Speaker 2.</b> "Our audience: friend groups and cousins, university students at fests and trips, and people at weddings and concerts." Then the model: free for everyone, so groups grow by invite; Sonder+ for power users; and the big one, printed photo books of a reveal, and paid event capsules for weddings. Prices are proposals; say so if asked.</aside>
   </section>
 
   <!-- 13 PROOF -->
   <section class="slide" id="s13" data-speaker="Speaker 2">
-    <div class="pad"><div class="kicker">It's real</div><h2 style="font-size:84px">Built, tested, running</h2></div>
+    <div class="pad"><div class="kicker">It's real</div><h2 style="font-size:84px;margin-bottom:10px">Built, tested, running</h2><p class="expl" style="max-width:1000px">Everything in this presentation works today, and automated tests check it every time we change the code.</p></div>
     <div class="nums">
       <div class="sticker" style="background:var(--sun)"><b data-to="43">0</b><span>app tests</span><small>run on every change</small></div>
       <div class="sticker" style="background:var(--peach)"><b data-to="59">0</b><span>server checks</span><small>end-to-end, real database</small></div>
@@ -404,25 +467,25 @@ html,body{touch-action:manipulation;-webkit-tap-highlight-color:transparent;-web
 
   <!-- 14 NEXT -->
   <section class="slide" id="s14" data-speaker="Speaker 2">
-    <div class="pad"><div class="kicker">What's next</div><h2 style="font-size:84px">Where Sonder goes from here</h2></div>
+    <div class="pad"><div class="kicker">What's next</div><h2 style="font-size:84px;margin-bottom:10px">Where Sonder goes from here</h2><p class="expl">Built in stages, as planned in the System Evolution part of our design document.</p></div>
     <div class="road">
       <div class="ph sticker" style="background:var(--mintl)"><em>Now</em><h3>Testing</h3><ul><li>Android app with friends</li><li>iPhone build</li><li>Live server</li></ul></div>
-      <div class="ph sticker" style="background:var(--sun)"><em>Next</em><h3>Launch</h3><ul><li>Google Play release</li><li>App Store via TestFlight</li><li>Our own domain &amp; email</li></ul></div>
-      <div class="ph sticker" style="background:var(--peach)"><em>Later</em><h3>Grow</h3><ul><li>Video moments</li><li>Printed photo books</li><li>Event capsules</li></ul></div>
+      <div class="ph sticker" style="background:var(--sun)"><em>Next</em><h3>Launch</h3><ul><li>Google Play &amp; App Store</li><li>Early-unlock group vote</li><li>Our own domain &amp; email</li></ul></div>
+      <div class="ph sticker" style="background:var(--peach)"><em>Later</em><h3>Grow</h3><ul><li>Video &amp; voice memories</li><li>Public Moments at uni fests</li><li>AI captions &amp; highlight reels</li><li>Printed photo books</li></ul></div>
     </div>
-    <aside class="notes"><b>Speaker 2.</b> Now: real people are testing it. Next: Play Store and App Store, plus our own domain for emails. Later: video, printed photo books and event capsules, which is where the business grows.</aside>
+    <aside class="notes"><b>Speaker 2.</b> Now: real people are testing it. Next: Play Store and App Store, the early-unlock vote from our design document, and our own email domain. Later: video and voice memories, public Moments for university fests, AI captions and highlight reels, and printed photo books.</aside>
   </section>
 
   <!-- 15 FINALE -->
   <section class="slide" id="s15" data-speaker="Both" data-trans="iris">
     <div class="center"><div class="lockbig">🔒</div><div class="cd" id="cd">0:05</div><p class="kicker" style="margin-top:6px">This capsule unlocks in</p><button class="startbtn" id="cdBtn" type="button">Start the countdown</button></div>
     <div id="burst"></div>
-    <div class="end"><h1>Sonder</h1><p>Capture now. Reveal later.</p><p class="q">Thank you. Questions?</p><p class="names">[Speaker 1] &amp; [Speaker 2]</p></div>
+    <div class="end"><h1>Sonder</h1><p>Capture now. Reveal later.</p><p class="q">Thank you. Questions?</p><p class="names">Syed Hassan Abbas &amp; Syeda Manaal Nafees</p></div>
     <aside class="notes"><b>Both.</b> Speaker 2: "We'll end the way every Sonder capsule ends." Press Start (or →) and count down out loud with the room: 5, 4, 3, 2, 1. The capsule opens. Both: "Thank you! Any questions?" Take questions on your own half.</aside>
   </section>
 
   <div id="iris" class="shut"></div><div id="flash"></div>
-  <div id="chip"></div><div id="count"></div><div id="bar"></div>
+  <div id="count"></div><div id="bar"></div>
 </div></div>
 
 <div id="notes" role="region" aria-label="Speaker notes"></div>
@@ -466,6 +529,9 @@ html,body{touch-action:manipulation;-webkit-tap-highlight-color:transparent;-web
   const roll = $('#roll .track'); const pal = ['#FFD84D', '#FF8E6E', '#6FD3A8', '#8E9CFF', '#FFE5B4', '#E6E6FA', '#FFD9E6', '#E0F8E6', '#2A3066', '#3B4070'];
   for (let k = 0; k < 64; k++) { const i = document.createElement('i'); const a = pal[(k * 7) % pal.length], c = pal[(k * 3 + 2) % pal.length]; i.style.background = `linear-gradient(${(k * 47) % 360}deg,${a},${c})`; i.style.opacity = .55 + ((k * 13) % 40) / 100; roll.appendChild(i); }
 
+  // idea: a month of unopened snaps
+  { const g = $('#cal .g'), pal = ['#FFD84D', '#FF8E6E', '#6FD3A8', '#8E9CFF', '#FFE5B4', '#FFD9E6', '#E0F8E6', '#E6E6FA'];
+    for (let d = 1; d <= 30; d++) { const i = document.createElement('i'); i.innerHTML = `<em>${d}</em>📩`; i.style.setProperty('--bg', `linear-gradient(${(d * 53) % 360}deg,${pal[d % 8]},${pal[(d * 3 + 1) % 8]})`); i.style.transitionDelay = (d * 25) + 'ms'; g.appendChild(i); } }
   // 6: how-it-works screens
   const howScreens = ['r-home', 'moment', 'chat', 'ready'];
   function swapScreen(el, name) {
@@ -476,17 +542,17 @@ html,body{touch-action:manipulation;-webkit-tap-highlight-color:transparent;-web
 
   // 7: tappable demo
   const screens = {
-    login:{label:'Log in', hs:[[7, 53, 88, 8, 'home']]},
-    home:{img:'r-home', label:'Home', hs:[[7, 75, 35, 11, 'ready'], [51, 44, 38, 7, 'moment', 'Joined the capsule 🎉'], [55, 92, 12, 8, 'vault'], [78, 92, 12, 8, 'profile']]},
-    ready:{label:'Ready to Open', hs:[[7, 60, 86, 17, 'story', 'Opening the capsule ✨'], [7, 40, 86, 12, 'story'], [9, 92, 12, 8, 'home'], [55, 92, 12, 8, 'vault'], [78, 92, 12, 8, 'profile']]},
-    moment:{label:'A locked capsule', hs:[[2, 1, 10, 6, 'home'], [50, 9, 43, 7, 'chat']]},
-    chat:{label:'Live chat', hs:[[2, 1, 10, 6, 'home'], [7, 9, 41, 7, 'moment']]},
-    vault:{img:'r-vault', label:'Past Vault', hs:[[7, 21, 87, 17, 'gallery'], [9, 92, 12, 8, 'home'], [78, 92, 12, 8, 'profile']]},
-    gallery:{img:'r-gallery', label:'Revealed photos', hs:[[3, 9, 45, 27, 'story'], [51, 9, 46, 27, 'story'], [90, 1, 9, 6, 'replies'], [78, 1, 10, 6, null, 'Saved 6 photos to your gallery ✓'], [1, 1, 10, 6, 'vault']]},
-    story:{img:'r-story', label:'Slideshow', hs:[[89, 2, 10, 6, 'gallery'], [20, 85, 60, 6, null, 'Sent ❤️ to the chat'], [50, 15, 50, 65, 'gallery']]},
-    replies:{img:'r-replies', label:'Photo replies', hs:[[1, 1, 10, 6, 'gallery'], [2, 7, 30, 25, 'story']]},
-    profile:{label:'Profile', hs:[[8, 10, 87, 18, 'account'], [9, 92, 12, 8, 'home'], [55, 92, 12, 8, 'vault']]},
-    account:{label:'Account', hs:[[1, 1, 10, 6, 'profile']]}
+    login:{label:'Log in', d:'Log in with your email or username. New accounts confirm their email with a 6-digit code.', hs:[[7, 53, 88, 8, 'home']]},
+    home:{img:'r-home', label:'Home', d:'Your capsules, invites to accept or decline, and anything that is Ready to Open.', hs:[[7, 75, 35, 11, 'ready'], [51, 44, 38, 7, 'moment', 'Joined the capsule 🎉'], [55, 92, 12, 8, 'vault'], [78, 92, 12, 8, 'profile']]},
+    ready:{label:'Ready to Open', d:'The timer has ended. The capsule waits here until you open it, so nobody misses the reveal.', hs:[[7, 60, 86, 17, 'story', 'Opening the capsule ✨'], [7, 40, 86, 12, 'story'], [9, 92, 12, 8, 'home'], [55, 92, 12, 8, 'vault'], [78, 92, 12, 8, 'profile']]},
+    moment:{label:'A locked capsule', d:'The countdown, who is here now, and your own photos. Everyone else\'s stay hidden.', hs:[[2, 1, 10, 6, 'home'], [50, 9, 43, 7, 'chat']]},
+    chat:{label:'Live chat', d:'The Hangout: a live group chat for this capsule, with "here now" and typing indicators.', hs:[[2, 1, 10, 6, 'home'], [7, 9, 41, 7, 'moment']]},
+    vault:{img:'r-vault', label:'Past Vault', d:'Opened capsules move here. Leave a group, or delete it for everyone if you created it.', hs:[[7, 21, 87, 17, 'gallery'], [9, 92, 12, 8, 'home'], [78, 92, 12, 8, 'profile']]},
+    gallery:{img:'r-gallery', label:'Revealed photos', d:'Everyone\'s photos together. Save one, or all of them, to your phone\'s gallery.', hs:[[3, 9, 45, 27, 'story'], [51, 9, 46, 27, 'story'], [90, 1, 9, 6, 'replies'], [78, 1, 10, 6, null, 'Saved 6 photos to your gallery ✓'], [1, 1, 10, 6, 'vault']]},
+    story:{img:'r-story', label:'Slideshow', d:'The reveal plays like a story. React or comment and it is posted in the chat with the photo.', hs:[[89, 2, 10, 6, 'gallery'], [20, 85, 60, 6, null, 'Sent ❤️ to the chat'], [50, 15, 50, 65, 'gallery']]},
+    replies:{img:'r-replies', label:'Photo replies', d:'Replies show up in the chat with a thumbnail, so every comment stays linked to its photo.', hs:[[1, 1, 10, 6, 'gallery'], [2, 7, 30, 25, 'story']]},
+    profile:{label:'Profile', d:'Your stats, your theme, and your account settings.', hs:[[8, 10, 87, 18, 'account'], [9, 92, 12, 8, 'home'], [55, 92, 12, 8, 'vault']]},
+    account:{label:'Account', d:'Change your name, username, email or password, or delete your account.', hs:[[1, 1, 10, 6, 'profile']]}
   };
   const demoScreen = $('#demoScreen'), demoImg = $('#demoImg'), toast = $('#demoToast'), jump = $('#demoJump');
   let demoCur = 'login', toastT;
@@ -498,6 +564,7 @@ html,body{touch-action:manipulation;-webkit-tap-highlight-color:transparent;-web
     demoScreen.querySelectorAll('.hot').forEach(h => h.remove());
     s.hs.forEach(([x, y, w, h, to, m]) => { const d = document.createElement('div'); d.className = 'hot'; Object.assign(d.style, {left: x + '%', top: y + '%', width: w + '%', height: h + '%'}); d.addEventListener('click', e => { e.stopPropagation(); demoGo(to, m); }); demoScreen.appendChild(d); });
     jump.querySelectorAll('button').forEach(b => b.classList.toggle('cur', b.dataset.s === name));
+    $('#demoWhat').innerHTML = `<b>${s.label}</b>${s.d}`;
     if (msg) showToast(msg);
   }
   function showToast(m) { toast.textContent = m; toast.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => toast.classList.remove('on'), 1800); }
@@ -522,12 +589,14 @@ html,body{touch-action:manipulation;-webkit-tap-highlight-color:transparent;-web
 
   // 9: themes
   const themes = [['theme-light', '#FAF9F6', 'Light'], ['theme-glow', '#0E0E11', 'Pastel Glow'], ['theme-aurora', '#05070F', 'Northern Lights'], ['theme-blossom', '#14284A', 'Aurora Blossom']];
+  const themeDescs = ['The original look: cream background, pastel cards, thick outlines and offset shadows. The sticker style from our design document.', 'Pastel Glow: a dark mode that keeps the pastel colours, easier on the eyes at night.', 'Northern Lights: a green aurora sky behind every screen of the app.', 'Aurora Blossom: a pink and blue aurora for a softer, dreamier look.'];
   function themeGo(k) {
     const img = $('#themeImg'); img.style.opacity = 0;
     setTimeout(() => { img.src = `img/${themes[k][0]}.jpg`; img.alt = `Sonder in the ${themes[k][2]} theme`; img.style.opacity = 1; }, 250);
     $('#s9').style.background = k === 0 ? 'linear-gradient(180deg,#FFF6E8,#FFE5B4)' : `radial-gradient(ellipse at 70% 40%,${['', '#2a2a35', '#173a33', '#1d4a6e'][k]},${themes[k][1]})`;
     $('#s9').classList.toggle('light', k === 0);
     $$('#tbtns button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.th === k));
+    $('#themeDesc').textContent = themeDescs[k];
     $('#s9 .phone').style.transform = `rotate(${[2, -3, 3, -2][k]}deg)`;
   }
   $$('#tbtns button').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); step = +b.dataset.th; themeGo(step); }));
@@ -596,6 +665,7 @@ html,body{touch-action:manipulation;-webkit-tap-highlight-color:transparent;-web
     s.dataset.step = k;
     s.querySelectorAll('[data-show]').forEach(el => el.classList.toggle('on', +el.dataset.show <= k));
     const id = s.id;
+    if (id === 'sIdea') { $('#cal .hd span').textContent = k === 2 ? '30 days · all opened together' : '30 days · 0 opened'; $('#cal .ft').textContent = k === 2 ? 'Day 30: everyone opens everything at once ✨' : 'Waiting for day 30…'; }
     if (id === 's6') { s.querySelectorAll('.st').forEach((st, j) => { st.classList.toggle('cur', j === k); st.classList.toggle('done', j < k); }); swapScreen($('#s6screen'), howScreens[k]); }
     if (id === 's8') featRender(k);
     if (id === 's9') themeGo(k);
@@ -610,7 +680,7 @@ html,body{touch-action:manipulation;-webkit-tap-highlight-color:transparent;-web
   }
   function sky(i) {
     const t = i / (slides.length - 1);
-    $('#sunwrap').style.transform = `translateY(${1130 - t * 300}px)`;
+    $('#sunwrap').style.transform = `translateY(${1130 - t * 230}px)`;
     $('#stars').style.opacity = String(.8 - t * .6);
     $$('#waves i').forEach((w, k) => w.style.transform = `translateY(${(1 - t) * 40 + k * 4}px)`);
   }
@@ -620,7 +690,6 @@ html,body{touch-action:manipulation;-webkit-tap-highlight-color:transparent;-web
     const swap = () => {
       if (prev && prev !== next) { prev.classList.remove('active'); prev.classList.add('leave'); setTimeout(() => prev.classList.remove('leave'), 800); }
       cur = i; step = k; next.classList.add('active'); applyStep(next, k); onEnter(next);
-      const sp = next.dataset.speaker; const chip = $('#chip'); chip.textContent = sp === 'Both' ? 'Both speakers' : sp; chip.className = sp === 'Speaker 1' ? 's1' : sp === 'Speaker 2' ? 's2' : '';
       $('#count').textContent = `${i + 1} / ${slides.length}`; $('#bar').style.width = `${((i + 1) / slides.length) * 100}%`;
       $('#notes').innerHTML = next.querySelector('aside.notes')?.innerHTML || '';
       sky(i);
@@ -657,7 +726,7 @@ html,body{touch-action:manipulation;-webkit-tap-highlight-color:transparent;-web
   addEventListener('touchstart', e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; swiped = false; }, {passive: true});
   addEventListener('touchend', e => { const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty; if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) { swiped = true; dx < 0 ? next() : prev(); } }, {passive: true});
   addEventListener('orientationchange', () => setTimeout(fit, 300));
-  stage.addEventListener('click', e => { if (swiped) { swiped = false; return; } if (cur === 6 || e.target.closest('button,.node,.win,.hot')) return; next(); });
+  stage.addEventListener('click', e => { if (swiped) { swiped = false; return; } if (slides[cur].id === 's7' || e.target.closest('button,.node,.win,.hot')) return; next(); });
   const t0 = Date.now(); setInterval(() => { const s = Math.floor((Date.now() - t0) / 1000); $('#timer').textContent = `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`; }, 1000);
   setTimeout(() => $('#help').style.opacity = 0, 7000);
 
