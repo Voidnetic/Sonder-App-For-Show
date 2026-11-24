@@ -246,7 +246,7 @@ html,body{touch-action:manipulation;-webkit-tap-highlight-color:transparent;-web
 /* 12 Market + model */
 #s12 .who{display:flex;flex-wrap:wrap;gap:12px;margin-top:6px;max-width:760px}
 #s12 .who span{font:800 22px var(--body);padding:12px 18px;background:var(--paper)}
-#s12 .tiers{position:absolute;right:100px;top:150px;width:620px;display:flex;flex-direction:column;gap:18px}
+#s12 .tiers{position:absolute;right:100px;top:200px;width:620px;display:flex;flex-direction:column;gap:18px}
 #s12 .tier{padding:24px 28px}
 #s12 .tier h3{font:400 44px var(--display);display:flex;justify-content:space-between;align-items:baseline}
 #s12 .tier h3 small{font:800 22px var(--body);color:var(--ink-soft)}
@@ -411,21 +411,7 @@ html,body{touch-action:manipulation;-webkit-tap-highlight-color:transparent;-web
     <div class="node sticker" data-n="gh" style="left:120px;top:560px;background:#fff"><h3>🛠️ Auto builds</h3><p>GitHub Actions</p></div>
     <p class="info" id="techInfo">Click any part to see what it does, or trace a photo's journey.</p>
     <button class="trace" id="traceBtn" type="button">▶ Trace a photo</button>
-    <aside class="notes"><b>Speaker 2.</b> "This isn't a mock-up, it's a live system." Click Trace a photo: it travels from the app to our server, which stores it in a private photo vault, and nobody gets a link to it until the capsule unlocks. Click nodes to explain: notifications for invites and unlocks, email codes for verification and password reset, and every change we make builds the Android and iPhone apps automatically.</aside>
-  </section>
-
-  <!-- 10b PLAN VS BUILD -->
-  <section class="slide" id="sPlan" data-speaker="Speaker 2">
-    <div class="pad"><div class="kicker">From design document to working app</div><h2>What we planned, what we built</h2></div>
-    <div class="tbl">
-      <div class="h"></div><div class="h">Planned</div><div class="h">Built</div>
-      <div class="a">⚙️ Backend</div><div class="pl">Firebase: Firestore, Storage, Cloud Functions</div><div class="bt" style="background:var(--peach)">Our own server (FastAPI) with PostgreSQL and a private Cloudflare R2 photo vault</div>
-      <div class="a">🔒 The lock (FR7)</div><div class="pl">Firebase Security Rules</div><div class="bt" style="background:var(--sun)">The server never hands out a photo link before unlock, and links expire after 1 hour</div>
-      <div class="a">📶 No signal (5.5)</div><div class="pl">Firestore offline persistence</div><div class="bt" style="background:var(--mintl)">An offline upload queue: photos wait privately on the phone and upload later</div>
-      <div class="a">🤖 AI &amp; early unlock</div><div class="pl">ML Kit tagging, AI captions, emergency unlock vote</div><div class="bt" style="background:var(--lav)">Moved to the roadmap so we could finish and test the core loop first</div>
-      <div class="a">✨ Extras</div><div class="pl">Not in the original plan</div><div class="bt" style="background:var(--pink)">Usernames, invite accept/decline, story replies, 4 themes, save to gallery, Past Vault</div>
-    </div>
-    <aside class="notes"><b>Speaker 2.</b> "Our design document planned Firebase. While building, we moved to our own server so we fully control the lock: the server simply never gives out a photo link before the unlock time." Walk the rows: the lock requirement (FR7) is met on the server; offline reliability became an upload queue; AI features and the early-unlock vote moved to the roadmap so the core loop could be finished and tested; and we added features users asked for while testing.</aside>
+    <aside class="notes"><b>Speaker 2.</b> "This isn't a mock-up, it's a live system." Click Trace a photo: it travels from the app to our server, which stores it in a private photo vault, and nobody gets a link to it until the capsule unlocks. Click nodes to explain: notifications for invites and unlocks, email codes for verification and password reset, and every change we make builds the Android and iPhone apps automatically. If asked why it isn't Firebase like in the design document: "We moved to our own server so we fully control the lock: the server never gives out a photo link before the unlock time. The AI features and the early-unlock vote are on our roadmap."</aside>
   </section>
 
   <!-- 11 TRUST -->
@@ -443,13 +429,12 @@ html,body{touch-action:manipulation;-webkit-tap-highlight-color:transparent;-web
     <div class="pad"><div class="kicker">Who it's for</div><h2 style="font-size:80px">Every moment<br>worth waiting for</h2>
       <p class="expl" style="max-width:720px;margin-bottom:22px">Young, smartphone-first people who go to events together and want every perspective in one place.</p>
       <div class="who"><span class="sticker" style="background:var(--peach)">👯 Friend groups &amp; cousins</span><span class="sticker" style="background:var(--lav)">🎓 University fests &amp; trips</span><span class="sticker" style="background:var(--mintl)">🎂 Birthdays</span><span class="sticker" style="background:var(--pink)">💍 Weddings</span><span class="sticker" style="background:#E1F5FE">🎵 Concerts</span><span class="sticker" style="background:var(--sun)">🎉 Nights out</span></div>
-      <p class="note">Prices are proposals for discussion.</p></div>
+      </div>
     <div class="tiers">
-      <div class="tier sticker" style="background:var(--paper)"><h3>Sonder <small>Free</small></h3><ul><li>Unlimited capsules with friends</li><li>Photos, chat, reveal, save to gallery</li></ul></div>
-      <div class="tier sticker" style="background:var(--sun)"><h3>Sonder+ <small>Rs 299 / month</small></h3><ul><li>Bigger groups and longer capsules</li><li>Full-resolution originals</li><li>Exclusive themes</li></ul></div>
-      <div class="tier sticker" style="background:var(--coral)"><h3>Print the reveal <small>from Rs 2,499</small></h3><ul><li>Turn a capsule into a printed photo book</li><li>Event capsules for weddings and parties</li></ul></div>
+      <div class="tier sticker" style="background:var(--paper)"><h3>Free for everyone</h3><ul><li>Every feature, free</li><li>No ads, no in-app purchases</li><li>Grows by friends inviting friends</li></ul></div>
+      <div class="tier sticker" style="background:var(--lav)"><h3>Ideas for later <small>if it takes off</small></h3><ul><li>Printed photo books of a reveal</li><li>Event capsules for weddings and university fests</li></ul></div>
     </div>
-    <aside class="notes"><b>Speaker 2.</b> "Our audience: friend groups and cousins, university students at fests and trips, and people at weddings and concerts." Then the model: free for everyone, so groups grow by invite; Sonder+ for power users; and the big one, printed photo books of a reveal, and paid event capsules for weddings. Prices are proposals; say so if asked.</aside>
+    <aside class="notes"><b>Speaker 2.</b> "Our audience: friend groups and cousins, university students at fests and trips, and people at weddings and concerts." Sonder is completely free: no ads and no in-app purchases. If it grows, there are ideas for later, like printed photo books of a reveal and event capsules for weddings and fests.</aside>
   </section>
 
   <!-- 13 PROOF -->
