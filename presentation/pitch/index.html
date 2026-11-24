@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#07091A">
 <title>Sonder Pitch</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
@@ -22,8 +26,8 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:#07091A;overflow:hidden}
 body{font-family:var(--body);color:var(--paper)}
-#vp{position:fixed;inset:0;display:grid;place-items:center}
-#stage{position:relative;width:1600px;height:900px;transform-origin:center;overflow:hidden;overflow:clip;background:var(--navy)}
+#vp{position:fixed;inset:0;overflow:hidden}
+#stage{position:absolute;left:50%;top:50%;width:1600px;height:900px;transform-origin:center;overflow:hidden;overflow:clip;background:var(--navy)}
 button{font-family:var(--body);cursor:pointer}
 button:focus-visible,[tabindex]:focus-visible{outline:4px solid var(--sun);outline-offset:3px}
 
@@ -70,6 +74,12 @@ aside.notes{display:none}
 #notes{position:fixed;left:50%;bottom:16px;transform:translate(-50%,140%);width:min(1100px,94vw);max-height:42vh;overflow:auto;z-index:100;background:rgba(14,17,40,.96);border:1.5px solid #3B4070;border-radius:18px;padding:18px 22px;font:500 18px/1.5 var(--body);color:#E8E6F7;transition:transform .35s cubic-bezier(.2,.8,.2,1)}
 #notes.open{transform:translate(-50%,0)}#notes b{color:var(--sun)}
 #timer{position:fixed;right:16px;top:14px;z-index:100;font:800 18px var(--body);background:rgba(14,17,40,.9);border:1.5px solid #3B4070;border-radius:12px;padding:8px 12px;display:none;font-variant-numeric:tabular-nums}
+html,body{touch-action:manipulation;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
+#rotate{display:none;position:fixed;inset:0;z-index:300;background:#07091A;color:#fff;place-items:center;text-align:center;font:700 20px var(--body);padding:30px}
+#rotate .ph{width:54px;height:90px;border:4px solid #FFC94A;border-radius:12px;margin:0 auto 22px;animation:turn 2s ease-in-out infinite}
+@keyframes turn{0%,25%{transform:rotate(0)}60%,100%{transform:rotate(-90deg)}}
+@media (pointer:coarse) and (orientation:portrait){#rotate{display:grid}}
+@media (pointer:coarse){#help .keys{display:none}#help .tap{display:inline!important}#nav button{padding:12px 18px;font-size:18px}}
 #help{position:fixed;left:16px;bottom:14px;z-index:100;font:600 13px var(--body);color:rgba(255,255,255,.55);transition:opacity .6s}
 #nav{position:fixed;right:16px;bottom:14px;z-index:100;display:flex;gap:8px}
 #nav button{font:800 15px var(--body);background:rgba(14,17,40,.85);color:#fff;border:1.5px solid #3B4070;border-radius:12px;padding:9px 14px}
@@ -417,14 +427,15 @@ aside.notes{display:none}
 
 <div id="notes" role="region" aria-label="Speaker notes"></div>
 <div id="timer">00:00</div>
-<p id="help">→ / Space next · ← back · N notes · T timer · F full screen</p>
+<p id="help"><span class="keys">→ / Space next · ← back · N notes · T timer · F full screen</span><span class="tap" style="display:none">Tap or swipe ← to go on · swipe → to go back</span></p>
+<div id="rotate"><div><div class="ph"></div>Turn your phone sideways<br><span style="font-weight:500;font-size:15px;opacity:.7">The presentation is made for landscape</span></div></div>
 <div id="nav"><button type="button" id="bPrev" aria-label="Previous">←</button><button type="button" id="bNext" aria-label="Next">→</button></div>
 
 <script>
 (() => {
   const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
   const stage = $('#stage');
-  const fit = () => { const k = Math.min(innerWidth / 1600, innerHeight / 900); stage.style.transform = `scale(${k})`; };
+  const fit = () => { const k = Math.min(innerWidth / 1600, innerHeight / 900); stage.style.transform = `translate(-50%,-50%) scale(${k})`; };
   addEventListener('resize', fit); fit();
   // A focused button must never scroll the stage itself.
   stage.addEventListener('scroll', () => { stage.scrollTop = 0; stage.scrollLeft = 0; });
@@ -642,7 +653,11 @@ aside.notes{display:none}
   });
   $('#bNext').addEventListener('click', e => { e.stopPropagation(); next(); });
   $('#bPrev').addEventListener('click', e => { e.stopPropagation(); prev(); });
-  stage.addEventListener('click', e => { if (cur === 6 || e.target.closest('button,.node,.win,.hot')) return; next(); });
+  let tx = 0, ty = 0, swiped = false;
+  addEventListener('touchstart', e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; swiped = false; }, {passive: true});
+  addEventListener('touchend', e => { const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty; if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) { swiped = true; dx < 0 ? next() : prev(); } }, {passive: true});
+  addEventListener('orientationchange', () => setTimeout(fit, 300));
+  stage.addEventListener('click', e => { if (swiped) { swiped = false; return; } if (cur === 6 || e.target.closest('button,.node,.win,.hot')) return; next(); });
   const t0 = Date.now(); setInterval(() => { const s = Math.floor((Date.now() - t0) / 1000); $('#timer').textContent = `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`; }, 1000);
   setTimeout(() => $('#help').style.opacity = 0, 7000);
 
