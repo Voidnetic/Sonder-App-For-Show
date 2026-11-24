@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sonder Theme Previews</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+/* One visual world: Sonder's own palette. Layout: theme tabs, a 16:9 stage that scales to fit, controls below. */
+:root{
+  --cream:#FAF9F6; --ink:#1C1C1C; --ink-soft:#4A4A4A; --navy:#1E2240; --navy-deep:#141A35;
+  --lav:#E6E6FA; --peri:#B9C4FF; --coral:#FF9F80; --mint:#E0F8E6; --sun:#FFD84D; --peach:#FFE5B4; --sky:#E1F5FE;
+  --display:"Bagel Fat One", "Arial Rounded MT Bold", system-ui, sans-serif;
+  --body:"Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:#121218;color:#F4F2EC;font-family:var(--body);display:flex;flex-direction:column;align-items:center;gap:14px;padding:18px 16px 22px}
+header{width:min(1280px,100%);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+header h1{font-family:var(--display);font-weight:400;font-size:26px;letter-spacing:.2px}
+header p{color:#A9A7B5;font-size:14px}
+.tabs{display:flex;flex-wrap:wrap;gap:8px}
+.tabs button{font:600 14px var(--body);color:#E9E7F2;background:#22222B;border:1.5px solid #34343F;border-radius:999px;padding:9px 16px;cursor:pointer;transition:background .2s,border-color .2s,color .2s}
+.tabs button[aria-selected="true"]{background:var(--sun);color:var(--ink);border-color:var(--sun)}
+.tabs button:focus-visible,.ctrl button:focus-visible{outline:3px solid var(--peri);outline-offset:2px}
+.viewport{width:min(1280px,100%);aspect-ratio:16/9;position:relative;border-radius:18px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5);background:#000}
+.stage{position:absolute;left:0;top:0;width:1600px;height:900px;transform-origin:0 0}
+.theme{position:absolute;inset:0;display:none;overflow:hidden}
+.theme.active{display:block}
+.ctrl{width:min(1280px,100%);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.ctrl .nav{display:flex;gap:8px;align-items:center}
+.ctrl button{font:700 14px var(--body);background:#22222B;color:#F4F2EC;border:1.5px solid #34343F;border-radius:12px;padding:10px 16px;cursor:pointer}
+.ctrl button.primary{background:var(--sun);color:var(--ink);border-color:var(--sun)}
+.dots{display:flex;gap:6px}
+.dots i{width:9px;height:9px;border-radius:50%;background:#3A3A46;transition:background .3s,transform .3s}
+.dots i.on{background:var(--sun);transform:scale(1.25)}
+.about{color:#B9B6C8;font-size:14px;max-width:760px;line-height:1.45}
+.about b{color:#fff}
+
+/* Shared pieces */
+.phone{position:absolute;border-radius:54px;background:#0E0E12;padding:12px;box-shadow:0 40px 80px rgba(0,0,0,.35)}
+.phone .screen{position:relative;width:100%;height:100%;border-radius:42px;overflow:hidden;background:#fff}
+.phone .screen img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top}
+.sticker{border:3px solid var(--ink);border-radius:28px;box-shadow:7px 7px 0 var(--ink);color:var(--ink)}
+.kicker{font:800 18px var(--body);letter-spacing:3px;text-transform:uppercase}
+h2.big{font-family:var(--display);font-weight:400;line-height:1;text-wrap:balance}
+
+/* ============ 1 · PHONE STAGE ============ */
+#t1{background:var(--cream);color:var(--ink);transition:background-color .9s ease}
+#t1 .phone{left:860px;top:70px;width:380px;height:822px;transition:transform .9s cubic-bezier(.2,.9,.25,1.15)}
+#t1 .screen img{transition:transform .7s cubic-bezier(.65,0,.35,1),opacity .7s}
+#t1 .screen img.in{transform:translateX(0)} #t1 .screen img.out-left{transform:translateX(-102%)} #t1 .screen img.wait-right{transform:translateX(102%)}
+#t1 .copy{position:absolute;left:110px;top:150px;width:640px}
+#t1 .copy > *{opacity:0;transform:translateY(26px) scale(.96)}
+#t1 .copy.show > *{animation:pop .7s cubic-bezier(.2,1.4,.4,1) forwards}
+#t1 .copy.show > *:nth-child(2){animation-delay:.08s}#t1 .copy.show > *:nth-child(3){animation-delay:.16s}#t1 .copy.show > *:nth-child(4){animation-delay:.24s}
+@keyframes pop{to{opacity:1;transform:none}}
+#t1 h2.big{font-size:120px;margin:14px 0 18px}
+#t1 .lead{font-size:30px;font-weight:600;line-height:1.3;color:var(--ink);max-width:600px}
+#t1 .chips{display:flex;flex-wrap:wrap;gap:14px;margin-top:30px}
+#t1 .chips span{font:800 22px var(--body);padding:12px 20px;background:#fff}
+#t1 .floaty{position:absolute;font:800 22px var(--body);padding:14px 20px;background:var(--sun);transform:rotate(-6deg) scale(0);transition:transform .6s cubic-bezier(.2,1.5,.4,1) .4s}
+#t1 .floaty.on{transform:rotate(-6deg) scale(1)}
+
+/* ============ 2 · ZOOM INTO THE APP ============ */
+#t2{background:radial-gradient(ellipse at 30% 40%,#2A2F5A 0%,var(--navy) 55%,var(--navy-deep) 100%)}
+#t2 .world{position:absolute;left:0;top:0;width:900px;transform-origin:0 0;transition:transform 1.4s cubic-bezier(.65,0,.25,1)}
+#t2 .world img{width:900px;display:block;border-radius:60px;border:14px solid #0E0E12;box-shadow:0 40px 90px rgba(0,0,0,.45)}
+#t2 .focus{position:absolute;border:5px solid var(--sun);border-radius:34px;box-shadow:0 0 0 2000px rgba(20,26,53,.55),0 0 40px rgba(255,216,77,.6);opacity:0;transition:opacity .5s .9s}
+#t2 .focus.on{opacity:1}
+#t2 .card{position:absolute;right:90px;top:50%;width:520px;padding:40px 42px;background:var(--cream);transform:translate(40px,-50%) rotate(2deg);opacity:0;transition:opacity .5s,transform .6s cubic-bezier(.2,1.3,.4,1)}
+#t2 .card.on{opacity:1;transform:translate(0,-50%) rotate(-1.5deg);transition-delay:1.05s}
+#t2 .card .kicker{color:#7B6CF6}
+#t2 .card h2.big{font-size:70px;margin:10px 0 14px}
+#t2 .card p{font-size:24px;line-height:1.4;font-weight:600;color:var(--ink-soft)}
+#t2 .title{position:absolute;right:110px;top:240px;width:560px;color:#FFF6E8;transition:opacity .6s}
+#t2 .title h2.big{font-size:150px}
+#t2 .title p{font:600 30px var(--body);color:var(--sun);margin-top:12px}
+#t2 .title.hide{opacity:0}
+
+/* ============ 3 · STICKER STACK ============ */
+#t3{background:var(--cream);background-image:radial-gradient(#E3DFD3 1.6px,transparent 1.6px);background-size:26px 26px}
+#t3 .deck{position:absolute;left:120px;top:90px;width:1360px;height:720px}
+#t3 .sc{position:absolute;inset:0;padding:70px 80px;transition:transform .75s cubic-bezier(.2,.9,.3,1.1),opacity .6s}
+#t3 .sc.fly{transform:translate(-1400px,-260px) rotate(-28deg)!important;opacity:0}
+#t3 .sc h2.big{font-size:104px;margin:12px 0 18px}
+#t3 .sc p{font:600 28px var(--body);line-height:1.35;max-width:620px}
+#t3 .sc .phone{right:80px;top:-40px;width:300px;height:650px;transform:rotate(5deg);border:3px solid var(--ink)}
+#t3 .grid4{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:26px;max-width:700px}
+#t3 .grid4 div{background:#fff;border:3px solid var(--ink);border-radius:22px;padding:16px 20px;box-shadow:5px 5px 0 var(--ink);font:800 24px var(--body)}
+#t3 .grid4 small{display:block;font:600 17px var(--body);color:var(--ink-soft);margin-top:4px}
+#t3 .num{font-family:var(--display);font-size:34px;margin-right:8px}
+
+/* ============ 4 · SHUTTER REVEAL ============ */
+@property --r{syntax:"<length>";inherits:false;initial-value:1100px}
+@property --spin{syntax:"<angle>";inherits:false;initial-value:0deg}
+#t4{background:var(--navy)}
+#t4 .sl{position:absolute;inset:0;opacity:0;pointer-events:none}
+#t4 .sl.on{opacity:1;pointer-events:auto}
+#t4 .iris{position:absolute;inset:0;z-index:5;pointer-events:none;--r:1100px;
+  background:conic-gradient(from var(--spin),#0B0E1F 0 20deg,#11152B 20deg 60deg,#0B0E1F 60deg 80deg,#11152B 80deg 120deg,#0B0E1F 120deg 140deg,#11152B 140deg 180deg,#0B0E1F 180deg 200deg,#11152B 200deg 240deg,#0B0E1F 240deg 260deg,#11152B 260deg 300deg,#0B0E1F 300deg 320deg,#11152B 320deg 360deg);
+  -webkit-mask:radial-gradient(circle at 50% 50%,transparent var(--r),#000 calc(var(--r) + 2px));mask:radial-gradient(circle at 50% 50%,transparent var(--r),#000 calc(var(--r) + 2px))}
+#t4 .iris.close{animation:irisClose .45s cubic-bezier(.7,0,.9,.4) forwards}
+#t4 .iris.open{animation:irisOpen .7s cubic-bezier(.1,.6,.3,1) forwards}
+@keyframes irisClose{from{--r:1100px;--spin:0deg}to{--r:0px;--spin:60deg}}
+@keyframes irisOpen{from{--r:0px;--spin:60deg}to{--r:1100px;--spin:0deg}}
+#t4 .flash{position:absolute;inset:0;background:#fff;opacity:0;z-index:6;pointer-events:none}
+#t4 .flash.go{animation:flash .35s ease-out}
+@keyframes flash{0%{opacity:.85}100%{opacity:0}}
+#t4 .center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#FFF6E8}
+#t4 .center img.icon{width:220px;border-radius:50px;box-shadow:0 30px 70px rgba(0,0,0,.45);margin-bottom:26px}
+#t4 h2.big{font-size:150px}
+#t4 .tag{font:600 30px var(--body);color:var(--sun);margin-top:12px}
+#t4 .locked{position:absolute;left:120px;top:160px;width:620px;color:#FFF6E8}
+#t4 .locked h2.big{font-size:96px;margin:12px 0 20px}
+#t4 .locked p{font:600 26px var(--body);color:#C9C6E3;line-height:1.4}
+#t4 .odo{display:flex;gap:10px;margin-top:34px}
+#t4 .odo span{width:78px;height:104px;border-radius:18px;background:#FFF6E8;color:var(--ink);font:800 70px var(--body);display:grid;place-items:center;border:3px solid var(--ink);box-shadow:6px 6px 0 #0B0E1F;overflow:hidden}
+#t4 .odo span.colon{width:24px;background:none;border:none;box-shadow:none;color:#FFF6E8}
+#t4 .odo b{display:block;font-weight:800;transition:transform .5s cubic-bezier(.2,1.2,.4,1)}
+#t4 .phone{right:170px;top:70px;width:370px;height:800px}
+#t4 .phone .screen img{transition:filter 1.2s ease .5s,transform 1.2s ease .5s}
+#t4 .blurred .screen img{filter:blur(22px) saturate(1.2);transform:scale(1.08)}
+#t4 .lockchip{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font:800 24px var(--body);background:rgba(255,255,255,.9);color:var(--ink);padding:12px 20px;border-radius:999px;border:3px solid var(--ink);transition:opacity .4s .4s,transform .5s .4s}
+#t4 .unlocked .lockchip{opacity:0;transform:translate(-50%,-50%) scale(1.6)}
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:.01ms!important;transition-duration:.01ms!important;animation-delay:0s!important;transition-delay:0s!important}
+}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>Sonder: theme previews with live transitions</h1><p>Pick a theme, then press Next (or → / Space) to see how slides change.</p></div>
+  <nav class="tabs" role="tablist" aria-label="Themes">
+    <button role="tab" id="tab-t1" aria-selected="true" data-t="t1">1 · Phone Stage</button>
+    <button role="tab" id="tab-t2" aria-selected="false" data-t="t2">2 · Zoom into the App</button>
+    <button role="tab" id="tab-t3" aria-selected="false" data-t="t3">3 · Sticker Stack</button>
+    <button role="tab" id="tab-t4" aria-selected="false" data-t="t4">4 · Shutter Reveal</button>
+  </nav>
+</header>
+
+<div class="viewport" id="viewport"><div class="stage" id="stage">
+
+  <!-- 1 PHONE STAGE -->
+  <section class="theme active" id="t1" aria-label="Phone Stage">
+    <div class="copy show" id="t1copy"></div>
+    <div class="phone sticker" id="t1phone"><div class="screen" id="t1screen"><img class="in" src="img/login.jpg" alt="Sonder login screen"></div></div>
+    <div class="floaty sticker" id="t1floaty"></div>
+  </section>
+
+  <!-- 2 ZOOM INTO THE APP -->
+  <section class="theme" id="t2" aria-label="Zoom into the App">
+    <div class="world" id="t2world"><img src="img/home-big.jpg" alt="Sonder Home screen"><div class="focus" id="t2focus"></div></div>
+    <div class="title" id="t2title"><h2 class="big">Sonder</h2><p>Capture now. Reveal later.</p></div>
+    <div class="card sticker" id="t2card"><div class="kicker" id="t2k"></div><h2 class="big" id="t2h"></h2><p id="t2p"></p></div>
+  </section>
+
+  <!-- 3 STICKER STACK -->
+  <section class="theme" id="t3" aria-label="Sticker Stack"><div class="deck" id="t3deck"></div></section>
+
+  <!-- 4 SHUTTER REVEAL -->
+  <section class="theme" id="t4" aria-label="Shutter Reveal">
+    <div class="sl on" data-i="0"><div class="center"><img class="icon" src="img/icon.png" alt="Sonder app icon"><h2 class="big">Sonder</h2><p class="tag">Capture now. Reveal later.</p></div></div>
+    <div class="sl" data-i="1">
+      <div class="locked"><div class="kicker" style="color:var(--sun)">Locked until the reveal</div><h2 class="big">Nobody peeks.</h2><p>Every photo in a capsule stays hidden from everyone, even the person who made it, until the countdown hits zero.</p>
+        <div class="odo" id="t4odo"></div></div>
+      <div class="phone blurred" id="t4lockphone"><div class="screen"><img src="img/r-vault.jpg" alt="Past Vault screen"><div class="lockchip">🔒 Hidden</div></div></div>
+    </div>
+    <div class="sl" data-i="2">
+      <div class="locked"><div class="kicker" style="color:var(--sun)">The reveal</div><h2 class="big">Open it together.</h2><p>When the timer ends the capsule turns into "Ready to Open". Tap, and everyone's photos appear at once.</p></div>
+      <div class="phone blurred" id="t4openphone"><div class="screen"><img src="img/ready.jpg" alt="Ready to Open on Home"><div class="lockchip">🔒 04:55:33</div></div></div>
+    </div>
+    <div class="sl" data-i="3"><div class="center"><h2 class="big">Thank you</h2><p class="tag">Questions?</p></div></div>
+    <div class="iris" id="t4iris"></div><div class="flash" id="t4flash"></div>
+  </section>
+
+</div></div>
+
+<div class="ctrl">
+  <p class="about" id="about"></p>
+  <div class="nav"><div class="dots" id="dots" aria-hidden="true"></div>
+    <button type="button" id="prev" aria-label="Previous slide">← Back</button>
+    <button type="button" id="next" class="primary" aria-label="Next slide">Next →</button></div>
+</div>
+
+<script>
+(() => {
+  const stage = document.getElementById('stage'), vp = document.getElementById('viewport');
+  const fit = () => { stage.style.transform = `scale(${vp.clientWidth / 1600})`; };
+  addEventListener('resize', fit); fit();
+
+  const about = {
+    t1: '<b>Phone Stage.</b> The phone never leaves the screen: each slide swipes the app to the next screen like real navigation, the background shifts colour, and the words pop in like the app\'s own stickers.',
+    t2: '<b>Zoom into the App.</b> One giant Home screen is the whole presentation. Each slide flies the camera into a part of it (the invite, the stats, "Ready to Open") and a sticker card explains it.',
+    t3: '<b>Sticker Stack.</b> Every slide is one of the app\'s sticker cards in a pile. Next flicks the top card away and the one underneath settles into place.',
+    t4: '<b>Shutter Reveal.</b> The app\'s camera shutter is the transition: the aperture closes, flashes, and opens on the next slide. Locked screens un-blur like a capsule opening, and the countdown rolls.'
+  };
+
+  /* ---------- 1 · Phone Stage ---------- */
+  const t1 = [
+    {bg:'#FAF9F6', img:'login', html:'<div class="kicker">A time capsule for friends</div><h2 class="big">Sonder</h2><p class="lead">Capture now. Reveal later.</p>'},
+    {bg:'#FFD9E6', img:'moment', html:'<div class="kicker">While it counts down</div><h2 class="big" style="font-size:92px">Capture,<br>don\'t peek.</h2><div class="chips"><span class="sticker">📸 Add photos</span><span class="sticker" style="background:#E6E6FA">🔒 All hidden</span><span class="sticker" style="background:#E0F8E6">💬 Chat live</span></div>', floaty:['04:55:33 to go', 1160, 120]},
+    {bg:'#FFF3C4', img:'ready', html:'<div class="kicker">When the timer ends</div><h2 class="big" style="font-size:92px">Ready to<br>Open ✨</h2><p class="lead">The capsule waits on Home with a glowing badge until you open it together.</p>', floaty:['Tap to open 🎁', 760, 640]},
+    {bg:'#E6E6FA', img:'r-vault', html:'<div class="kicker">After the reveal</div><h2 class="big" style="font-size:92px">The Past<br>Vault</h2><p class="lead">Every opened capsule lives here: slideshow, reactions, save to your gallery.</p>'}
+  ];
+  let t1i = 0;
+  function t1render(i, dir) {
+    const s = t1[i], th = document.getElementById('t1');
+    th.style.backgroundColor = s.bg;
+    const copy = document.getElementById('t1copy');
+    copy.classList.remove('show'); void copy.offsetWidth; copy.innerHTML = s.html; copy.classList.add('show');
+    const scr = document.getElementById('t1screen'), old = scr.querySelector('img.in');
+    const img = new Image(); img.src = `img/${s.img}.jpg`; img.alt = 'Sonder app screen';
+    img.className = dir < 0 ? 'out-left' : 'wait-right'; scr.appendChild(img);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      img.className = 'in';
+      if (old) { old.className = dir < 0 ? 'wait-right' : 'out-left'; setTimeout(() => old.remove(), 750); }
+    }));
+    const ph = document.getElementById('t1phone');
+    ph.style.transform = `rotate(${[0, 3, -3, 2][i]}deg) translateY(${i % 2 ? -8 : 0}px)`;
+    const f = document.getElementById('t1floaty');
+    f.classList.remove('on');
+    if (s.floaty) { f.textContent = s.floaty[0]; f.style.left = s.floaty[1] + 'px'; f.style.top = s.floaty[2] + 'px'; setTimeout(() => f.classList.add('on'), 30); }
+  }
+
+  /* ---------- 2 · Zoom ---------- */
+  // Focus boxes in % of the Home screenshot (x, y, w, h).
+  const t2 = [
+    {f:null},
+    {f:[6,27,90,27], k:'Invites', h:'You choose to join', p:'Friends add you to a capsule, and you tap Accept or Decline. Nothing is shared until you do.'},
+    {f:[6,57,90,17], k:'Live counts', h:'Always up to date', p:'How many capsules are counting down and how many memories are locked, right on Home.'},
+    {f:[6,74,90,15], k:'The best moment', h:'Ready to Open', p:'When a countdown ends, the capsule stays on Home with a glowing badge until you open it together.'}
+  ];
+  function t2render(i) {
+    const s = t2[i], world = document.getElementById('t2world'), focus = document.getElementById('t2focus');
+    const W = 900, H = 1948;
+    const card = document.getElementById('t2card'), title = document.getElementById('t2title');
+    card.classList.remove('on'); focus.classList.remove('on');
+    if (!s.f) {
+      const sc = 820 / H; world.style.transform = `translate(160px,40px) scale(${sc})`;
+      title.classList.remove('hide'); return;
+    }
+    title.classList.add('hide');
+    const [x, y, w, h] = s.f.map(v => v / 100);
+    const fx = x * W, fy = y * H, fw = w * W, fh = h * H;
+    const sc = Math.min(860 / fw, 600 / fh);
+    const tx = 80 + (860 - fw * sc) / 2 - fx * sc, ty = 450 - (fy + fh / 2) * sc;
+    world.style.transform = `translate(${tx}px,${ty}px) scale(${sc})`;
+    Object.assign(focus.style, {left: fx - 10 + 'px', top: fy - 10 + 'px', width: fw + 20 + 'px', height: fh + 20 + 'px'});
+    document.getElementById('t2k').textContent = s.k; document.getElementById('t2h').textContent = s.h; document.getElementById('t2p').textContent = s.p;
+    focus.classList.add('on'); card.classList.add('on');
+  }
+
+  /* ---------- 3 · Sticker Stack ---------- */
+  const t3 = [
+    {bg:'#B9C4FF', html:'<div class="kicker">A time capsule for friends</div><h2 class="big">Sonder</h2><p>Everyone adds photos to a shared capsule. Nobody sees them until the countdown ends.</p>', img:'r-home'},
+    {bg:'#FFE5B4', html:'<div class="kicker">How it works</div><h2 class="big" style="font-size:84px">Four steps</h2><div class="grid4"><div><span class="num">1</span>Create<small>Pick when it unlocks</small></div><div><span class="num">2</span>Capture<small>Photos stay hidden</small></div><div><span class="num">3</span>Count down<small>Chat while you wait</small></div><div><span class="num">4</span>Reveal<small>Open it together</small></div></div>'},
+    {bg:'#E0F8E6', html:'<div class="kicker">Made for real life</div><h2 class="big" style="font-size:84px">Works with<br>no signal</h2><p>Photos save instantly and upload by themselves when you\'re back online.</p>', img:'moment'},
+    {bg:'#FF9F80', html:'<div class="kicker">Four looks</div><h2 class="big" style="font-size:84px">Your vibe,<br>your theme</h2><p>Light, Pastel Glow, Northern Lights and Aurora Blossom.</p>', img:'theme-aurora'}
+  ];
+  const deck = document.getElementById('t3deck');
+  t3.forEach((s, i) => {
+    const c = document.createElement('div'); c.className = 'sc sticker'; c.style.background = s.bg;
+    c.innerHTML = s.html + (s.img ? `<div class="phone sticker"><div class="screen"><img src="img/${s.img}.jpg" alt="Sonder app screen"></div></div>` : '');
+    deck.appendChild(c);
+  });
+  function t3render(i) {
+    [...deck.children].forEach((c, k) => {
+      const depth = k - i;
+      c.classList.toggle('fly', depth < 0);
+      c.style.zIndex = 100 - k;
+      if (depth >= 0) c.style.transform = `translate(${depth * 16}px,${depth * 18}px) rotate(${[0, -2.5, 2, -1.5][k] + depth * 1.5}deg) scale(${1 - depth * .02})`;
+    });
+  }
+
+  /* ---------- 4 · Shutter ---------- */
+  const odo = document.getElementById('t4odo');
+  '04:55:33'.split('').forEach(ch => { const s = document.createElement('span'); if (ch === ':') { s.className = 'colon'; s.textContent = ':'; } else s.innerHTML = `<b>${ch}</b>`; odo.appendChild(s); });
+  let tick = null;
+  function rollOdo() {
+    clearInterval(tick); let secs = 4 * 3600 + 55 * 60 + 33;
+    tick = setInterval(() => {
+      secs--; const t = [Math.floor(secs / 3600), Math.floor(secs / 60) % 60, secs % 60].map(n => String(n).padStart(2, '0')).join(':');
+      [...odo.children].forEach((s, k) => { if (s.className !== 'colon' && s.firstChild.textContent !== t[k]) { const b = s.firstChild; b.style.transform = 'translateY(-110%)'; setTimeout(() => { b.textContent = t[k]; b.style.transition = 'none'; b.style.transform = 'translateY(110%)'; requestAnimationFrame(() => { b.style.transition = ''; b.style.transform = 'none'; }); }, 220); } });
+    }, 1000);
+  }
+  let t4busy = false;
+  function t4render(i, first) {
+    const slides = [...document.querySelectorAll('#t4 .sl')], iris = document.getElementById('t4iris'), flash = document.getElementById('t4flash');
+    const show = () => {
+      slides.forEach(s => s.classList.toggle('on', +s.dataset.i === i));
+      const lp = document.getElementById('t4lockphone'), op = document.getElementById('t4openphone');
+      lp.classList.add('blurred'); op.classList.add('blurred'); op.classList.remove('unlocked');
+      if (i === 1) rollOdo(); else clearInterval(tick);
+      if (i === 2) setTimeout(() => { op.classList.remove('blurred'); op.classList.add('unlocked'); }, 300);
+    };
+    if (first) { show(); return; }
+    t4busy = true; iris.className = 'iris close';
+    setTimeout(() => { show(); flash.classList.remove('go'); void flash.offsetWidth; flash.classList.add('go'); iris.className = 'iris open'; setTimeout(() => t4busy = false, 650); }, 470);
+  }
+
+  /* ---------- Controls ---------- */
+  const themes = {t1:{n:t1.length, r:t1render}, t2:{n:t2.length, r:t2render}, t3:{n:t3.length, r:t3render}, t4:{n:4, r:t4render}};
+  let cur = 't1', idx = {t1:0, t2:0, t3:0, t4:0};
+  const dots = document.getElementById('dots');
+  function drawDots() { dots.innerHTML = ''; for (let k = 0; k < themes[cur].n; k++) { const d = document.createElement('i'); if (k === idx[cur]) d.className = 'on'; dots.appendChild(d); } }
+  function go(d) {
+    if (cur === 't4' && t4busy) return;
+    const n = themes[cur].n, ni = (idx[cur] + d + n) % n;
+    idx[cur] = ni; themes[cur].r(ni, d); drawDots();
+  }
+  function pick(t) {
+    cur = t;
+    document.querySelectorAll('.theme').forEach(s => s.classList.toggle('active', s.id === t));
+    document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.t === t));
+    document.getElementById('about').innerHTML = about[t];
+    themes[t].r(idx[t], 1, true); drawDots();
+  }
+  document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => pick(b.dataset.t)));
+  document.getElementById('next').addEventListener('click', () => go(1));
+  document.getElementById('prev').addEventListener('click', () => go(-1));
+  vp.addEventListener('click', () => go(1));
+  addEventListener('keydown', e => { if (['ArrowRight', ' ', 'PageDown'].includes(e.key)) { e.preventDefault(); go(1); } if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); go(-1); } });
+
+  t1render(0, 1); t2render(0); t3render(0); t4render(0, true); pick('t1');
+})();
+</script>
+</body>
+</html>
