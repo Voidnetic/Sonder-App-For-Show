@@ -11,11 +11,13 @@ from app.groups import accept_invite, add_member, delete_moment, leave_moment, m
 from app.models.memory import Memory
 from app.models.moment import INVITED, JOINED, Moment, moment_participants
 from app.models.user import User
-from app.schemas.moment import AddParticipantRequest, CreateMomentRequest, MomentResponse
+from app.models.message import Message, MessageType
+from app.schemas.moment import AddParticipantRequest, CreateMomentRequest, EditMomentRequest, MomentResponse
 from app.schemas.user import UserResponse
 from app.push import notify_users
 from app.relationships import friend_ids
 from app.utils import to_utc
+from app.ws_manager import manager
 
 router = APIRouter(prefix="/moments", tags=["Moments"])
 
@@ -31,14 +33,13 @@ def _to_response(moment: Moment, db: Session, viewer: User) -> MomentResponse:
     is_locked = to_utc(moment.unlock_at) > now
     mine = membership(moment.id, viewer.id, db)
     inviter = db.get(User, mine.invited_by) if mine is not None and mine.invited_by else None
-    pending_count = (
-        db.scalar(
-            select(func.count())
-            .select_from(moment_participants)
-            .where(moment_participants.c.moment_id == moment.id, moment_participants.c.status == INVITED)
-        )
-        or 0
-    )
+    invited = db.scalars(
+        select(User)
+        .join(moment_participants, moment_participants.c.user_id == User.id)
+        .where(moment_participants.c.moment_id == moment.id, moment_participants.c.status == INVITED)
+        .order_by(User.name)
+    ).all()
+    pending_count = len(invited)
     opened_at = mine.opened_at if mine is not None else None
     return MomentResponse(
         id=moment.id,
@@ -58,6 +59,7 @@ def _to_response(moment: Moment, db: Session, viewer: User) -> MomentResponse:
         opened_at=opened_at,
         is_ready=not is_locked and opened_at is None,
         pending_count=pending_count,
+        invited=[UserResponse.model_validate(u) for u in invited],
     )
 
 
@@ -223,6 +225,8 @@ def add_participant(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Moment not found")
     if moment.creator_id != current_user.id:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Only the creator can add participants")
+    if to_utc(moment.unlock_at) <= datetime.now(timezone.utc):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "This moment has already unlocked")
 
     new_participant = db.get(User, body.user_id)
     if new_participant is None:
@@ -234,6 +238,69 @@ def add_participant(
         db.commit()
         db.refresh(moment)
         _invite_push(background, moment, current_user, [new_participant.id])
+    return _to_response(moment, db, current_user)
+
+
+@router.patch(
+    "/{moment_id}",
+    response_model=MomentResponse,
+    summary="Edit a moment before it unlocks: rename it, change the reveal time, invite more friends (creator only)",
+)
+async def edit_moment(
+    moment_id: uuid.UUID,
+    body: EditMomentRequest,
+    background: BackgroundTasks,
+    current_user: User = Depends(get_verified_user),
+    db: Session = Depends(get_db),
+) -> MomentResponse:
+    moment = _get_moment_for_participant(moment_id, current_user, db)
+    if moment.creator_id != current_user.id:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Only the person who made this moment can edit it")
+    now = datetime.now(timezone.utc)
+    if to_utc(moment.unlock_at) <= now:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "This moment has already unlocked, so it can't be edited")
+
+    notes: list[str] = []
+    if body.title is not None and body.title.strip() and body.title.strip() != moment.title:
+        moment.title = body.title.strip()
+        notes.append(f"{current_user.name} renamed the moment to “{moment.title}”")
+    if body.unlock_at is not None and to_utc(body.unlock_at) != to_utc(moment.unlock_at):
+        if to_utc(body.unlock_at) <= now:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "Pick a reveal time in the future")
+        moment.unlock_at = body.unlock_at
+        notes.append(f"{current_user.name} changed the reveal time")
+
+    changes = list(notes)  # rename / new time: worth a push to everyone in it
+    added: list[User] = []
+    invite_ids = set(body.add_participant_ids) - {current_user.id}
+    if invite_ids:
+        if invite_ids - friend_ids(current_user.id, db):
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "You can only add friends to a moment")
+        for user_id in invite_ids:
+            if add_member(moment.id, user_id, db, invited_by=current_user.id):
+                added.append(db.get(User, user_id))
+    if added:
+        people = [u.name for u in added]
+        names = people[0] if len(people) == 1 else ", ".join(people[:-1]) + " and " + people[-1]
+        notes.append(f"{current_user.name} invited {names}")
+
+    messages = [Message(moment_id=moment.id, author_id=None, type=MessageType.SYSTEM, text=t) for t in notes]
+    db.add_all(messages)
+    db.commit()
+    db.refresh(moment)
+
+    _invite_push(background, moment, current_user, [u.id for u in added])
+    others = [p.id for p in moment.participants if p.id != current_user.id]
+    if others and changes:
+        background.add_task(
+            notify_users, others, moment.title, " · ".join(changes), {"type": "moment_updated", "moment_id": str(moment.id)}
+        )
+    if messages:
+        from app.routers.hangout import _to_response as message_response
+
+        for m in messages:
+            db.refresh(m)
+            await manager.broadcast(moment.id, message_response(m, db).model_dump(mode="json"))
     return _to_response(moment, db, current_user)
 
 

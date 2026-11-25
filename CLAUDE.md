@@ -18,10 +18,10 @@ App ID: `com.mhcorps.sonder`.
 - Push only to branch `claude/wonderful-johnson-i2ajge`. Don't open PRs unless asked.
 
 ## Code layout
-- `lib/`: Flutter app (3.47.5). Widget tests in `test/widget_test.dart` (43 tests; run `flutter test`).
+- `lib/`: Flutter app (3.47.5). Widget tests in `test/widget_test.dart` (45 tests; run `flutter test`).
 - `backend/`: FastAPI + SQLAlchemy + PostgreSQL. SQL migrations in `backend/db/0*.sql` run on every start
   (01 schema, 02 demo seed, 03 accounts/safety, 04 push, 05 email codes, 06 groups/photos, 07 usernames).
-- `backend/scripts/e2e_groups.py`, `e2e_usernames.py`: end-to-end checks against a local server on :8000
+- `backend/scripts/e2e_groups.py`, `e2e_usernames.py`, `e2e_edit.py`: end-to-end checks against a local server on :8000
   (demo users like hassan@sonder.app / sonderpass123 from the seed).
 - `backend/scripts/railway_api.py`: tiny Railway GraphQL helper (the token is injected by the environment's
   network secret, never stored here).
@@ -44,7 +44,8 @@ Accounts: email/password with confirm field and show-password eye, unique **user
 or username), Google sign-in (Android), email verification codes, forgot password, Profile → **Account**
 (change name, username, email, password), delete account.
 Capsules: create with friends → friends get an **invite** to Accept/Decline; countdown; "here now" and
-typing indicators; live chat; own photos visible to the author while locked with **swap/delete**;
+typing indicators; live chat; the creator can **edit** a capsule before it opens (rename, change the
+reveal time, invite more friends; the chat shows what changed); own photos visible to the author while locked with **swap/delete**;
 **offline upload queue** (photos saved privately on the phone, upload later, keep their taken time);
 when the timer ends the capsule stays on Home as **Ready to Open** until that person opens it, then moves
 to their **Past Vault** (per-person). Vault: leave a group (photos stay) or delete for everyone (creator

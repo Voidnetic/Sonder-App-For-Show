@@ -22,7 +22,11 @@ DateTime tonightRevealTime(DateTime now) {
 DateTime tomorrowRevealTime(DateTime now) => DateTime(now.year, now.month, now.day + 1, 9);
 
 class CreateMomentScreen extends StatefulWidget {
-  const CreateMomentScreen({super.key});
+  /// When set, the screen edits this moment instead of creating one: rename it, move the reveal time and
+  /// invite more friends. People already in it stay in. Pops with the updated moment.
+  final Moment? editing;
+
+  const CreateMomentScreen({super.key, this.editing});
 
   @override
   State<CreateMomentScreen> createState() => _CreateMomentScreenState();
@@ -37,10 +41,27 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
   bool _isButtonPressed = false;
   bool _creating = false;
 
+  Moment? get _editing => widget.editing;
+
+  /// Already in the moment (joined, or invited and not answered yet): shown ticked, can't be untapped.
+  final Map<String, String> _alreadyIn = {};
+
   @override
   void initState() {
     super.initState();
     _friends = SonderApi.instance.getFriends();
+    final m = _editing;
+    if (m != null) {
+      _titleController.text = m.title;
+      _selectedTime = "Custom";
+      _customTime = m.unlockAt.toLocal();
+      for (final p in m.participants) {
+        if (p.id != m.creator.id) _alreadyIn[p.id] = 'Joined';
+      }
+      for (final p in m.invited) {
+        _alreadyIn[p.id] = 'Invited';
+      }
+    }
   }
 
   @override
@@ -83,7 +104,40 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
     });
   }
 
+  Future<void> _save() async {
+    final m = _editing!;
+    final unlockAt = _unlockAt;
+    if (unlockAt == null || !unlockAt.isAfter(DateTime.now())) {
+      showErrorSnack(context, 'Pick a reveal time in the future.');
+      return;
+    }
+    final title = _titleController.text.trim();
+    final newTitle = title.isNotEmpty && title != m.title ? title : null;
+    final newTime = unlockAt.toUtc() == m.unlockAt.toUtc() ? null : unlockAt;
+    final newPeople = _selectedFriendIds.where((id) => !_alreadyIn.containsKey(id)).toList();
+    if (newTitle == null && newTime == null && newPeople.isEmpty) {
+      Navigator.pop(context);
+      return;
+    }
+    setState(() => _creating = true);
+    try {
+      final updated = await SonderApi.instance.editMoment(
+        m.id,
+        title: newTitle,
+        unlockAt: newTime,
+        addParticipantIds: newPeople,
+      );
+      if (mounted) Navigator.pop(context, updated);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _creating = false);
+        showErrorSnack(context, e);
+      }
+    }
+  }
+
   Future<void> _create() async {
+    if (_editing != null) return _save();
     final unlockAt = _unlockAt;
     if (unlockAt == null) {
       showErrorSnack(context, 'Choose when the moment should reveal.');
@@ -125,7 +179,7 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          "Create a moment",
+          _editing == null ? "Create a moment" : "Edit moment",
           style: TextStyle(fontFamily: AppTheme.displayFont, color: AppTheme.kTextPrimary, fontSize: 22),
         ),
         centerTitle: true,
@@ -162,7 +216,9 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
             Text("WHO IS COMING?", style: _sectionTitleStyle),
             const SizedBox(height: 6),
             Text(
-              "They'll get an invite to accept before they join.",
+              _editing == null
+                  ? "They'll get an invite to accept before they join."
+                  : "Tap friends to invite them too. Everyone already in stays in.",
               style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppTheme.kTextSecondary),
             ),
             const SizedBox(height: 16),
@@ -178,19 +234,26 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
                     }),
                   );
                 }
-                final friends = snapshot.data!;
+                final friends = [
+                  ...snapshot.data!,
+                  // People in the moment who aren't (or are no longer) your friends still show as being in it.
+                  for (final p in [...?_editing?.participants, ...?_editing?.invited])
+                    if (_alreadyIn.containsKey(p.id) && !snapshot.data!.any((f) => f.id == p.id)) p,
+                ];
                 return Wrap(
                   spacing: 12,
                   runSpacing: 16,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    if (friends.isEmpty)
+                    if (friends.isEmpty && _editing == null)
                       Text(
                         "No friends yet. The moment will just be you for now.",
                         style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.kTextSecondary),
                       ),
                     for (final friend in friends)
-                      _buildBouncyFriendChip(friend, _selectedFriendIds.contains(friend.id)),
+                      _alreadyIn.containsKey(friend.id)
+                          ? _alreadyInChip(friend, _alreadyIn[friend.id]!)
+                          : _buildBouncyFriendChip(friend, _selectedFriendIds.contains(friend.id)),
                     _addFriendsChip(),
                   ],
                 );
@@ -270,7 +333,7 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
                             child: CircularProgressIndicator(color: AppTheme.kOnPrimary, strokeWidth: 3),
                           )
                         : Text(
-                            "CREATE MOMENT",
+                            _editing == null ? "CREATE MOMENT" : "SAVE CHANGES",
                             style: TextStyle(
                               color: AppTheme.kOnPrimary,
                               fontSize: 18,
@@ -284,6 +347,34 @@ class _CreateMomentScreenState extends State<CreateMomentScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _alreadyInChip(AppUser person, String label) {
+    return Container(
+      key: Key('already-in-${person.id}'),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppTheme.kSurface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppTheme.kBorder.withValues(alpha: 0.35), width: 2),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.check_circle, color: AppTheme.kTextSecondary, size: 20),
+          const SizedBox(width: 8),
+          Text(
+            person.name,
+            style: TextStyle(color: AppTheme.kTextSecondary, fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(color: AppTheme.kTextSecondary, fontWeight: FontWeight.w900, fontSize: 11),
+          ),
+        ],
       ),
     );
   }

@@ -300,6 +300,71 @@ void main() {
     expect(find.text('No memories yet'), findsOneWidget);
   });
 
+  testWidgets('edit moment: the creator renames it, moves the reveal and invites more friends', (tester) async {
+    final backend = FakeBackend();
+    final now = DateTime.now();
+    final party = {
+      ...momentJson(id: 'm1', title: 'Birthday Night', unlockAt: now.add(const Duration(hours: 2))),
+      'participants': [hassan, ali],
+      'invited': [ahmed],
+    };
+    backend.routes['GET /api/moments/active'] = (_) => [
+      momentJson(id: 'm2', title: 'Murree Trip', unlockAt: now.add(const Duration(hours: 1)), creator: ali),
+      party,
+    ];
+    backend.routes['PATCH /api/moments/m1'] = (req) {
+      final body = jsonDecode(req.body) as Map<String, dynamic>;
+      return {
+        ...party,
+        'title': body['title'] ?? party['title'],
+        'invited': [ahmed, hajra],
+      };
+    };
+    await setUpApi(backend);
+    await startApp(tester);
+
+    // Someone else's moment: no edit button.
+    await tapAndSettle(tester, find.text('MURREE TRIP'));
+    expect(find.byKey(const Key('edit-moment')), findsNothing);
+    await tapAndSettle(tester, find.byIcon(Icons.arrow_back_rounded));
+
+    await tapAndSettle(tester, find.text('BIRTHDAY NIGHT'));
+    await tapAndSettle(tester, find.byKey(const Key('edit-moment')));
+    expect(find.text('Edit moment'), findsOneWidget);
+    expect(find.byKey(const Key('already-in-u2')), findsOneWidget); // Ali joined
+    expect(find.byKey(const Key('already-in-u3')), findsOneWidget); // Ahmed invited
+    expect(find.text('Joined'), findsOneWidget);
+    expect(find.text('Invited'), findsOneWidget);
+
+    await tester.enterText(find.byKey(const Key('moment-title-field')), 'Birthday Bash');
+    await tapAndSettle(tester, find.text('Ali'), 2); // already in: tapping does nothing
+    await tapAndSettle(tester, find.text('Hajra'), 2);
+    await tapAndSettle(tester, find.text('Tomorrow'), 2);
+    await tester.ensureVisible(find.text('SAVE CHANGES'));
+    await tapAndSettle(tester, find.text('SAVE CHANGES'), 12);
+
+    final body = backend.lastBody('PATCH', '/api/moments/m1');
+    expect(body['title'], 'Birthday Bash');
+    expect(body['add_participant_ids'], ['u4']);
+    final unlockAt = DateTime.parse(body['unlock_at'] as String).toLocal();
+    expect(unlockAt.hour, 9);
+    expect(find.text('BIRTHDAY BASH'), findsOneWidget);
+    expect(find.text('Moment updated ✓'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 5));
+  });
+
+  testWidgets('edit moment: saving with no changes sends nothing', (tester) async {
+    final backend = FakeBackend();
+    await setUpApi(backend);
+    await startApp(tester);
+    await tapAndSettle(tester, find.text('BIRTHDAY NIGHT'));
+    await tapAndSettle(tester, find.byKey(const Key('edit-moment')));
+    await tester.ensureVisible(find.text('SAVE CHANGES'));
+    await tapAndSettle(tester, find.text('SAVE CHANGES'), 8);
+    expect(backend.called('PATCH', '/api/moments/m1'), isFalse);
+    expect(find.text('BIRTHDAY NIGHT'), findsOneWidget);
+  });
+
   testWidgets('active moment: hidden memories, chat history, sending, and live messages', (tester) async {
     final backend = FakeBackend();
     final api = await setUpApi(backend);

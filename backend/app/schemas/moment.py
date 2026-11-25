@@ -19,6 +19,14 @@ class AddParticipantRequest(BaseModel):
     user_id: uuid.UUID
 
 
+class EditMomentRequest(BaseModel):
+    """Changes the creator can make before the moment unlocks. Anything left out stays as it is."""
+
+    title: str | None = Field(default=None, min_length=1, max_length=120)
+    unlock_at: datetime | None = Field(default=None, description="A new reveal time, in the future")
+    add_participant_ids: list[uuid.UUID] = Field(default_factory=list, description="More friends to invite")
+
+
 class MomentResponse(BaseModel):
     id: uuid.UUID
     title: str
@@ -42,3 +50,5 @@ class MomentResponse(BaseModel):
     is_ready: bool = False
     # How many friends are invited but haven't accepted yet.
     pending_count: int = 0
+    # Friends invited who haven't accepted yet.
+    invited: list[UserResponse] = []

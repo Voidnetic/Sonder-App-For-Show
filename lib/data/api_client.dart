@@ -357,6 +357,26 @@ class SonderApi {
     return Moment.fromJson(json as Map<String, dynamic>);
   }
 
+  /// Edits a moment before it unlocks (only whoever made it): rename it, move the reveal time, invite more friends.
+  /// Anything left null stays as it is.
+  Future<Moment> editMoment(
+    String id, {
+    String? title,
+    DateTime? unlockAt,
+    List<String> addParticipantIds = const [],
+  }) async {
+    final json = await _send(
+      'PATCH',
+      '/moments/$id',
+      body: {
+        'title': ?title,
+        'unlock_at': ?unlockAt?.toUtc().toIso8601String(),
+        if (addParticipantIds.isNotEmpty) 'add_participant_ids': addParticipantIds,
+      },
+    );
+    return Moment.fromJson(json as Map<String, dynamic>);
+  }
+
   /// Opens an unlocked moment. The first time, it moves from Home to the Past Vault.
   Future<Moment> revealMoment(String id) async =>
       Moment.fromJson(await _send('POST', '/moments/$id/reveal') as Map<String, dynamic>);

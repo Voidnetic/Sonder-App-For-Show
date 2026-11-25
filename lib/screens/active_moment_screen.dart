@@ -15,6 +15,7 @@ import '../widgets/live_presence.dart';
 import '../widgets/safety_sheets.dart';
 import '../widgets/status_views.dart';
 import 'camera_screen.dart';
+import 'create_moment_screen.dart';
 import 'reveal_screen.dart';
 import 'story_viewer_screen.dart';
 
@@ -195,6 +196,7 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
               case HangoutMessage(:final message):
                 _clearTyping(message.author?.id); // their message arrived, so they've stopped typing
                 _addMessage(message);
+                if (message.isSystem) _refreshMoment(); // e.g. it was renamed or its reveal time moved
               case HangoutPresence(:final userIds):
                 if (mounted) setState(() => _hereNow = userIds);
               case HangoutTyping(:final userId, :final typing):
@@ -332,6 +334,19 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
     );
   }
 
+  bool get _canEdit => !widget.chatOnly && !_moment.isUnlocked && _moment.createdBy(_api.currentUser.value?.id);
+
+  Future<void> _edit() async {
+    final updated = await Navigator.push<Moment>(
+      context,
+      MaterialPageRoute(builder: (context) => CreateMomentScreen(editing: _moment)),
+    );
+    if (updated != null && mounted) {
+      setState(() => _moment = updated);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Moment updated ✓')));
+    }
+  }
+
   void _openReveal() {
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => RevealScreen(moment: _moment)));
   }
@@ -371,6 +386,15 @@ class _ActiveMomentScreenState extends State<ActiveMomentScreen> with SingleTick
           ],
         ),
         centerTitle: true,
+        actions: [
+          if (_canEdit)
+            IconButton(
+              key: const Key('edit-moment'),
+              tooltip: 'Edit moment',
+              icon: Icon(Icons.edit_rounded, color: AppTheme.kTextPrimary, size: 24),
+              onPressed: _edit,
+            ),
+        ],
       ),
       body: Column(
         children: [

@@ -163,6 +163,9 @@ class Moment {
   /// Friends who were invited but haven't accepted yet.
   final int pendingCount;
 
+  /// Those friends themselves (shown when editing the moment).
+  final List<AppUser> invited;
+
   const Moment({
     required this.id,
     required this.title,
@@ -179,6 +182,7 @@ class Moment {
     this.invitedBy,
     this.openedAt,
     this.pendingCount = 0,
+    this.invited = const [],
   });
 
   factory Moment.fromJson(Map<String, dynamic> json) => Moment(
@@ -201,6 +205,9 @@ class Moment {
     invitedBy: json['invited_by'] == null ? null : AppUser.fromJson(json['invited_by'] as Map<String, dynamic>),
     openedAt: json['opened_at'] == null ? null : _parseDate(json['opened_at']),
     pendingCount: (json['pending_count'] as int?) ?? 0,
+    invited: ((json['invited'] as List<dynamic>?) ?? const [])
+        .map((p) => AppUser.fromJson(p as Map<String, dynamic>))
+        .toList(),
   );
 
   /// Computed from the clock rather than the server flag, so it flips the moment the countdown ends.
